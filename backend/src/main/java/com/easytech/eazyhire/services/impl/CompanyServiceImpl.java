@@ -3,6 +3,7 @@ package com.easytech.eazyhire.services.impl;
 import com.easytech.eazyhire.core.exceptions.CustomException;
 import com.easytech.eazyhire.core.utils.StringUtils;
 import com.easytech.eazyhire.models.dtos.response.CompanyDetailResponseDTO;
+import com.easytech.eazyhire.models.dtos.request.CompanyRegistrationUpdateRequestDTO;
 import com.easytech.eazyhire.models.dtos.request.CompanyFilterRequestDTO;
 import com.easytech.eazyhire.models.dtos.response.CompanyResponseDTO;
 import com.easytech.eazyhire.models.dtos.response.CompanyProfileDTO;
@@ -63,6 +64,17 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public CompanyDetailResponseDTO getOwnRegistration(Long userId) {
+        UserEntity user = userService.getByIdWithCompany(userId);
+        CompanyEntity company = requireUserCompany(user);
+        if (company.getStatus() != CompanyStatus.REJECTED && company.getStatus() != CompanyStatus.PENDING) {
+            throw new CustomException(409, "Hồ sơ đăng ký không ở trạng thái cần xem lại");
+        }
+        return toDetail(getCompany(company.getId()));
+    }
+
+    @Override
     public CompanyEntity createPendingCompany(RegisterRequestDTO request) {
         String taxCode = request.getTaxCode().trim();
         if (companyRepository.existsByTaxCodeIgnoreCase(taxCode)) {
@@ -76,16 +88,14 @@ public class CompanyServiceImpl implements CompanyService {
 
         return companyRepository.save(CompanyEntity.builder()
                 .name(request.getCompanyName().trim()).slug(slug).taxCode(taxCode)
-                .phone(trimToNull(request.getPhone())).email(normalizeEmail(request.getEmail()))
-                .address(trimToNull(request.getAddress())).status(CompanyStatus.PENDING).build());
+                .email(normalizeEmail(request.getEmail()))
+                .status(CompanyStatus.PENDING).build());
     }
 
     @Override
     public CompanyProfileEntity createInitialProfile(CompanyEntity company, RegisterRequestDTO request) {
         return companyProfileRepository.save(CompanyProfileEntity.builder()
                 .company(company).primaryColor("#2563eb")
-                .businessType(trimToNull(request.getBusinessType()))
-                .industry(trimToNull(request.getIndustry())).companySize(trimToNull(request.getCompanySize()))
                 .onboardingCompleted(false).profileCompleted(false).build());
     }
 
@@ -147,6 +157,66 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     @Transactional
+    public CompanyDetailResponseDTO updateOwnRegistration(Long userId, CompanyRegistrationUpdateRequestDTO request) {
+        UserEntity user = userService.getByIdWithCompany(userId);
+        CompanyEntity company = requireUserCompany(user);
+        if (company.getStatus() != CompanyStatus.REJECTED) {
+            throw new CustomException(409, "Chỉ hồ sơ bị từ chối mới được chỉnh sửa để gửi lại");
+        }
+        if (user.getStatus() != UserStatus.PENDING) {
+            throw new CustomException(403, "Trạng thái tài khoản không cho phép chỉnh sửa hồ sơ đăng ký");
+        }
+
+        rejectBlankIfPresent(request.getFullName(), "Họ và tên không được để trống");
+        rejectBlankIfPresent(request.getCompanyName(), "Tên công ty không được để trống");
+        rejectBlankIfPresent(request.getTaxCode(), "Mã số thuế không được để trống");
+
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName().trim());
+            userService.save(user);
+        }
+        if (request.getCompanyName() != null) {
+            company.setName(request.getCompanyName().trim());
+            String baseSlug = StringUtils.toSlug(company.getName());
+            if (!company.getSlug().equals(baseSlug)) {
+                String slug = baseSlug;
+                int suffix = 1;
+                while (companyRepository.existsBySlug(slug)) slug = baseSlug + "-" + suffix++;
+                company.setSlug(slug);
+            }
+        }
+        if (request.getTaxCode() != null) {
+            updateTaxCode(company, request.getTaxCode());
+        }
+
+        CompanyEntity saved = companyRepository.save(company);
+        auditLogService.record(saved, user, "UPDATE_REJECTED_REGISTRATION", "COMPANY", saved.getId(),
+                "{\"companyStatus\":\"REJECTED\"}");
+        return toDetail(saved);
+    }
+
+    @Override
+    @Transactional
+    public CompanyDetailResponseDTO resubmitOwnRegistration(Long userId) {
+        UserEntity user = userService.getByIdWithCompany(userId);
+        CompanyEntity company = requireUserCompany(user);
+        if (company.getStatus() != CompanyStatus.REJECTED) {
+            throw new CustomException(409, "Chỉ hồ sơ bị từ chối mới được gửi lại");
+        }
+        if (user.getStatus() != UserStatus.PENDING) {
+            throw new CustomException(403, "Trạng thái tài khoản không cho phép gửi lại hồ sơ đăng ký");
+        }
+
+        company.setStatus(CompanyStatus.PENDING);
+        CompanyEntity saved = companyRepository.save(company);
+        auditLogService.record(saved, user, "RESUBMIT_REGISTRATION", "COMPANY", saved.getId(),
+                "{\"fromStatus\":\"REJECTED\",\"toStatus\":\"PENDING\"}");
+        emailNotificationService.notifyAdminOfRegistration(saved.getName(), user.getEmail());
+        return toDetail(saved);
+    }
+
+    @Override
+    @Transactional
     public CompanyResponseDTO updateCompanyStatus(Long companyId, Long adminId, CompanyStatus target, String reason) {
         CompanyEntity company = getCompany(companyId);
         UserEntity admin = userService.getById(adminId);
@@ -177,6 +247,12 @@ public class CompanyServiceImpl implements CompanyService {
     private CompanyEntity getCompany(Long companyId) {
         return companyRepository.findByIdWithDetails(companyId)
                 .orElseThrow(() -> new CustomException(404, "Không tìm thấy doanh nghiệp"));
+    }
+
+    private CompanyEntity requireUserCompany(UserEntity user) {
+        CompanyEntity company = user.getCompany();
+        if (company == null) throw new CustomException(403, "Tài khoản không thuộc doanh nghiệp");
+        return company;
     }
 
     private CompanyDetailResponseDTO toDetail(CompanyEntity company) {
@@ -289,5 +365,11 @@ public class CompanyServiceImpl implements CompanyService {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private void rejectBlankIfPresent(String value, String message) {
+        if (value != null && value.isBlank()) {
+            throw new CustomException(400, message);
+        }
     }
 }

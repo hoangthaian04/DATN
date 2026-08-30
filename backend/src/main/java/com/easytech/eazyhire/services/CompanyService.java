@@ -1,6 +1,7 @@
 package com.easytech.eazyhire.services;
 
 import com.easytech.eazyhire.models.dtos.response.CompanyDetailResponseDTO;
+import com.easytech.eazyhire.models.dtos.request.CompanyRegistrationUpdateRequestDTO;
 import com.easytech.eazyhire.models.dtos.request.CompanyFilterRequestDTO;
 import com.easytech.eazyhire.models.dtos.response.CompanyResponseDTO;
 import com.easytech.eazyhire.models.dtos.response.CompanyProfileDTO;
@@ -17,6 +18,8 @@ public interface CompanyService {
 
     CompanyDetailResponseDTO getCompanyDetail(Long id);
 
+    CompanyDetailResponseDTO getOwnRegistration(Long userId);
+
     CompanyEntity createPendingCompany(RegisterRequestDTO request);
 
     CompanyProfileEntity createInitialProfile(CompanyEntity company, RegisterRequestDTO request);
@@ -28,6 +31,10 @@ public interface CompanyService {
     CompanyDetailResponseDTO updateProfile(Long companyId, OnboardingRequestDTO request);
 
     CompanyDetailResponseDTO completeOnboarding(Long companyId, boolean skip);
+
+    CompanyDetailResponseDTO updateOwnRegistration(Long userId, CompanyRegistrationUpdateRequestDTO request);
+
+    CompanyDetailResponseDTO resubmitOwnRegistration(Long userId);
 
     CompanyResponseDTO updateCompanyStatus(Long companyId, Long adminId, CompanyStatus status, String reason);
 }

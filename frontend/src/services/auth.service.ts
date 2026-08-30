@@ -2,6 +2,8 @@ import api from './api';
 import type { BaseResponse } from '@/types/api.types';
 import type {
   CompanyProfile,
+  CompanyDetail,
+  CompanyRegistrationUpdateRequest,
   LoginRequest,
   LoginResponse,
   OnboardingRequest,
@@ -68,6 +70,21 @@ export const AuthService = {
     );
     if (!response.data.data.profile) throw new Error('Phản hồi hồ sơ công ty không hợp lệ');
     return response.data.data.profile;
+  },
+
+  getOwnRegistration: async (): Promise<CompanyDetail> => {
+    const response = await api.get<BaseResponse<CompanyDetail>>('/company-registration/me');
+    return response.data.data;
+  },
+
+  updateOwnRegistration: async (data: CompanyRegistrationUpdateRequest): Promise<CompanyDetail> => {
+    const response = await api.patch<BaseResponse<CompanyDetail>>('/company-registration/me', data);
+    return response.data.data;
+  },
+
+  resubmitOwnRegistration: async (): Promise<CompanyDetail> => {
+    const response = await api.post<BaseResponse<CompanyDetail>>('/company-registration/me/resubmit');
+    return response.data.data;
   },
 
   logout: async (): Promise<void> => {
