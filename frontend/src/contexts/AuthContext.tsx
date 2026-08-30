@@ -12,6 +12,7 @@ interface AuthContextValue {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (data: LoginRequest) => Promise<User>;
+  loginWithGoogle: (idToken: string) => Promise<User>;
   adminLogin: (data: LoginRequest) => Promise<User>;
   register: (data: RegisterRequest) => Promise<User>;
   onboarding: (data: OnboardingRequest) => Promise<void>;
@@ -46,6 +47,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = useCallback(async (data: LoginRequest): Promise<User> => {
     const response = await AuthService.login(data);
+    AuthService.saveTokens(response);
+    setUser(response.user);
+    return response.user;
+  }, []);
+
+  const loginWithGoogle = useCallback(async (idToken: string): Promise<User> => {
+    const response = await AuthService.googleLogin({ idToken });
     AuthService.saveTokens(response);
     setUser(response.user);
     return response.user;
@@ -88,6 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         isAuthenticated: !!user,
         login,
+        loginWithGoogle,
         adminLogin,
         register,
         onboarding,

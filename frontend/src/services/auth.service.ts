@@ -22,6 +22,12 @@ export const AuthService = {
     return res.data.data;
   },
 
+  /** Đăng nhập bằng Google ID Token */
+  googleLogin: async (data: { idToken: string }): Promise<LoginResponse> => {
+    const res = await api.post<BaseResponse<LoginResponse>>('/auth/google', data);
+    return res.data.data;
+  },
+
   /** Đăng nhập Quản trị viên (Admin) */
   adminLogin: async (data: LoginRequest): Promise<LoginResponse> => {
     const res = await api.post<BaseResponse<LoginResponse>>('/admin/auth/login', data);

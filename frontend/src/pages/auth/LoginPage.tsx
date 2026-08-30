@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 import { AlertCircle, ArrowRight, Building2, CheckCircle2, Lock, Mail, Sparkles } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -12,6 +13,25 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleGoogleSuccess = async (idToken: string) => {
+    try {
+      setIsLoading(true);
+      setErrorMessage(null);
+      const user = await loginWithGoogle(idToken);
+      if (user.companyStatus === 'PENDING') {
+        navigate('/pending', { replace: true });
+      } else {
+        const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+        navigate(from, { replace: true });
+      }
+    } catch (err: unknown) {
+      const msg = (err as { customMessage?: string })?.customMessage || 'Đăng nhập Google thất bại';
+      setErrorMessage(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,6 +201,18 @@ export const LoginPage: React.FC = () => {
               )}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-3 text-slate-400 font-medium">Hoặc tiếp tục với</span>
+            </div>
+          </div>
+
+          <GoogleLoginButton onSuccess={handleGoogleSuccess} isLoading={isLoading} text="Đăng nhập với Google" mode="login" />
 
           <div className="mt-8 border-t border-slate-100 pt-6 text-center">
             <Link to="/admin/login" className="text-xs text-slate-400 hover:text-slate-600 transition">

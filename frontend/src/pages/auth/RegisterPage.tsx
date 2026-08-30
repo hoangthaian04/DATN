@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 import { AlertCircle, ArrowRight, Building2, CheckCircle2, Lock, Mail, Phone, Sparkles, User as UserIcon } from 'lucide-react';
 
 export const RegisterPage: React.FC = () => {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState('');
@@ -15,6 +16,24 @@ export const RegisterPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleGoogleSuccess = async (idToken: string) => {
+    try {
+      setIsLoading(true);
+      setErrorMessage(null);
+      const user = await loginWithGoogle(idToken);
+      if (user.companyStatus === 'PENDING') {
+        navigate('/onboarding', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (err: unknown) {
+      const msg = (err as { customMessage?: string })?.customMessage || 'Đăng ký bằng Google thất bại';
+      setErrorMessage(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,6 +269,18 @@ export const RegisterPage: React.FC = () => {
               )}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-3 text-slate-400 font-medium">Hoặc đăng ký nhanh với</span>
+            </div>
+          </div>
+
+          <GoogleLoginButton onSuccess={handleGoogleSuccess} isLoading={isLoading} text="Đăng ký với Google" mode="register" />
         </div>
       </div>
     </div>
