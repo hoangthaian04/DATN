@@ -46,20 +46,21 @@ public class SecurityConfig {
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints (Auth & Public Career)
+                        // Public endpoints: Auth & Public Career
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/refresh",
-                                "/api/v1/admin/auth/login",
                                 "/api/v1/public/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/error"
                         ).permitAll()
-                        // Admin only endpoints
+                        // Admin login: public (đặt TRƯỚC rule admin/**)
+                        .requestMatchers("/api/v1/admin/auth/**").permitAll()
+                        // Admin only: các endpoint quản trị còn lại
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        // Authenticated requests
+                        // Các request còn lại cần đăng nhập
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

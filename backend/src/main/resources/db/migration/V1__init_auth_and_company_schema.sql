@@ -87,7 +87,7 @@ VALUES (
     'System Administrator',
     'ADMIN',
     'ACTIVE',
-    '$2a$10$GRLdNijSQMUvl/au9ofL.eDwmoohzzS7.rmNSJZ.EmWXeUsQLmq6q',
+    '$2b$12$OcWdOcZLmmnqzZR2dunXj.rRC2oAzDboNqEnzAUrlZxgMfAWRzsiO',
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 ) ON CONFLICT (email) DO NOTHING;

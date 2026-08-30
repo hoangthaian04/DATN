@@ -16,7 +16,7 @@ import EazyTech.EazyHire.services.cache.AuthCacheService;
 
 import java.io.IOException;
 
-@Component
+// @Component - Disabled: We use JwtAuthenticationFilter in SecurityConfig instead
 public class ApiTokenFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(ApiTokenFilter.class);
 
