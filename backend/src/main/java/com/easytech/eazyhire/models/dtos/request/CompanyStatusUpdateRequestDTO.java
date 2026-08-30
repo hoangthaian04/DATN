@@ -12,6 +12,6 @@ public class CompanyStatusUpdateRequestDTO {
     @NotNull(message = "Trạng thái doanh nghiệp không được để trống")
     private CompanyStatus status;
 
-    @Size(max = 1000, message = "Lý do không quá 1000 ký tự")
+    @Size(min = 10, max = 1000, message = "Lý do phải từ 10 đến 1000 ký tự")
     private String reason;
 }

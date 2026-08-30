@@ -27,6 +27,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [detailTab, setDetailTab] = useState<'company' | 'hr'>('company');
   const [rejectingCompanyId, setRejectingCompanyId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [rejectReasonError, setRejectReasonError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -94,19 +95,33 @@ export const AdminDashboardPage: React.FC = () => {
 
   const handleRejectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rejectingCompanyId || !rejectReason.trim()) return;
+    const reason = rejectReason.trim();
+    if (!rejectingCompanyId) return;
+    if (!reason) {
+      setRejectReasonError('Vui lòng nhập lý do từ chối.');
+      return;
+    }
+    if (reason.length < 10) {
+      setRejectReasonError('Lý do từ chối phải có ít nhất 10 ký tự.');
+      return;
+    }
+    if (reason.length > 1000) {
+      setRejectReasonError('Lý do từ chối không quá 1000 ký tự.');
+      return;
+    }
 
     try {
       setActionLoadingId(rejectingCompanyId);
-      await AdminService.rejectCompany(rejectingCompanyId, rejectReason.trim());
+      await AdminService.rejectCompany(rejectingCompanyId, reason);
       showToast('success', 'Đã từ chối doanh nghiệp.');
       setRejectingCompanyId(null);
       setRejectReason('');
+      setRejectReasonError(null);
       if (selectedCompany?.id === rejectingCompanyId) {
         setSelectedCompany({
           ...selectedCompany,
           status: 'REJECTED',
-          rejectedReason: rejectReason.trim(),
+          rejectedReason: reason,
         });
       }
       await fetchCompanies();
@@ -498,17 +513,30 @@ export const AdminDashboardPage: React.FC = () => {
               <textarea
                 rows={3}
                 value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
+                maxLength={1000}
+                onChange={(e) => {
+                  setRejectReason(e.target.value);
+                  setRejectReasonError(null);
+                }}
                 placeholder="VD: Mã số thuế không khớp với tên doanh nghiệp hoặc thông tin chưa đầy đủ..."
-                className="w-full rounded-xl border border-slate-200 p-3 text-xs focus:border-[#0052cc] focus:outline-none"
+                className={`w-full rounded-xl border p-3 text-xs focus:border-[#0052cc] focus:outline-none ${
+                  rejectReasonError ? 'border-rose-300 bg-rose-50' : 'border-slate-200'
+                }`}
                 required
               />
+              <div className="flex justify-between text-[11px] font-semibold">
+                <span className={rejectReasonError ? 'text-rose-600' : 'text-slate-400'}>
+                  {rejectReasonError || 'Tối thiểu 10 ký tự, tối đa 1000 ký tự.'}
+                </span>
+                <span className="text-slate-400">{rejectReason.length}/1000</span>
+              </div>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => {
                     setRejectingCompanyId(null);
                     setRejectReason('');
+                    setRejectReasonError(null);
                   }}
                   className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
@@ -516,7 +544,7 @@ export const AdminDashboardPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={!rejectReason.trim() || actionLoadingId !== null}
+                  disabled={rejectReason.trim().length < 10 || actionLoadingId !== null}
                   className="rounded-xl bg-rose-600 px-5 py-2 text-xs font-semibold text-white hover:bg-rose-700 cursor-pointer disabled:opacity-60"
                 >
                   Xác nhận từ chối
