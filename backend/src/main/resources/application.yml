@@ -1,0 +1,36 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: EazyHire
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/easytech}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: ${SHOW_SQL:false}
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000
+
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  access-token-expiration-ms: ${JWT_EXPIRATION_MS:86400000} # 24 giờ
+  refresh-token-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000} # 7 ngày
+
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
