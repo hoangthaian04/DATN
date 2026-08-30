@@ -45,8 +45,16 @@ public class CompanyMapper {
     }
 
     public CompanyProfileDTO toProfile(CompanyProfileEntity profile) {
+        CompanyEntity company = profile.getCompany();
         return CompanyProfileDTO.builder()
-                .id(profile.getId()).logoUrl(profile.getLogoUrl()).bannerUrl(profile.getBannerUrl())
+                .id(profile.getId())
+                .companyName(company != null ? company.getName() : null)
+                .taxCode(company != null ? company.getTaxCode() : null)
+                .email(company != null ? company.getEmail() : null)
+                .phone(company != null ? company.getPhone() : null)
+                .website(company != null ? company.getWebsite() : null)
+                .address(company != null ? company.getAddress() : null)
+                .logoUrl(profile.getLogoUrl()).bannerUrl(profile.getBannerUrl())
                 .primaryColor(profile.getPrimaryColor()).description(profile.getDescription())
                 .benefits(profile.getBenefits()).socialLinks(profile.getSocialLinks())
                 .businessType(profile.getBusinessType()).industry(profile.getIndustry())

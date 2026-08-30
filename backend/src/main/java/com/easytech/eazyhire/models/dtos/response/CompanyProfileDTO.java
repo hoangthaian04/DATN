@@ -13,6 +13,12 @@ import lombok.Setter;
 @Builder
 public class CompanyProfileDTO {
     private Long id;
+    private String companyName;
+    private String taxCode;
+    private String email;
+    private String phone;
+    private String website;
+    private String address;
     private String logoUrl;
     private String bannerUrl;
     private String primaryColor;

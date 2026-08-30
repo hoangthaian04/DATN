@@ -1,6 +1,7 @@
 package com.easytech.eazyhire.models.dtos.request;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,6 +30,7 @@ public class OnboardingRequestDTO {
     private String email;
 
     @Size(max = 255, message = "Website không quá 255 ký tự")
+    @Pattern(regexp = "^$|https?://.+\\..+", message = "Website phải bắt đầu bằng http:// hoặc https://")
     private String website;
 
     private String address;
