@@ -1,5 +1,6 @@
 package EazyTech.EazyHire.models.dtos;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -19,12 +20,17 @@ public class OnboardingRequestDTO {
     @Size(max = 255, message = "Tên công ty không quá 255 ký tự")
     private String companyName;
 
+    @Size(max = 100, message = "Mã số thuế không quá 100 ký tự")
     private String taxCode;
 
+    @Size(max = 50, message = "Số điện thoại không quá 50 ký tự")
     private String phone;
 
+    @Email(message = "Email công ty không đúng định dạng")
+    @Size(max = 255, message = "Email công ty không quá 255 ký tự")
     private String email;
 
+    @Size(max = 255, message = "Website không quá 255 ký tự")
     private String website;
 
     private String address;
@@ -33,6 +39,7 @@ public class OnboardingRequestDTO {
 
     private String bannerUrl;
 
+    @Size(max = 20, message = "Mã màu không hợp lệ")
     private String primaryColor;
 
     private String description;
