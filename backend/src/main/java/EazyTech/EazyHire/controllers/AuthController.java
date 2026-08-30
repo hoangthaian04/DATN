@@ -4,6 +4,7 @@ import EazyTech.EazyHire.core.AuthorizedUser;
 import EazyTech.EazyHire.core.BaseResponse;
 import EazyTech.EazyHire.core.exceptions.CustomException;
 import EazyTech.EazyHire.core.utils.SecurityUtils;
+import EazyTech.EazyHire.models.dtos.GoogleLoginRequestDTO;
 import EazyTech.EazyHire.models.dtos.LoginRequestDTO;
 import EazyTech.EazyHire.models.dtos.OnboardingRequestDTO;
 import EazyTech.EazyHire.models.dtos.RegisterRequestDTO;
@@ -36,6 +37,11 @@ public class AuthController {
     @PostMapping("/login")
     public BaseResponse login(@Valid @RequestBody LoginRequestDTO request) {
         return new BaseResponse(authService.login(request));
+    }
+
+    @PostMapping("/google")
+    public BaseResponse googleLogin(@Valid @RequestBody GoogleLoginRequestDTO request) {
+        return new BaseResponse(authService.googleLogin(request));
     }
 
     @PostMapping("/onboarding")

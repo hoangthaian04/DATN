@@ -5,6 +5,7 @@ import EazyTech.EazyHire.core.utils.StringUtils;
 import EazyTech.EazyHire.models.dtos.CareerSiteDTO;
 import EazyTech.EazyHire.models.dtos.CompanyDetailResponseDTO;
 import EazyTech.EazyHire.models.dtos.CompanyProfileDTO;
+import EazyTech.EazyHire.models.dtos.GoogleLoginRequestDTO;
 import EazyTech.EazyHire.models.dtos.LoginRequestDTO;
 import EazyTech.EazyHire.models.dtos.LoginResponseDTO;
 import EazyTech.EazyHire.models.dtos.OnboardingRequestDTO;
@@ -142,6 +143,116 @@ public class AuthServiceImpl implements AuthService {
 
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
+
+        return buildLoginResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public LoginResponseDTO googleLogin(GoogleLoginRequestDTO request) {
+        String idToken = request.getIdToken();
+        if (idToken == null || idToken.isBlank()) {
+            throw new CustomException(400, "Google ID Token không được để trống");
+        }
+
+        // 1. Xác thực Google ID Token qua Google OAuth2 API
+        String googleId;
+        String email;
+        String name;
+        String picture;
+
+        try {
+            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+            String googleTokenUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken;
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> tokenInfo = restTemplate.getForObject(googleTokenUrl, java.util.Map.class);
+
+            if (tokenInfo == null || tokenInfo.get("email") == null) {
+                throw new CustomException(401, "Google ID Token không hợp lệ");
+            }
+
+            email = ((String) tokenInfo.get("email")).trim().toLowerCase();
+            googleId = (String) tokenInfo.get("sub");
+            name = (String) tokenInfo.get("name");
+            picture = (String) tokenInfo.get("picture");
+            if (name == null || name.isBlank()) {
+                name = email.split("@")[0];
+            }
+        } catch (CustomException ce) {
+            throw ce;
+        } catch (Exception e) {
+            throw new CustomException(401, "Không thể xác thực danh tính với Google: " + e.getMessage());
+        }
+
+        // 2. Kiểm tra người dùng trong hệ thống
+        UserEntity user = userRepository.findByGoogleId(googleId)
+                .or(() -> userRepository.findByEmailWithCompany(email))
+                .orElse(null);
+
+        if (user != null) {
+            // Cập nhật googleId hoặc avatar nếu chưa có
+            if (user.getGoogleId() == null) {
+                user.setGoogleId(googleId);
+            }
+            if (user.getAvatarUrl() == null && picture != null) {
+                user.setAvatarUrl(picture);
+            }
+            if (user.getStatus() == UserStatus.BLOCKED || user.getStatus() == UserStatus.INACTIVE) {
+                throw new CustomException(403, "Tài khoản của bạn đã bị khóa hoặc ngừng kích hoạt");
+            }
+            user.setLastLoginAt(LocalDateTime.now());
+            user = userRepository.save(user);
+            return buildLoginResponse(user);
+        }
+
+        // 3. Nếu là người dùng mới: Tự động khởi tạo Doanh nghiệp & Hồ sơ HR
+        String companyName = name + "'s Company";
+        String baseSlug = StringUtils.toSlug(companyName);
+        String slug = baseSlug;
+        int count = 1;
+        while (companyRepository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + count++;
+        }
+
+        // Tạo Company trạng thái PENDING
+        CompanyEntity company = CompanyEntity.builder()
+                .name(companyName)
+                .slug(slug)
+                .email(email)
+                .status(CompanyStatus.PENDING)
+                .build();
+        company = companyRepository.save(company);
+
+        // Tạo Profile & CareerSite mặc định
+        CompanyProfileEntity profile = CompanyProfileEntity.builder()
+                .company(company)
+                .logoUrl(picture)
+                .primaryColor("#2563eb")
+                .build();
+        companyProfileRepository.save(profile);
+
+        CareerSiteEntity careerSite = CareerSiteEntity.builder()
+                .company(company)
+                .siteTitle("Cơ hội nghề nghiệp tại " + company.getName())
+                .tagline("Gia nhập đội ngũ tài năng của chúng tôi")
+                .accentColor("#2563eb")
+                .fontFamily("Inter")
+                .showCompanyDescription(true)
+                .showBenefits(true)
+                .build();
+        careerSiteRepository.save(careerSite);
+
+        // Tạo User HR
+        user = UserEntity.builder()
+                .email(email)
+                .fullName(name)
+                .googleId(googleId)
+                .avatarUrl(picture)
+                .role(UserRole.HR)
+                .status(UserStatus.ACTIVE)
+                .company(company)
+                .build();
+        user = userRepository.save(user);
 
         return buildLoginResponse(user);
     }

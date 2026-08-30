@@ -1,6 +1,7 @@
 package EazyTech.EazyHire.services;
 
 import EazyTech.EazyHire.models.dtos.CompanyDetailResponseDTO;
+import EazyTech.EazyHire.models.dtos.GoogleLoginRequestDTO;
 import EazyTech.EazyHire.models.dtos.LoginRequestDTO;
 import EazyTech.EazyHire.models.dtos.LoginResponseDTO;
 import EazyTech.EazyHire.models.dtos.OnboardingRequestDTO;
@@ -14,6 +15,8 @@ public interface AuthService {
     LoginResponseDTO login(LoginRequestDTO request);
 
     LoginResponseDTO adminLogin(LoginRequestDTO request);
+
+    LoginResponseDTO googleLogin(GoogleLoginRequestDTO request);
 
     CompanyDetailResponseDTO onboarding(Long userId, OnboardingRequestDTO request);
 
