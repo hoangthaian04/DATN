@@ -1,71 +1,72 @@
 package EazyTech.EazyHire.core;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.domain.Page;
 
 import java.io.Serializable;
 import java.util.List;
 
-@Data
 @AllArgsConstructor
 @Builder
 @Getter
 @Setter
 public class BaseResponse implements Serializable {
+
     private Integer status;
     private String message;
-    
-    @JsonAlias({"data", "payload"})
-    private Object payload;
+
+    @JsonProperty("data")
+    private Object data;
 
     public BaseResponse() {
         this.status = 1;
         this.message = "success";
-        this.payload = null;
+        this.data = null;
     }
 
-    public <T> BaseResponse(T payload) {
+    public <T> BaseResponse(T data) {
         this.status = 1;
         this.message = "success";
-        this.payload = payload;
+        this.data = data;
     }
 
-    public <T> BaseResponse(List<T> payload) {
+    public <T> BaseResponse(List<T> data) {
         this.status = 1;
         this.message = "success";
-        this.payload = payload;
+        this.data = data;
     }
 
-    public <T> BaseResponse(Page<T> payload) {
+    public <T> BaseResponse(Page<T> pagePayload) {
         this.status = 1;
         this.message = "success";
-        this.payload = new BasePagination<T>(payload);
+        this.data = new BasePagination<T>(pagePayload);
     }
 
-    public static <T> BaseResponse success(String message, T payload) {
-        return BaseResponse.builder().status(1).message(message).payload(payload).build();
+    public static <T> BaseResponse success(String message, T data) {
+        return BaseResponse.builder().status(1).message(message).data(data).build();
     }
 
-    public static <T> BaseResponse success(T payload) {
-        return BaseResponse.builder().status(1).message("success").payload(payload).build();
+    public static <T> BaseResponse success(T data) {
+        return BaseResponse.builder().status(1).message("success").data(data).build();
     }
 
     public static <T> BaseResponse success(String message) {
-        return BaseResponse.builder().status(1).message(message).payload(null).build();
+        return BaseResponse.builder().status(1).message(message).data(null).build();
     }
 
-
-    public static <T> BaseResponse fail(String message, T payload) {
-        return BaseResponse.builder().status(0).message(message).payload(payload).build();
+    public static <T> BaseResponse fail(String message, T data) {
+        return BaseResponse.builder().status(0).message(message).data(data).build();
     }
 
-    public static <T> BaseResponse fail(T payload) {
-        return BaseResponse.builder().status(0).message("failed").payload(payload).build();
+    public static <T> BaseResponse fail(T data) {
+        return BaseResponse.builder().status(0).message("failed").data(data).build();
     }
 
     public static <T> BaseResponse fail(String message) {
-        return BaseResponse.builder().status(0).message(message).payload(null).build();
+        return BaseResponse.builder().status(0).message(message).data(null).build();
     }
-
 }

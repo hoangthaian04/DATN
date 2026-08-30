@@ -2,12 +2,10 @@ package EazyTech.EazyHire.core;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Autowired;
+import EazyTech.EazyHire.core.utils.StringUtils;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import EazyTech.EazyHire.core.utils.StringUtils;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -16,13 +14,15 @@ import java.util.List;
 @Service
 public class RedisClient {
 
-    @Autowired
-    RedisTemplate<String, String> redisTemplate;
-    @Autowired
-    ObjectMapper mapper;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper mapper;
 
+    public RedisClient(RedisTemplate<String, String> redisTemplate, ObjectMapper mapper) {
+        this.redisTemplate = redisTemplate;
+        this.mapper = mapper;
+    }
 
-    public @Nullable String get(String key) {
+    public String get(String key) {
         return redisTemplate.opsForValue().get(key);
     }
 
@@ -31,7 +31,7 @@ public class RedisClient {
         return value != null ? value : defaultValue;
     }
 
-    public @Nullable <T> T getObject(String key, Class<T> objectType) throws JsonProcessingException {
+    public <T> T getObject(String key, Class<T> objectType) throws JsonProcessingException {
         String value = get(key);
         if (value == null) {
             return null;
@@ -51,7 +51,6 @@ public class RedisClient {
         long seconds = Math.abs(Duration.between(expiredAt, Instant.now()).getSeconds());
         redisTemplate.opsForValue().set(key, value, Duration.ofSeconds(seconds));
     }
-
 
     public <T> void setObject(String key, T object) throws JsonProcessingException {
         redisTemplate.opsForValue().set(key, mapper.writeValueAsString(object));
@@ -84,8 +83,8 @@ public class RedisClient {
         redisTemplate.opsForHash().put(key, field, mapper.writeValueAsString(object));
     }
 
-    public <T> void hSetExpireAt(String key, String field, Instant time) {
-        redisTemplate.opsForHash().expireAt(key, time, List.of(field));
+    public void hSetExpireAt(String key, String field, Instant time) {
+        redisTemplate.expireAt(key, time);
     }
 
     public <T> void hDel(String key, String field) {

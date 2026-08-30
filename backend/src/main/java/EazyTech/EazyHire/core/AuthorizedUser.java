@@ -1,13 +1,17 @@
 package EazyTech.EazyHire.core;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -15,16 +19,17 @@ import java.util.List;
 @Setter
 public class AuthorizedUser {
 
-    protected String id;
+    protected Long id;
     protected String name;
-    protected String username;
+    protected String email;
+    protected Long companyId;
+    protected String companyStatus;
     protected List<String> roles;
 
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (roles != null && !roles.isEmpty()) {
             return roles.stream().map(SimpleGrantedAuthority::new).toList();
         }
-        return null;
+        return Collections.emptyList();
     }
-
 }
