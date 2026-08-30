@@ -34,9 +34,13 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     public Page<CompanyResponseDTO> getCompanies(CompanyFilterRequestDTO request) {
+        String search = (request.getSearchText() != null && !request.getSearchText().trim().isEmpty())
+                ? "%" + request.getSearchText().trim().toLowerCase() + "%"
+                : null;
+
         Page<CompanyEntity> page = companyRepository.searchCompanies(
                 request.getStatus(),
-                request.getSearchText(),
+                search,
                 request.getPageable()
         );
         return page.map(this::mapToCompanyResponseDTO);

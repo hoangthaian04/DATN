@@ -24,9 +24,10 @@ public interface CompanyRepository extends JpaRepository<CompanyEntity, Long> {
 
     @Query("SELECT c FROM CompanyEntity c WHERE " +
            "(:status IS NULL OR c.status = :status) AND " +
-           "(:search IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           " LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           " LOWER(c.phone) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "(:search IS NULL OR " +
+           " LOWER(c.name) LIKE :search OR " +
+           " LOWER(c.email) LIKE :search OR " +
+           " LOWER(c.phone) LIKE :search)")
     Page<CompanyEntity> searchCompanies(
             @Param("status") CompanyStatus status,
             @Param("search") String search,
