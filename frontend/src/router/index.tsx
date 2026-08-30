@@ -27,6 +27,9 @@ import { NotificationsPage } from '@/pages/hr/NotificationsPage';
 // ─── Admin Pages ──────────────────────────────────────────────────────────────
 import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
+import { AdminJobCategories } from '@/pages/admin/AdminJobCategories';
+import { AdminAuditLogs } from '@/pages/admin/AdminAuditLogs';
+import { AdminUsers } from '@/pages/admin/AdminUsers';
 
 // ─── Career Site Pages (Public) ───────────────────────────────────────────────
 import { CareerHomePage } from '@/pages/career/CareerHomePage';
@@ -80,6 +83,10 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <AdminDashboardPage /> },
+      { path: 'companies', element: <AdminDashboardPage /> },
+      { path: 'categories', element: <AdminJobCategories /> },
+      { path: 'logs', element: <AdminAuditLogs /> },
+      { path: 'users', element: <AdminUsers /> },
     ],
   },
 

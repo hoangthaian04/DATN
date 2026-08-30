@@ -18,6 +18,7 @@ public class RegisterRequestDTO {
 
     @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không đúng định dạng")
+    @Size(max = 255, message = "Email không quá 255 ký tự")
     private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống")
@@ -32,5 +33,6 @@ public class RegisterRequestDTO {
     @Size(max = 255, message = "Tên công ty không quá 255 ký tự")
     private String companyName;
 
+    @Size(max = 50, message = "Số điện thoại không quá 50 ký tự")
     private String phone;
 }

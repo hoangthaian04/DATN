@@ -1,26 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowRight, Lock, Mail, ShieldAlert, ShieldCheck } from 'lucide-react';
+import {
+  Activity,
+  AlertCircle,
+  KeyRound,
+  Loader2,
+  Server,
+  ShieldAlert,
+  ShieldCheck,
+} from 'lucide-react';
 
 export const AdminLoginPage: React.FC = () => {
   const { adminLogin } = useAuth();
   const navigate = useNavigate();
 
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('admin@easytech.vn');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setErrorMessage('Vui lòng nhập đầy đủ email và mật khẩu');
+      setErrorMessage('Vui lòng nhập đầy đủ email và mật khẩu quản trị');
       return;
     }
 
     try {
-      setIsLoading(true);
+      setLoading(true);
       setErrorMessage(null);
 
       const user = await adminLogin({ email, password });
@@ -34,90 +42,166 @@ export const AdminLoginPage: React.FC = () => {
       const msg = (err as { customMessage?: string })?.customMessage || 'Đăng nhập quản trị thất bại';
       setErrorMessage(msg);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-900 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 rounded-3xl border border-slate-800 bg-slate-950/80 p-8 sm:p-10 shadow-2xl backdrop-blur-xl">
-        <div className="text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 shadow-lg shadow-indigo-500/30">
-            <ShieldCheck className="h-7 w-7 text-white" />
-          </div>
-          <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-            EasyTech Admin
-          </h2>
-          <p className="mt-2 text-xs text-slate-400">
-            Cổng đăng nhập bảo mật dành cho Quản trị viên hệ thống
-          </p>
-        </div>
-
-        {errorMessage && (
-          <div className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-xs font-medium text-red-300">
-            <ShieldAlert className="h-4 w-4 flex-shrink-0 text-red-400 mt-0.5" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">
-              Email Quản trị
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@easytech.vn"
-                required
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/90 pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition"
-              />
+    <div className="h-screen w-full flex flex-col bg-white font-sans overflow-hidden">
+      <main className="flex-1 flex w-full h-full">
+        {/* Left Side: Form */}
+        <div className="w-full lg:w-1/2 h-full flex flex-col justify-center px-8 sm:px-16 md:px-24 relative overflow-y-auto bg-white">
+          <div className="max-w-[380px] w-full mx-auto my-auto py-10">
+            <div className="h-12 w-12 rounded-xl bg-[#0052cc] flex items-center justify-center text-white mb-6 shadow-lg shadow-blue-500/20">
+              <ShieldAlert className="h-6 w-6" />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">
-              Mật khẩu
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/90 pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition"
-              />
-            </div>
-            <p className="mt-1.5 text-[11px] text-slate-500">Mặc định ban đầu: Admin@123</p>
-          </div>
+            <h1 className="text-[32px] font-bold text-slate-900 mb-2 tracking-tight">System Admin</h1>
+            <p className="text-[15px] text-slate-500 mb-8">
+              Khu vực hạn chế. Đăng nhập để truy cập hệ thống quản trị lõi của nền tảng EasyTech.
+            </p>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="group mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 px-4 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 disabled:opacity-60 transition cursor-pointer"
-          >
-            {isLoading ? (
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            ) : (
-              <>
-                <span>Xác thực & Đăng nhập</span>
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </>
+            {errorMessage && (
+              <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-700 animate-in fade-in">
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
+                <span>{errorMessage}</span>
+              </div>
             )}
-          </button>
-        </form>
 
-        <div className="border-t border-slate-800 pt-4 text-center">
-          <a href="/login" className="text-xs text-slate-500 hover:text-slate-300 transition">
-            &larr; Quay lại trang HR Portal
-          </a>
+            {/* Form */}
+            <form onSubmit={handleAdminLogin} className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
+                  ADMIN EMAIL
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@easytech.vn"
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-slate-700 bg-slate-50 focus:bg-white"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
+                  MASTER PASSWORD
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-slate-700 bg-slate-50 focus:bg-white"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <label className="flex items-center gap-2.5 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-slate-300 text-[#0052cc] focus:ring-[#0052cc] cursor-pointer"
+                  />
+                  <span className="text-sm font-semibold text-slate-600 group-hover:text-slate-800 transition-colors">
+                    Remember device
+                  </span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 rounded-lg bg-[#0052cc] hover:bg-[#0047b3] text-white text-[15px] font-bold transition-colors mt-4 flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-60"
+              >
+                {loading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>
+                    <KeyRound className="h-4.5 w-4.5" />
+                    <span>Authenticate</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-12 text-center">
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="text-[11px] text-slate-400 hover:text-slate-600 font-bold underline decoration-slate-300 underline-offset-4 cursor-pointer"
+              >
+                &larr; Quay lại đăng nhập Doanh nghiệp
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+
+        {/* Right Side: Visual/Feature List */}
+        <div className="hidden lg:flex w-1/2 relative bg-[#ebf2ff] items-center justify-center overflow-hidden p-12 shadow-[inset_1px_0_10px_rgba(0,0,0,0.02)]">
+          {/* Abstract Background pattern simulation */}
+          <div className="absolute inset-0 opacity-70">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-400/20 rounded-full blur-[100px] translate-x-1/3 -translate-y-1/3" />
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/20 rounded-full blur-[80px] -translate-x-1/4 translate-y-1/4" />
+
+            {/* Tech grid pattern */}
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  'linear-gradient(rgba(0, 82, 204, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 82, 204, 0.05) 1px, transparent 1px)',
+                backgroundSize: '30px 30px',
+              }}
+            />
+          </div>
+
+          {/* Feature Card */}
+          <div className="bg-white/95 backdrop-blur-xl rounded-2xl p-10 max-w-[440px] w-full shadow-[0_20px_60px_-15px_rgba(0,30,100,0.15)] relative z-10 border border-white">
+            <div className="flex items-center gap-3.5 mb-6">
+              <Server className="h-8 w-8 text-[#0052cc]" />
+              <h2 className="text-2xl font-bold text-slate-800">EasyTech Core Console</h2>
+            </div>
+
+            <p className="text-[15px] text-slate-500 mb-10 leading-relaxed font-medium">
+              Trung tâm điều hành và quản lý dữ liệu toàn cục. Mọi thao tác tại đây đều được giám sát và lưu trữ lịch sử chặt chẽ (Audit Logging).
+            </p>
+
+            <div className="space-y-5">
+              {[
+                { icon: ShieldCheck, text: 'Bảo mật dữ liệu cấp độ cao' },
+                { icon: Activity, text: 'Giám sát hệ thống Real-time' },
+                { icon: Server, text: 'Quản lý tài nguyên & Master Data' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <item.icon className="h-5 w-5 text-[#0052cc] shrink-0 stroke-[2.5]" />
+                  <span className="text-[15px] text-slate-700 font-semibold">{item.text}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10 pt-6 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                System Status
+              </span>
+              <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-50 text-[#0052cc] text-[10px] font-bold border border-blue-100">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                ALL SYSTEMS NOMINAL
+              </span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="w-full bg-[#f4f7fb] py-5 px-8 md:px-16 flex flex-col md:flex-row items-center justify-between text-[12px] text-[#2c3e50] font-bold border-t border-slate-200 shrink-0">
+        <div>© 2024 EasyTech Core Systems. Restricted Access.</div>
+        <div className="flex items-center gap-8 mt-4 md:mt-0">
+          <a href="#" className="hover:text-[#0052cc] transition-colors">Security Policy</a>
+          <a href="#" className="hover:text-[#0052cc] transition-colors">Audit Logs</a>
+          <a href="#" className="hover:text-[#0052cc] transition-colors">System Status</a>
+        </div>
+      </footer>
     </div>
   );
 };

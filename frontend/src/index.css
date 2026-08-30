@@ -1,7 +1,25 @@
 /* ─── Google Fonts ──────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 @import "tailwindcss";
+
+@theme {
+  --color-primary-50: #f0f9fd;
+  --color-primary-100: #e0f2fa;
+  --color-primary-200: #b9e5f6;
+  --color-primary-300: #7dd0ef;
+  --color-primary-400: #62c3ea;
+  --color-primary-500: #47b1de;
+  --color-primary-600: #319bc5;
+  --color-primary-700: #227a9e;
+  --color-primary-800: #1c627f;
+  --color-primary-900: #184457;
+  --color-primary-950: #0f2b38;
+
+  --color-secondary: #10B981;
+  --color-brand-bg: #F8FAFC;
+  --color-sidebar-bg: #FFFFFF;
+}
 
 /* ─── Global Reset & Base ───────────────────────────────────────── */
 *, *::before, *::after {
@@ -13,11 +31,12 @@ html {
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #1e293b;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
   background-color: #f8fafc;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #334155;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -31,14 +50,38 @@ body {
 }
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 9999px;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-/* ─── Focus styles ──────────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
+/* ─── Custom Card & Utility ─────────────────────────────────────── */
+.premium-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.premium-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+  border-color: #CBD5E1;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 4px;
+}
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
