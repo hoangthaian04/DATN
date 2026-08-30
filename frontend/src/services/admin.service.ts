@@ -23,13 +23,16 @@ export const AdminService = {
 
   /** Duyệt doanh nghiệp (chuyển sang ACTIVE) */
   approveCompany: async (id: number): Promise<CompanySummary> => {
-    const res = await api.put<BaseResponse<CompanySummary>>(`/admin/companies/${id}/approve`);
+    const res = await api.patch<BaseResponse<CompanySummary>>(`/admin/companies/${id}/status`, {
+      status: 'ACTIVE',
+    });
     return res.data.data;
   },
 
   /** Từ chối doanh nghiệp (chuyển sang REJECTED kèm lý do) */
   rejectCompany: async (id: number, reason: string): Promise<CompanySummary> => {
-    const res = await api.put<BaseResponse<CompanySummary>>(`/admin/companies/${id}/reject`, {
+    const res = await api.patch<BaseResponse<CompanySummary>>(`/admin/companies/${id}/status`, {
+      status: 'REJECTED',
       reason,
     });
     return res.data.data;
@@ -37,7 +40,10 @@ export const AdminService = {
 
   /** Khóa doanh nghiệp (chuyển sang BLOCKED) */
   blockCompany: async (id: number): Promise<CompanySummary> => {
-    const res = await api.put<BaseResponse<CompanySummary>>(`/admin/companies/${id}/block`);
+    const res = await api.patch<BaseResponse<CompanySummary>>(`/admin/companies/${id}/status`, {
+      status: 'BLOCKED',
+      reason: 'Khóa bởi quản trị viên hệ thống',
+    });
     return res.data.data;
   },
 };

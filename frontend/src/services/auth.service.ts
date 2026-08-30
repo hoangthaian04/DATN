@@ -1,65 +1,76 @@
 import api from './api';
 import type { BaseResponse } from '@/types/api.types';
 import type {
-  CompanyDetail,
+  CompanyProfile,
   LoginRequest,
   LoginResponse,
   OnboardingRequest,
   RegisterRequest,
+  RegistrationResponse,
   User,
 } from '@/types/auth.types';
 
 export const AuthService = {
-  /** Đăng ký tài khoản HR mới */
-  register: async (data: RegisterRequest): Promise<LoginResponse> => {
-    const res = await api.post<BaseResponse<LoginResponse>>('/auth/register', data);
-    return res.data.data;
+  initializeCsrf: async (): Promise<void> => {
+    await api.get<BaseResponse<string>>('/auth/csrf');
   },
 
-  /** Đăng nhập HR */
+  register: async (data: RegisterRequest): Promise<RegistrationResponse> => {
+    const response = await api.post<BaseResponse<RegistrationResponse>>('/auth/register', data);
+    return response.data.data;
+  },
+
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    const res = await api.post<BaseResponse<LoginResponse>>('/auth/login', data);
-    return res.data.data;
+    const response = await api.post<BaseResponse<LoginResponse>>('/auth/login', data);
+    return response.data.data;
   },
 
-  /** Đăng nhập bằng Google ID Token */
-  googleLogin: async (data: { idToken: string }): Promise<LoginResponse> => {
-    const res = await api.post<BaseResponse<LoginResponse>>('/auth/google', data);
-    return res.data.data;
+  googleLogin: async (idToken: string): Promise<LoginResponse> => {
+    const response = await api.post<BaseResponse<LoginResponse>>('/auth/google', { idToken });
+    return response.data.data;
   },
 
-  /** Đăng nhập Quản trị viên (Admin) */
   adminLogin: async (data: LoginRequest): Promise<LoginResponse> => {
-    const res = await api.post<BaseResponse<LoginResponse>>('/admin/auth/login', data);
-    return res.data.data;
+    const response = await api.post<BaseResponse<LoginResponse>>('/admin/auth/login', data);
+    return response.data.data;
   },
 
-  /** Hoàn tất Onboarding công ty (chuyển trạng thái sang PENDING) */
-  onboarding: async (data: OnboardingRequest): Promise<CompanyDetail> => {
-    const res = await api.post<BaseResponse<CompanyDetail>>('/auth/onboarding', data);
-    return res.data.data;
-  },
-
-  /** Lấy thông tin user hiện tại */
   getMe: async (): Promise<User> => {
-    const res = await api.get<BaseResponse<User>>('/auth/me');
-    return res.data.data;
+    const response = await api.get<BaseResponse<User>>('/auth/me');
+    return response.data.data;
   },
 
-  /** Đăng xuất */
+  getCompanyProfile: async (): Promise<CompanyProfile> => {
+    const response = await api.get<BaseResponse<CompanyProfile>>('/company-profiles/me');
+    return response.data.data;
+  },
+
+  updateCompanyProfile: async (data: OnboardingRequest): Promise<CompanyProfile> => {
+    const response = await api.patch<BaseResponse<import('@/types/auth.types').CompanyDetail>>('/company-profiles/me', data);
+    if (!response.data.data.profile) throw new Error('Phản hồi hồ sơ công ty không hợp lệ');
+    return response.data.data.profile;
+  },
+
+  uploadCompanyLogo: async (file: File): Promise<CompanyProfile> => {
+    const body = new FormData();
+    body.append('file', file);
+    const response = await api.post<BaseResponse<import('@/types/auth.types').CompanyDetail>>('/company-profiles/me/logo', body, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    if (!response.data.data.profile) throw new Error('Phản hồi hồ sơ công ty không hợp lệ');
+    return response.data.data.profile;
+  },
+
+  completeOnboarding: async (skip = false): Promise<CompanyProfile> => {
+    const response = await api.patch<BaseResponse<import('@/types/auth.types').CompanyDetail>>(
+      '/company-profiles/me/onboarding',
+      { skip },
+    );
+    if (!response.data.data.profile) throw new Error('Phản hồi hồ sơ công ty không hợp lệ');
+    return response.data.data.profile;
+  },
+
   logout: async (): Promise<void> => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-  },
-
-  /** Lưu tokens vào localStorage */
-  saveTokens: (tokens: { accessToken: string; refreshToken: string }): void => {
-    localStorage.setItem('accessToken', tokens.accessToken);
-    localStorage.setItem('refreshToken', tokens.refreshToken);
-  },
-
-  /** Kiểm tra có token hay không */
-  hasToken: (): boolean => {
-    return !!localStorage.getItem('accessToken');
+    await api.post('/auth/logout');
   },
 };

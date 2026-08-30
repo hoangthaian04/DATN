@@ -30,6 +30,7 @@ import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminJobCategories } from '@/pages/admin/AdminJobCategories';
 import { AdminAuditLogs } from '@/pages/admin/AdminAuditLogs';
 import { AdminUsers } from '@/pages/admin/AdminUsers';
+import { AdminOverview } from '@/pages/admin/AdminOverview';
 
 // ─── Career Site Pages (Public) ───────────────────────────────────────────────
 import { CareerHomePage } from '@/pages/career/CareerHomePage';
@@ -47,14 +48,21 @@ export const router = createBrowserRouter([
   // ── Auth ──
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
-  { path: '/onboarding', element: <OnboardingPage /> },
+  {
+    path: '/onboarding',
+    element: (
+      <PrivateRoute roles={['HR', 'HR_ADMIN']}>
+        <OnboardingPage />
+      </PrivateRoute>
+    ),
+  },
   { path: '/pending', element: <PendingApprovalPage /> },
 
   // ── HR Dashboard (yêu cầu đăng nhập, role HR) ──
   {
     path: '/dashboard',
     element: (
-      <PrivateRoute role="HR">
+      <PrivateRoute roles={['HR', 'HR_ADMIN']} requireOnboarding>
         <DashboardLayout />
       </PrivateRoute>
     ),
@@ -82,8 +90,10 @@ export const router = createBrowserRouter([
       </PrivateRoute>
     ),
     children: [
-      { index: true, element: <AdminDashboardPage /> },
+      { index: true, element: <Navigate to="dashboard" replace /> },
+      { path: 'dashboard', element: <AdminOverview /> },
       { path: 'companies', element: <AdminDashboardPage /> },
+      { path: 'companies/pending', element: <AdminDashboardPage /> },
       { path: 'categories', element: <AdminJobCategories /> },
       { path: 'logs', element: <AdminAuditLogs /> },
       { path: 'users', element: <AdminUsers /> },
@@ -104,6 +114,15 @@ export const router = createBrowserRouter([
     ],
   },
   { path: '/company/:companySlug', element: <CompanyCareerSitePage /> },
+
+  {
+    path: '/403',
+    element: (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-center">
+        <div><h1 className="text-5xl font-black text-slate-900">403</h1><p className="mt-3 text-slate-500">Bạn không có quyền truy cập trang này.</p></div>
+      </div>
+    ),
+  },
 
   // ── Catch-all ──
   { path: '*', element: <Navigate to="/login" replace /> },

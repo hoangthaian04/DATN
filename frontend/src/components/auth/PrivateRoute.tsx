@@ -1,12 +1,14 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import type { UserRole } from '@/types/auth.types';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
   /** Nếu có, chỉ cho phép role này truy cập */
   role?: UserRole;
+  roles?: UserRole[];
+  requireOnboarding?: boolean;
   /** Redirect đến đây nếu chưa đăng nhập (mặc định: /login) */
   redirectTo?: string;
 }
@@ -18,6 +20,8 @@ interface PrivateRouteProps {
 export const PrivateRoute: React.FC<PrivateRouteProps> = ({
   children,
   role,
+  roles,
+  requireOnboarding = false,
   redirectTo = '/login',
 }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -39,8 +43,13 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  if (role && user?.role !== role) {
+  const allowedRoles = roles || (role ? [role] : undefined);
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
     return <Navigate to="/403" replace />;
+  }
+
+  if (requireOnboarding && user && user.role !== 'ADMIN' && !user.onboardingCompleted) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;

@@ -16,6 +16,7 @@ backend/build/
 backend/.mvn/wrapper/maven-wrapper.jar
 backend/*.jar
 backend/*.war
+backend/uploads/
 
 # Gradle cache & wrapper binary
 backend/.gradle/

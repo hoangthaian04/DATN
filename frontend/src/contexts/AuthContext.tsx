@@ -1,43 +1,19 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { AuthService } from '@/services/auth.service';
-import type {
-  LoginRequest,
-  OnboardingRequest,
-  RegisterRequest,
-  User,
-} from '@/types/auth.types';
-
-interface AuthContextValue {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (data: LoginRequest) => Promise<User>;
-  loginWithGoogle: (idToken: string) => Promise<User>;
-  adminLogin: (data: LoginRequest) => Promise<User>;
-  register: (data: RegisterRequest) => Promise<User>;
-  onboarding: (data: OnboardingRequest) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import type { LoginRequest, OnboardingRequest, RegisterRequest, RegistrationResponse, User } from '@/types/auth.types';
+import { AuthContext } from './auth-context-definition';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Khôi phục session khi mount
   useEffect(() => {
     const restoreSession = async () => {
-      if (!AuthService.hasToken()) {
-        setIsLoading(false);
-        return;
-      }
       try {
-        const me = await AuthService.getMe();
-        setUser(me);
+        await AuthService.initializeCsrf();
+        setUser(await AuthService.getMe());
       } catch {
-        await AuthService.logout();
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -46,73 +22,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = useCallback(async (data: LoginRequest): Promise<User> => {
-    const response = await AuthService.login(data);
-    AuthService.saveTokens(response);
-    setUser(response.user);
-    return response.user;
+    const { user: loggedInUser } = await AuthService.login(data);
+    setUser(loggedInUser);
+    return loggedInUser;
   }, []);
 
   const loginWithGoogle = useCallback(async (idToken: string): Promise<User> => {
-    const response = await AuthService.googleLogin({ idToken });
-    AuthService.saveTokens(response);
-    setUser(response.user);
-    return response.user;
+    const { user: loggedInUser } = await AuthService.googleLogin(idToken);
+    setUser(loggedInUser);
+    return loggedInUser;
   }, []);
 
   const adminLogin = useCallback(async (data: LoginRequest): Promise<User> => {
-    const response = await AuthService.adminLogin(data);
-    AuthService.saveTokens(response);
-    setUser(response.user);
-    return response.user;
+    const { user: loggedInUser } = await AuthService.adminLogin(data);
+    setUser(loggedInUser);
+    return loggedInUser;
   }, []);
 
-  const register = useCallback(async (data: RegisterRequest): Promise<User> => {
-    const response = await AuthService.register(data);
-    AuthService.saveTokens(response);
-    setUser(response.user);
-    return response.user;
-  }, []);
+  const register = useCallback(
+    (data: RegisterRequest): Promise<RegistrationResponse> => AuthService.register(data),
+    [],
+  );
 
-  const onboarding = useCallback(async (data: OnboardingRequest): Promise<void> => {
-    await AuthService.onboarding(data);
-    const me = await AuthService.getMe();
-    setUser(me);
+  const onboarding = useCallback(async (data: OnboardingRequest, skip = false): Promise<void> => {
+    if (!skip) {
+      await AuthService.updateCompanyProfile(data);
+    }
+    await AuthService.completeOnboarding(skip);
+    setUser(await AuthService.getMe());
   }, []);
 
   const logout = useCallback(async () => {
-    await AuthService.logout();
-    setUser(null);
+    try {
+      await AuthService.logout();
+    } finally {
+      setUser(null);
+    }
   }, []);
 
   const refreshUser = useCallback(async () => {
-    const me = await AuthService.getMe();
-    setUser(me);
+    setUser(await AuthService.getMe());
   }, []);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        login,
-        loginWithGoogle,
-        adminLogin,
-        register,
-        onboarding,
-        logout,
-        refreshUser,
-      }}
-    >
+    <AuthContext.Provider value={{
+      user,
+      isLoading,
+      isAuthenticated: Boolean(user),
+      login,
+      loginWithGoogle,
+      adminLogin,
+      register,
+      onboarding,
+      logout,
+      refreshUser,
+    }}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = (): AuthContextValue => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error('useAuth phải được dùng bên trong <AuthProvider>');
-  }
-  return ctx;
 };

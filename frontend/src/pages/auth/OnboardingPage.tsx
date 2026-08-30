@@ -1,8 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { PublicHeader } from '@/components/layout/PublicHeader';
-import { PublicFooter } from '@/components/layout/PublicFooter';
 import {
   AlertCircle,
   ArrowLeft,
@@ -10,393 +7,185 @@ import {
   Building2,
   Check,
   CheckCircle2,
-  Globe2,
   Loader2,
-  MapPin,
-  Phone,
-  Send,
+  Save,
   Sparkles,
   Upload,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/useAuth';
+import { AuthService } from '@/services/auth.service';
+import type { OnboardingRequest } from '@/types/auth.types';
+
+const inputClass = 'w-full rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-blue-600';
 
 export const OnboardingPage: React.FC = () => {
   const { user, onboarding } = useAuth();
   const navigate = useNavigate();
-
-  const [currentStep, setCurrentStep] = useState(1);
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string>();
+  const [form, setForm] = useState<OnboardingRequest>({ companyName: user?.companyName || '' });
 
-  // Form states
-  const [companyName, setCompanyName] = useState(user?.companyName || '');
-  const [services, setServices] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [address, setAddress] = useState('');
-  const [website, setWebsite] = useState('');
-  const [taxCode, setTaxCode] = useState('');
-  const slug = user?.companySlug || '';
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (user?.onboardingCompleted) {
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+    AuthService.getCompanyProfile()
+      .then((profile) => {
+        setLogoUrl(profile.logoUrl);
+        setForm((current) => ({
+          ...current,
+          businessType: profile.businessType,
+          industry: profile.industry,
+          companySize: profile.companySize,
+          description: profile.description,
+          benefits: profile.benefits,
+          logoUrl: profile.logoUrl,
+        }));
+      })
+      .catch(() => setError('Không thể tải thông tin công ty đã lưu.'));
+  }, [navigate, user?.onboardingCompleted]);
 
   const completeness = useMemo(() => {
-    let score = 15;
-    if (companyName.trim()) score += 20;
-    if (services.trim()) score += 20;
-    if (address.trim()) score += 15;
-    if (phoneNumber.trim()) score += 10;
-    if (website.trim()) score += 10;
-    if (slug.trim()) score += 10;
-    return Math.min(score, 100);
-  }, [address, companyName, phoneNumber, services, slug, website]);
+    const required = [form.description, form.industry, form.companySize, form.website, form.address, form.phone];
+    return Math.round((required.filter((value) => value?.trim()).length / required.length) * 100);
+  }, [form]);
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setLogoUrl(URL.createObjectURL(e.target.files[0]));
+  const update = (field: keyof OnboardingRequest, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const saveAndContinue = async (nextStep: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await AuthService.updateCompanyProfile(form);
+      setStep(nextStep);
+    } catch (requestError: unknown) {
+      setError((requestError as { customMessage?: string }).customMessage || 'Không thể lưu thông tin.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleComplete = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!companyName.trim() || !services.trim()) {
-      setErrorMessage('Vui lòng điền tên công ty và dịch vụ/mô tả hoạt động');
-      return;
-    }
-
+  const uploadLogo = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
     try {
       setLoading(true);
-      setErrorMessage(null);
+      setError(null);
+      const profile = await AuthService.uploadCompanyLogo(file);
+      setLogoUrl(profile.logoUrl);
+      update('logoUrl', profile.logoUrl || '');
+    } catch (requestError: unknown) {
+      setError((requestError as { customMessage?: string }).customMessage || 'Tải logo thất bại.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      await onboarding({
-        companyName,
-        taxCode: taxCode || undefined,
-        phone: phoneNumber || undefined,
-        website: website || undefined,
-        address: address || undefined,
-        description: services || undefined,
-        logoUrl: logoUrl || undefined,
-      });
-
-      navigate('/pending', { replace: true });
-    } catch (err: unknown) {
-      const msg = (err as { customMessage?: string })?.customMessage || 'Lưu thông tin thất bại. Vui lòng thử lại.';
-      setErrorMessage(msg);
+  const finish = async (skip = false) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await onboarding(form, skip);
+      navigate('/dashboard', { replace: true });
+    } catch (requestError: unknown) {
+      setError((requestError as { customMessage?: string }).customMessage || 'Không thể hoàn tất onboarding.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
-      <PublicHeader />
-
-      <main className="flex-1 max-w-7xl mx-auto w-full p-6 md:p-12">
-        <div className="mb-8 text-left">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[#0052cc] text-xs font-bold">
-            <Sparkles className="h-3.5 w-3.5" />
-            Lần đăng nhập đầu tiên
-          </span>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mt-4">
-            Thiết lập hồ sơ công ty trước khi vào HR Dashboard
-          </h1>
-          <p className="text-sm font-semibold text-slate-500 mt-2 max-w-3xl">
-            EasyTech cần thông tin doanh nghiệp để Admin duyệt, tạo Career Site riêng và gắn branding cho email/tin tuyển dụng.
-          </p>
+    <div className="min-h-screen bg-slate-50 p-6 font-sans md:p-12">
+      <main className="mx-auto max-w-6xl">
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
+              <Sparkles className="h-3.5 w-3.5" /> Lần đăng nhập đầu tiên
+            </span>
+            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900">Thiết lập hồ sơ công ty</h1>
+            <p className="mt-2 text-sm text-slate-500">Thông tin này được dùng cho trang tuyển dụng và nhận diện doanh nghiệp.</p>
+          </div>
+          <button type="button" disabled={loading} onClick={() => void finish(true)} className="rounded-xl px-4 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100">
+            Bỏ qua, thiết lập sau
+          </button>
         </div>
 
-        {errorMessage && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-700">
-            <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
-            <span>{errorMessage}</span>
+        {error && (
+          <div className="mb-6 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <AlertCircle className="h-5 w-5 shrink-0" /> {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start w-full">
-          {/* Stepper Sidebar */}
-          <aside className="lg:col-span-1 premium-card bg-white p-6 space-y-6 text-left">
-            <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest">
-              Luồng bắt buộc
-            </h3>
-            <div className="space-y-6 relative pl-2">
-              <div className="absolute top-1 bottom-1 left-[14px] w-0.5 bg-slate-200" />
-              {[
-                { step: 1, title: 'Thông tin công ty', desc: 'Tên, dịch vụ, logo' },
-                { step: 2, title: 'Liên hệ & Career Site', desc: 'Website, số điện thoại, slug' },
-                { step: 3, title: 'Xác nhận', desc: 'Gửi hồ sơ chờ duyệt' },
-              ].map((item) => (
-                <button
-                  key={item.step}
-                  type="button"
-                  onClick={() => setCurrentStep(item.step)}
-                  className="flex items-start gap-4 relative z-10 text-left w-full cursor-pointer"
-                >
-                  <span
-                    className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
-                      currentStep >= item.step
-                        ? 'bg-[#0052cc] text-white'
-                        : 'bg-slate-100 text-slate-400'
-                    }`}
-                  >
-                    {currentStep > item.step ? <Check className="h-4 w-4" /> : item.step}
+        <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
+          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            {[['Thông tin chung', 'Thương hiệu và lĩnh vực'], ['Liên hệ', 'Địa chỉ và website'], ['Xác nhận', 'Hoàn tất thiết lập']].map(([title, description], index) => {
+              const number = index + 1;
+              return (
+                <div key={title} className="mb-6 flex gap-3 last:mb-0">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${step >= number ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                    {step > number ? <Check className="h-4 w-4" /> : number}
                   </span>
-                  <span>
-                    <span className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      {item.title}
-                    </span>
-                    <span className="block text-[10px] font-semibold text-slate-400 uppercase mt-0.5">
-                      {item.desc}
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {/* Progress bar */}
-            <div className="pt-4 border-t border-slate-100">
-              <div className="flex items-center justify-between text-xs font-bold mb-1.5">
-                <span className="text-slate-600">Độ hoàn thiện</span>
-                <span className="text-[#0052cc]">{completeness}%</span>
-              </div>
-              <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#0052cc] transition-all duration-300 rounded-full"
-                  style={{ width: `${completeness}%` }}
-                />
-              </div>
+                  <div><p className="text-sm font-bold text-slate-800">{title}</p><p className="text-xs text-slate-400">{description}</p></div>
+                </div>
+              );
+            })}
+            <div className="mt-6 border-t border-slate-100 pt-5">
+              <div className="mb-2 flex justify-between text-xs font-bold"><span>Độ hoàn thiện</span><span className="text-blue-600">{completeness}%</span></div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full bg-blue-600 transition-all" style={{ width: `${completeness}%` }} /></div>
             </div>
           </aside>
 
-          {/* Center Form Section */}
-          <section className="lg:col-span-3 premium-card bg-white p-8 space-y-6">
-            <div className="pb-4 border-b border-slate-100 flex items-center justify-between">
-              <div className="text-left">
-                <h2 className="text-lg font-bold text-slate-800 tracking-tight">
-                  {currentStep === 1 && '1. Thông tin doanh nghiệp'}
-                  {currentStep === 2 && '2. Liên hệ & Cấu hình Career Site'}
-                  {currentStep === 3 && '3. Xác nhận & Gửi hồ sơ'}
-                </h2>
-                <p className="text-xs text-slate-400 font-semibold mt-0.5">
-                  Các trường này sẽ được dùng cho Admin Approval và Career Site riêng.
-                </p>
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+            {step === 1 && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-slate-50">
+                    {logoUrl ? <img src={logoUrl} alt="Logo công ty" className="h-full w-full object-cover" /> : <Building2 className="h-8 w-8 text-slate-300" />}
+                  </div>
+                  <label className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">
+                    <span className="flex items-center gap-2"><Upload className="h-4 w-4" /> Tải logo</span>
+                    <input className="hidden" type="file" accept="image/png,image/jpeg,image/webp" onChange={uploadLogo} />
+                  </label>
+                </div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">Tên công ty<input className={`${inputClass} mt-2`} value={form.companyName || ''} onChange={(e) => update('companyName', e.target.value)} /></label>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-600">Loại hình doanh nghiệp<select className={`${inputClass} mt-2`} value={form.businessType || ''} onChange={(e) => update('businessType', e.target.value)}><option value="">Chọn loại hình</option><option>TNHH</option><option>Cổ phần</option><option>FDI</option><option>Khác</option></select></label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-600">Lĩnh vực *<input className={`${inputClass} mt-2`} value={form.industry || ''} onChange={(e) => update('industry', e.target.value)} /></label>
+                </div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">Quy mô nhân sự *<select className={`${inputClass} mt-2`} value={form.companySize || ''} onChange={(e) => update('companySize', e.target.value)}><option value="">Chọn quy mô</option><option>1-10</option><option>11-50</option><option>51-200</option><option>201-500</option><option>Trên 500</option></select></label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">Giới thiệu công ty *<textarea rows={4} className={`${inputClass} mt-2 resize-none`} value={form.description || ''} onChange={(e) => update('description', e.target.value)} /></label>
+                <div className="flex justify-end"><button disabled={loading} onClick={() => void saveAndContinue(2)} className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white"><Save className="h-4 w-4" /> Lưu và tiếp tục <ArrowRight className="h-4 w-4" /></button></div>
               </div>
-              <Building2 className="h-6 w-6 text-[#0052cc]" />
-            </div>
+            )}
 
-            <form onSubmit={handleComplete} className="space-y-6 text-left">
-              {currentStep === 1 && (
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Logo công ty
-                    </label>
-                    <div className="flex items-center gap-6">
-                      {logoUrl ? (
-                        <img
-                          src={logoUrl}
-                          alt="Preview"
-                          className="h-16 w-16 rounded-xl object-cover border border-slate-200"
-                        />
-                      ) : (
-                        <div className="h-16 w-16 rounded-xl bg-slate-50 border border-dashed border-slate-300 flex items-center justify-center text-slate-400">
-                          <Building2 className="h-6 w-6" />
-                        </div>
-                      )}
-                      <label className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-600 cursor-pointer">
-                        <span className="flex items-center gap-1.5">
-                          <Upload className="h-4 w-4" />
-                          Tải ảnh lên
-                        </span>
-                        <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Tên công ty *
-                    </label>
-                    <input
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="VD: TechA Solutions JSC"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Mã số thuế (MST)
-                    </label>
-                    <input
-                      value={taxCode}
-                      onChange={(e) => setTaxCode(e.target.value)}
-                      placeholder="VD: 0101234567"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Dịch vụ cung cấp / Mô tả hoạt động *
-                    </label>
-                    <textarea
-                      value={services}
-                      onChange={(e) => setServices(e.target.value)}
-                      rows={3}
-                      placeholder="VD: Tuyển dụng IT, outsourcing, sản phẩm AI, phát triển nền tảng Cloud..."
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800 resize-none"
-                      required
-                    />
-                  </div>
-
-                  <div className="flex justify-end pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(2)}
-                      className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl bg-[#0052cc] hover:bg-[#0047b3] text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer"
-                    >
-                      Tiếp tục
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
-                  </div>
+            {step === 2 && (
+              <div className="space-y-5">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-600">Số điện thoại *<input className={`${inputClass} mt-2`} value={form.phone || ''} onChange={(e) => update('phone', e.target.value)} /></label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-600">Website *<input className={`${inputClass} mt-2`} value={form.website || ''} onChange={(e) => update('website', e.target.value)} placeholder="https://company.vn" /></label>
                 </div>
-              )}
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">Địa chỉ trụ sở *<input className={`${inputClass} mt-2`} value={form.address || ''} onChange={(e) => update('address', e.target.value)} /></label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">Phúc lợi nổi bật<textarea rows={4} className={`${inputClass} mt-2 resize-none`} value={form.benefits || ''} onChange={(e) => update('benefits', e.target.value)} /></label>
+                <div className="flex justify-between"><button onClick={() => setStep(1)} className="flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600"><ArrowLeft className="h-4 w-4" /> Quay lại</button><button disabled={loading} onClick={() => void saveAndContinue(3)} className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white">Lưu và tiếp tục <ArrowRight className="h-4 w-4" /></button></div>
+              </div>
+            )}
 
-              {currentStep === 2 && (
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Địa chỉ trụ sở
-                    </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-slate-400" />
-                      <input
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        placeholder="Quận 1, TP. Hồ Chí Minh..."
-                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        Số điện thoại hotline
-                      </label>
-                      <div className="relative">
-                        <Phone className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-slate-400" />
-                        <input
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                          placeholder="09xx xxx xxx"
-                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        Website công ty
-                      </label>
-                      <div className="relative">
-                        <Globe2 className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-slate-400" />
-                        <input
-                          value={website}
-                          onChange={(e) => setWebsite(e.target.value)}
-                          placeholder="www.company.vn"
-                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(1)}
-                      className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Quay lại
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(3)}
-                      className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl bg-[#0052cc] hover:bg-[#0047b3] text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer"
-                    >
-                      Tiếp tục
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 3 && (
-                <div className="space-y-6">
-                  <div className="rounded-2xl bg-blue-50/70 border border-blue-100 p-6 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-6 w-6 text-[#0052cc]" />
-                      <h4 className="text-base font-bold text-slate-900">
-                        Xác nhận thông tin doanh nghiệp
-                      </h4>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700">
-                      <div>
-                        <span className="font-bold text-slate-500 block">TÊN DOANH NGHIỆP:</span>
-                        <span className="font-semibold text-sm">{companyName}</span>
-                      </div>
-                      <div>
-                        <span className="font-bold text-slate-500 block">MÃ SỐ THUẾ:</span>
-                        <span className="font-semibold text-sm">{taxCode || 'Chưa cập nhật'}</span>
-                      </div>
-                      <div>
-                        <span className="font-bold text-slate-500 block">ĐỊA CHỈ:</span>
-                        <span className="font-semibold">{address || 'Chưa cập nhật'}</span>
-                      </div>
-                      <div>
-                        <span className="font-bold text-slate-500 block">HOTLINE / WEBSITE:</span>
-                        <span className="font-semibold">{phoneNumber || website || 'Chưa cập nhật'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    Sau khi bấm <strong>"Gửi hồ sơ chờ duyệt"</strong>, hồ sơ của bạn sẽ chuyển sang trạng thái{' '}
-                    <span className="text-amber-600 font-bold">Chờ duyệt (PENDING)</span>. Quản trị viên EasyTech sẽ kiểm duyệt trong vòng 24h.
-                  </p>
-
-                  <div className="flex items-center justify-between pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(2)}
-                      className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Quay lại
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-[#0052cc] hover:bg-[#0047b3] text-white text-sm font-bold shadow-lg shadow-blue-500/25 cursor-pointer disabled:opacity-60"
-                    >
-                      {loading ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4" />
-                          <span>Gửi hồ sơ chờ duyệt</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </form>
+            {step === 3 && (
+              <div className="space-y-6 text-center">
+                <CheckCircle2 className="mx-auto h-16 w-16 text-emerald-500" />
+                <div><h2 className="text-2xl font-extrabold text-slate-900">Sẵn sàng sử dụng EasyTech HRM</h2><p className="mt-2 text-sm text-slate-500">Bạn có thể chỉnh sửa các thông tin này trong phần cài đặt công ty.</p></div>
+                <div className="rounded-2xl bg-slate-50 p-5 text-left text-sm text-slate-600"><p><strong>Công ty:</strong> {form.companyName}</p><p className="mt-2"><strong>Lĩnh vực:</strong> {form.industry || 'Chưa cập nhật'}</p><p className="mt-2"><strong>Website:</strong> {form.website || 'Chưa cập nhật'}</p></div>
+                <div className="flex justify-between"><button onClick={() => setStep(2)} className="flex items-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600"><ArrowLeft className="h-4 w-4" /> Quay lại</button><button disabled={loading} onClick={() => void finish(false)} className="flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3 text-sm font-bold text-white">{loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />} Hoàn tất</button></div>
+              </div>
+            )}
           </section>
         </div>
       </main>
-
-      <PublicFooter />
     </div>
   );
 };

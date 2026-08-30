@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { AdminService } from '@/services/admin.service';
 import type { CompanyDetail, CompanyStatus, CompanySummary } from '@/types/auth.types';
 import {
@@ -15,8 +15,11 @@ import {
 export const AdminDashboardPage: React.FC = () => {
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
   const [total, setTotal] = useState(0);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>(
+    window.location.pathname.endsWith('/pending') ? 'PENDING' : 'all',
+  );
   const [search, setSearch] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   // Drawer & Modal state
@@ -27,18 +30,18 @@ export const AdminDashboardPage: React.FC = () => {
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const showToast = (type: 'success' | 'error', text: string) => {
+  const showToast = useCallback((type: 'success' | 'error', text: string) => {
     setToastMessage({ type, text });
     setTimeout(() => setToastMessage(null), 4000);
-  };
+  }, []);
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
       setIsLoading(true);
       const statusParam = filterStatus === 'all' ? undefined : (filterStatus as CompanyStatus);
       const res = await AdminService.getCompanies({
         status: statusParam,
-        searchText: search || undefined,
+        searchText: submittedSearch || undefined,
         limit: 50,
       });
       setCompanies(res.data);
@@ -48,15 +51,16 @@ export const AdminDashboardPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filterStatus, showToast, submittedSearch]);
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- remote data must load when filters change
     void fetchCompanies();
-  }, [filterStatus]);
+  }, [fetchCompanies]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    void fetchCompanies();
+    setSubmittedSearch(search);
   };
 
   const handleViewDetail = async (id: number) => {
@@ -364,6 +368,16 @@ export const AdminDashboardPage: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {detailTab === 'company' && (
                 <div className="space-y-4 text-xs">
+                  {selectedCompany.duplicateWarnings && selectedCompany.duplicateWarnings.length > 0 && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="font-extrabold uppercase tracking-wider text-amber-800">
+                        Cảnh báo hồ sơ có thể trùng lặp
+                      </p>
+                      <ul className="mt-2 list-disc space-y-1 pl-5 font-semibold text-amber-700">
+                        {selectedCompany.duplicateWarnings.map((warning) => <li key={warning}>{warning}</li>)}
+                      </ul>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 bg-slate-50 rounded-xl">
                       <span className="font-bold text-slate-500 block mb-1">MÃ SỐ THUẾ</span>

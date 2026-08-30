@@ -1,6 +1,6 @@
-export type UserRole = 'HR' | 'ADMIN';
-
+export type UserRole = 'HR' | 'HR_ADMIN' | 'ADMIN';
 export type CompanyStatus = 'PENDING' | 'ACTIVE' | 'REJECTED' | 'BLOCKED';
+export type UserStatus = 'PENDING' | 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
 
 export interface User {
   id: number;
@@ -8,31 +8,22 @@ export interface User {
   fullName: string;
   avatarUrl?: string;
   role: UserRole;
-  status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
+  status: UserStatus;
   companyId?: number;
   companyName?: string;
   companySlug?: string;
   companyStatus?: CompanyStatus;
+  onboardingCompleted?: boolean;
+  profileCompleted?: boolean;
   createdAt: string;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
+export interface LoginRequest { email: string; password: string; }
+export interface GoogleLoginRequest { idToken: string; }
+
+export interface LoginResponse {
   tokenType: string;
   expiresIn: number;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface GoogleLoginRequest {
-  idToken: string;
-}
-
-export interface LoginResponse extends AuthTokens {
   user: User;
 }
 
@@ -41,11 +32,22 @@ export interface RegisterRequest {
   password: string;
   fullName: string;
   companyName: string;
+  taxCode: string;
   phone?: string;
+  businessType?: string;
+  industry?: string;
+  companySize?: string;
+  address?: string;
+}
+
+export interface RegistrationResponse {
+  email: string;
+  companyName: string;
+  companyStatus: CompanyStatus;
 }
 
 export interface OnboardingRequest {
-  companyName: string;
+  companyName?: string;
   taxCode?: string;
   phone?: string;
   email?: string;
@@ -56,6 +58,9 @@ export interface OnboardingRequest {
   primaryColor?: string;
   description?: string;
   benefits?: string;
+  businessType?: string;
+  industry?: string;
+  companySize?: string;
 }
 
 export interface CompanyProfile {
@@ -66,6 +71,11 @@ export interface CompanyProfile {
   description?: string;
   benefits?: string;
   socialLinks?: string;
+  businessType?: string;
+  industry?: string;
+  companySize?: string;
+  onboardingCompleted: boolean;
+  profileCompleted: boolean;
 }
 
 export interface CareerSiteSettings {
@@ -102,6 +112,7 @@ export interface CompanySummary {
 export interface CompanyDetail extends CompanySummary {
   profile?: CompanyProfile;
   careerSite?: CareerSiteSettings;
+  duplicateWarnings?: string[];
 }
 
 export interface CompanyFilterParams {

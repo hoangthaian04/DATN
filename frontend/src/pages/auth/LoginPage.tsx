@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 import {
   AlertCircle,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
-  const { login, register, loginWithGoogle } = useAuth();
+  const { login, register, loginWithGoogle, user: sessionUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -50,6 +50,15 @@ export const LoginPage: React.FC = () => {
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
 
+  useEffect(() => {
+    if (isLoading || !sessionUser) return;
+    if (sessionUser.role === 'ADMIN') {
+      navigate('/admin/dashboard', { replace: true });
+      return;
+    }
+    navigate(sessionUser.onboardingCompleted ? '/dashboard' : '/onboarding', { replace: true });
+  }, [isLoading, navigate, sessionUser]);
+
   // Xử lý đăng nhập
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,8 +72,8 @@ export const LoginPage: React.FC = () => {
       setErrorMessage(null);
       const user = await login({ email, password });
 
-      if (user.companyStatus === 'PENDING') {
-        navigate('/pending', { replace: true });
+      if (!user.onboardingCompleted) {
+        navigate('/onboarding', { replace: true });
       } else if (user.companyStatus === 'REJECTED') {
         setErrorMessage('Hồ sơ doanh nghiệp của bạn đã bị từ chối. Vui lòng liên hệ hỗ trợ.');
       } else if (user.companyStatus === 'BLOCKED') {
@@ -88,8 +97,8 @@ export const LoginPage: React.FC = () => {
       setErrorMessage('Vui lòng điền đầy đủ các thông tin bắt buộc (*)');
       return;
     }
-    if (regPassword.length < 6) {
-      setErrorMessage('Mật khẩu phải có ít nhất 6 ký tự');
+    if (regPassword.length < 8 || !/[A-Z]/.test(regPassword) || !/\d/.test(regPassword)) {
+      setErrorMessage('Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa và chữ số');
       return;
     }
     setErrorMessage(null);
@@ -99,7 +108,7 @@ export const LoginPage: React.FC = () => {
   // Hoàn tất đăng ký
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyName) {
+    if (!companyName || !taxId) {
       setErrorMessage('Vui lòng nhập tên công ty pháp lý');
       return;
     }
@@ -107,14 +116,19 @@ export const LoginPage: React.FC = () => {
     try {
       setLoading(true);
       setErrorMessage(null);
-      await register({
+      const registration = await register({
         fullName,
         email: regEmail,
         password: regPassword,
         companyName,
+        taxCode: taxId,
         phone,
+        businessType: businessType || undefined,
+        industry: industry || undefined,
+        companySize: companySize || undefined,
+        address: [address, city].filter(Boolean).join(', ') || undefined,
       });
-      navigate('/onboarding', { replace: true });
+      navigate('/pending', { replace: true, state: registration });
     } catch (err: unknown) {
       const msg = (err as { customMessage?: string })?.customMessage || 'Đăng ký tài khoản thất bại. Vui lòng thử lại.';
       setErrorMessage(msg);
@@ -129,8 +143,8 @@ export const LoginPage: React.FC = () => {
       setLoading(true);
       setErrorMessage(null);
       const user = await loginWithGoogle(idToken);
-      if (user.companyStatus === 'PENDING') {
-        navigate('/pending', { replace: true });
+      if (!user.onboardingCompleted) {
+        navigate('/onboarding', { replace: true });
       } else {
         const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
         navigate(from, { replace: true });
@@ -402,13 +416,14 @@ export const LoginPage: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className={labelClassName}>Mã số thuế (MST)</label>
+                        <label className={labelClassName}>Mã số thuế (MST) *</label>
                         <input
                           type="text"
                           value={taxId}
                           onChange={(e) => setTaxId(e.target.value)}
                           placeholder="0101xxxxxx"
                           className={inputClassName}
+                          required
                         />
                       </div>
                       <div>
@@ -503,18 +518,9 @@ export const LoginPage: React.FC = () => {
                   </form>
                 )}
 
-                <div className="flex items-center gap-4 my-6">
-                  <div className="flex-1 h-[1px] bg-slate-200" />
-                  <span className="text-xs text-slate-400 font-medium px-2">hoặc</span>
-                  <div className="flex-1 h-[1px] bg-slate-200" />
-                </div>
-
-                <GoogleLoginButton
-                  onSuccess={handleGoogleSuccess}
-                  isLoading={loading}
-                  text="Đăng ký với Google"
-                  mode="register"
-                />
+                <p className="my-6 text-center text-xs font-semibold text-slate-500">
+                  Sau khi gửi đăng ký, tài khoản sẽ chờ quản trị viên phê duyệt.
+                </p>
               </div>
             )}
 

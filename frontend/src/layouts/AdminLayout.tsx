@@ -1,9 +1,10 @@
 import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import {
   Building2,
   LogOut,
+  LayoutDashboard,
   ScrollText,
   ShieldAlert,
   Tags,
@@ -21,7 +22,8 @@ export const AdminLayout: React.FC = () => {
   };
 
   const adminNavItems = [
-    { id: 'companies', label: 'Quản lý Doanh nghiệp', icon: Building2, path: '/admin' },
+    { id: 'overview', label: 'Tổng quan', icon: LayoutDashboard, path: '/admin/dashboard' },
+    { id: 'companies', label: 'Quản lý Doanh nghiệp', icon: Building2, path: '/admin/companies' },
     { id: 'categories', label: 'Danh mục (Job)', icon: Tags, path: '/admin/categories' },
     { id: 'logs', label: 'Audit Logs', icon: ScrollText, path: '/admin/logs' },
     { id: 'users', label: 'Tài khoản Admin', icon: Users, path: '/admin/users' },
@@ -70,9 +72,8 @@ export const AdminLayout: React.FC = () => {
           <nav className="space-y-1.5">
             {adminNavItems.map((item) => {
               const Icon = item.icon;
-              const active = item.path === '/admin'
-                ? location.pathname === '/admin' || location.pathname === '/admin/'
-                : location.pathname.startsWith(item.path);
+              const active = location.pathname === item.path
+                || (item.id === 'companies' && location.pathname.startsWith('/admin/companies/'));
 
               return (
                 <button
