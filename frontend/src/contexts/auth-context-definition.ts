@@ -17,7 +17,7 @@ export interface AuthContextValue {
   register: (data: RegisterRequest) => Promise<RegistrationResponse>;
   onboarding: (data: OnboardingRequest, skip?: boolean) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<User>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

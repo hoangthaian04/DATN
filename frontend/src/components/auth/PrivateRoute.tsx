@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/useAuth';
 import type { UserRole } from '@/types/auth.types';
+import { getPostLoginPath, isHrWorkspaceAllowed } from '@/utils/authRouting';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -45,7 +46,20 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({
 
   const allowedRoles = roles || (role ? [role] : undefined);
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    return <Navigate to={user.role === 'ADMIN' ? '/admin/dashboard' : getPostLoginPath(user)} replace />;
+  }
+
+  if (user && (user.status === 'INACTIVE' || user.status === 'BLOCKED')) {
     return <Navigate to="/403" replace />;
+  }
+
+  if (
+    user
+    && user.role !== 'ADMIN'
+    && (location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/onboarding'))
+    && !isHrWorkspaceAllowed(user)
+  ) {
+    return <Navigate to={getPostLoginPath(user)} replace />;
   }
 
   if (requireOnboarding && user && user.role !== 'ADMIN' && !user.onboardingCompleted) {

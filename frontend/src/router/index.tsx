@@ -11,6 +11,7 @@ import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
 import { OnboardingPage } from '@/pages/auth/OnboardingPage';
 import { PendingApprovalPage } from '@/pages/auth/PendingApprovalPage';
+import { RejectedRegistrationPage } from '@/pages/auth/RejectedRegistrationPage';
 
 // ─── HR Dashboard Pages ───────────────────────────────────────────────────────
 import { DashboardPage } from '@/pages/hr/DashboardPage';
@@ -57,6 +58,14 @@ export const router = createBrowserRouter([
     ),
   },
   { path: '/pending', element: <PendingApprovalPage /> },
+  {
+    path: '/registration/rejected',
+    element: (
+      <PrivateRoute roles={['HR', 'HR_ADMIN']}>
+        <RejectedRegistrationPage />
+      </PrivateRoute>
+    ),
+  },
 
   // ── HR Dashboard (yêu cầu đăng nhập, role HR) ──
   {
