@@ -42,17 +42,4 @@ public class RegisterRequestDTO {
     @Size(max = 100, message = "Mã số thuế không quá 100 ký tự")
     private String taxCode;
 
-    @Size(max = 50, message = "Số điện thoại không quá 50 ký tự")
-    private String phone;
-
-    @Size(max = 100, message = "Loại hình doanh nghiệp không quá 100 ký tự")
-    private String businessType;
-
-    @Size(max = 150, message = "Lĩnh vực hoạt động không quá 150 ký tự")
-    private String industry;
-
-    @Size(max = 50, message = "Quy mô doanh nghiệp không quá 50 ký tự")
-    private String companySize;
-
-    private String address;
 }

@@ -33,11 +33,6 @@ export interface RegisterRequest {
   fullName: string;
   companyName: string;
   taxCode: string;
-  phone?: string;
-  businessType?: string;
-  industry?: string;
-  companySize?: string;
-  address?: string;
 }
 
 export interface RegistrationResponse {
@@ -65,6 +60,12 @@ export interface OnboardingRequest {
 
 export interface CompanyProfile {
   id: number;
+  companyName?: string;
+  taxCode?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  address?: string;
   logoUrl?: string;
   bannerUrl?: string;
   primaryColor?: string;
@@ -121,4 +122,10 @@ export interface CompanyFilterParams {
   page?: number;
   limit?: number;
   orderBy?: string;
+}
+
+export interface CompanyRegistrationUpdateRequest {
+  fullName?: string;
+  companyName?: string;
+  taxCode?: string;
 }
