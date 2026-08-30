@@ -1,6 +1,7 @@
 import axios from 'axios';
+import type { BaseResponse } from '@/types/api.types';
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
+const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -22,7 +23,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ─── Response interceptor: xử lý 401 → tự động refresh token ─────────────────
+// ─── Response interceptor: xử lý 401 & refresh token ─────────────────────────
 let isRefreshing = false;
 let failedQueue: { resolve: (token: string) => void; reject: (err: unknown) => void }[] = [];
 
@@ -35,14 +36,20 @@ const processQueue = (error: unknown, token: string | null) => {
 };
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Trả về response bình thường
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
+    // Bắt mã lỗi từ BaseResponse nếu có
+    const errorMessage = error.response?.data?.message || error.message || 'Đã có lỗi xảy ra';
+    error.customMessage = errorMessage;
+
     // Bỏ qua nếu đây là request refresh token hoặc đã retry
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/login')) {
       if (isRefreshing) {
-        // Xếp hàng các request đang chờ
         return new Promise((resolve, reject) => {
           failedQueue.push({
             resolve: (token) => {
@@ -61,12 +68,15 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) throw new Error('Không có refresh token');
 
-        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
-        const newAccessToken: string = data.accessToken;
+        const { data } = await axios.post<BaseResponse<{ accessToken: string; refreshToken?: string }>>(
+          `${BASE_URL}/auth/refresh`,
+          { refreshToken }
+        );
+        const newAccessToken = data.data.accessToken;
 
         localStorage.setItem('accessToken', newAccessToken);
-        if (data.refreshToken) {
-          localStorage.setItem('refreshToken', data.refreshToken);
+        if (data.data.refreshToken) {
+          localStorage.setItem('refreshToken', data.data.refreshToken);
         }
 
         processQueue(null, newAccessToken);
@@ -74,7 +84,6 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        // Refresh thất bại → đăng xuất
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         window.location.href = '/login';

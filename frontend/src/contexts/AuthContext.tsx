@@ -1,13 +1,20 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { AuthService } from '@/services/auth.service';
-import type { User } from '@/types/auth.types';
+import type {
+  LoginRequest,
+  OnboardingRequest,
+  RegisterRequest,
+  User,
+} from '@/types/auth.types';
 
 interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (idToken: string) => Promise<void>;
+  login: (data: LoginRequest) => Promise<User>;
+  adminLogin: (data: LoginRequest) => Promise<User>;
+  register: (data: RegisterRequest) => Promise<User>;
+  onboarding: (data: OnboardingRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -16,7 +23,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Bắt đầu true để verify token
+  const [isLoading, setIsLoading] = useState(true);
 
   // Khôi phục session khi mount
   useEffect(() => {
@@ -29,7 +36,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const me = await AuthService.getMe();
         setUser(me);
       } catch {
-        // Token hết hạn hoặc không hợp lệ → xóa
         await AuthService.logout();
       } finally {
         setIsLoading(false);
@@ -38,16 +44,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     void restoreSession();
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const response = await AuthService.login({ email, password });
+  const login = useCallback(async (data: LoginRequest): Promise<User> => {
+    const response = await AuthService.login(data);
     AuthService.saveTokens(response);
     setUser(response.user);
+    return response.user;
   }, []);
 
-  const loginWithGoogle = useCallback(async (idToken: string) => {
-    const response = await AuthService.loginWithGoogle(idToken);
+  const adminLogin = useCallback(async (data: LoginRequest): Promise<User> => {
+    const response = await AuthService.adminLogin(data);
     AuthService.saveTokens(response);
     setUser(response.user);
+    return response.user;
+  }, []);
+
+  const register = useCallback(async (data: RegisterRequest): Promise<User> => {
+    const response = await AuthService.register(data);
+    AuthService.saveTokens(response);
+    setUser(response.user);
+    return response.user;
+  }, []);
+
+  const onboarding = useCallback(async (data: OnboardingRequest): Promise<void> => {
+    await AuthService.onboarding(data);
+    const me = await AuthService.getMe();
+    setUser(me);
   }, []);
 
   const logout = useCallback(async () => {
@@ -61,13 +82,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAuthenticated: !!user, login, loginWithGoogle, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        login,
+        adminLogin,
+        register,
+        onboarding,
+        logout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-/** Hook để sử dụng auth context trong bất kỳ component nào */
 export const useAuth = (): AuthContextValue => {
   const ctx = useContext(AuthContext);
   if (!ctx) {
