@@ -1,0 +1,18 @@
+# Frontend build output (sẽ được build bên trong container)
+node_modules/
+dist/
+.cache/
+
+# IDE & OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Env files
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*

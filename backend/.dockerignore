@@ -1,0 +1,25 @@
+# Backend build artifacts
+target/
+*.jar
+*.war
+*.class
+
+# IDE
+.idea/
+*.iml
+.gradle/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Gradle cache
+.gradle/
+
+# Logs
+*.log
+logs/
+
+# Test reports
+test-results/
