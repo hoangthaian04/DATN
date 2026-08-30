@@ -2,7 +2,6 @@ package com.easytech.eazyhire.security;
 
 import com.easytech.eazyhire.core.AuthorizedUser;
 import com.easytech.eazyhire.models.entities.UserEntity;
-import com.easytech.eazyhire.models.enums.CompanyStatus;
 import com.easytech.eazyhire.models.enums.UserRole;
 import com.easytech.eazyhire.models.enums.UserStatus;
 import com.easytech.eazyhire.services.UserService;
@@ -89,13 +88,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isAccountActive(UserEntity user) {
-        if (user.getStatus() != UserStatus.ACTIVE) {
+        if (user.getStatus() == UserStatus.INACTIVE || user.getStatus() == UserStatus.BLOCKED) {
             return false;
         }
         if (user.getRole() == UserRole.ADMIN) {
-            return true;
+            return user.getStatus() == UserStatus.ACTIVE;
         }
-        return user.getCompany() != null && user.getCompany().getStatus() == CompanyStatus.ACTIVE;
+        return user.getCompany() != null
+                && (user.getStatus() == UserStatus.ACTIVE || user.getStatus() == UserStatus.PENDING);
     }
 
     private void authenticate(AuthorizedUser authorizedUser) {

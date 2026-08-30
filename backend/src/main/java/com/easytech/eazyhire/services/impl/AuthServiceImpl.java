@@ -75,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
         if (user.getRole() != UserRole.HR && user.getRole() != UserRole.HR_ADMIN) {
             throw new CustomException(403, "Vui lòng sử dụng trang đăng nhập quản trị viên");
         }
-        validateHrAccount(user);
+        validateHrAuthenticationState(user);
         updateLastLogin(user);
         return buildLoginResponse(user);
     }
@@ -104,7 +104,7 @@ public class AuthServiceImpl implements AuthService {
         if (user.getRole() == UserRole.ADMIN) {
             throw new CustomException(403, "Tài khoản Admin không hỗ trợ đăng nhập Google");
         }
-        validateHrAccount(user);
+        validateHrAuthenticationState(user);
         if (user.getGoogleId() == null) user.setGoogleId(identity.googleId());
         if (user.getAvatarUrl() == null) user.setAvatarUrl(identity.picture());
         updateLastLogin(user);
@@ -116,7 +116,7 @@ public class AuthServiceImpl implements AuthService {
     public UserResponseDTO getMe(Long userId) {
         UserEntity user = userService.getByIdWithCompany(userId);
         if (user.getRole() == UserRole.ADMIN) validateUserStatus(user);
-        else validateHrAccount(user);
+        else validateHrAuthenticationState(user);
         return mapToUserResponseDTO(user);
     }
 
@@ -128,7 +128,7 @@ public class AuthServiceImpl implements AuthService {
         }
         UserEntity user = userService.getByIdWithCompany(tokenProvider.getUserIdFromToken(refreshToken));
         if (user.getRole() == UserRole.ADMIN) validateUserStatus(user);
-        else validateHrAccount(user);
+        else validateHrAuthenticationState(user);
         return buildLoginResponse(user);
     }
 
@@ -139,20 +139,19 @@ public class AuthServiceImpl implements AuthService {
         return user;
     }
 
-    private void validateHrAccount(UserEntity user) {
+    private void validateHrAuthenticationState(UserEntity user) {
         CompanyEntity company = user.getCompany();
         if (company == null) throw new CustomException(403, "Tài khoản chưa liên kết với doanh nghiệp");
-        if (company.getStatus() == CompanyStatus.PENDING || user.getStatus() == UserStatus.PENDING) {
-            throw new CustomException(403,
-                    "Tài khoản của bạn đang chờ phê duyệt. Vui lòng kiểm tra email để biết thêm thông tin.");
-        }
-        if (company.getStatus() == CompanyStatus.REJECTED) {
-            throw new CustomException(403, "Hồ sơ doanh nghiệp đã bị từ chối: " + company.getRejectedReason());
-        }
         if (company.getStatus() == CompanyStatus.BLOCKED) {
             throw new CustomException(403, "Tài khoản doanh nghiệp đã bị khóa. Vui lòng liên hệ quản trị viên.");
         }
-        validateUserStatus(user);
+        if (user.getStatus() == UserStatus.INACTIVE || user.getStatus() == UserStatus.BLOCKED) {
+            throw new CustomException(403,
+                    "Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.");
+        }
+        if (user.getStatus() != UserStatus.ACTIVE && user.getStatus() != UserStatus.PENDING) {
+            throw new CustomException(403, "Trạng thái tài khoản không hợp lệ");
+        }
     }
 
     private void validateUserStatus(UserEntity user) {
