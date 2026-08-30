@@ -40,4 +40,4 @@ docker compose up
 
 ## Tài liệu nghiệp vụ
 
-Xem `../EasyTech_FE/nghiep_vu/` để biết chi tiết từng Epic, Story và Task.
+Truy cập `https://github.com/VanHaPtit/EasyTech_FE/tree/main/nghiep_vu` để biết chi tiết từng Epic, Story và Task.
