@@ -33,12 +33,12 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public BaseResponse register(@Valid @RequestBody RegisterRequestDTO request) {
-        return new BaseResponse(authService.register(request));
+        return BaseResponse.success("Đăng ký thành công, hồ sơ đang chờ Admin phê duyệt", authService.register(request));
     }
 
     @PostMapping("/login")
     public BaseResponse login(@Valid @RequestBody LoginRequestDTO request, HttpServletResponse response) {
-        return createSessionResponse(authService.login(request), response);
+        return createSessionResponse(authService.login(request), response, "Đăng nhập thành công");
     }
 
     @PostMapping("/google")
@@ -46,17 +46,17 @@ public class AuthController {
             @Valid @RequestBody GoogleLoginRequestDTO request,
             HttpServletResponse response
     ) {
-        return createSessionResponse(authService.googleLogin(request), response);
+        return createSessionResponse(authService.googleLogin(request), response, "Đăng nhập Google thành công");
     }
 
     @GetMapping("/me")
     public BaseResponse getMe() {
-        return new BaseResponse(authService.getMe(currentUser().getId()));
+        return BaseResponse.success("Lấy thông tin người dùng thành công", authService.getMe(currentUser().getId()));
     }
 
     @GetMapping("/csrf")
     public BaseResponse csrf(CsrfToken csrfToken) {
-        return new BaseResponse(csrfToken.getToken());
+        return BaseResponse.success("Lấy CSRF token thành công", csrfToken.getToken());
     }
 
     @GetMapping("/health")
@@ -72,7 +72,7 @@ public class AuthController {
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new CustomException(401, "Refresh token không tồn tại");
         }
-        return createSessionResponse(authService.refreshToken(refreshToken), response);
+        return createSessionResponse(authService.refreshToken(refreshToken), response, "Làm mới phiên đăng nhập thành công");
     }
 
     @PostMapping("/logout")
@@ -81,9 +81,9 @@ public class AuthController {
         return BaseResponse.success("Đăng xuất thành công");
     }
 
-    private BaseResponse createSessionResponse(LoginResponseDTO session, HttpServletResponse response) {
+    private BaseResponse createSessionResponse(LoginResponseDTO session, HttpServletResponse response, String message) {
         authCookieService.writeSession(response, session);
-        return new BaseResponse(session);
+        return BaseResponse.success(message, session);
     }
 
     private AuthorizedUser currentUser() {

@@ -26,12 +26,12 @@ public class AdminCompaniesController {
 
     @GetMapping
     public BaseResponse getCompanies(@Valid @ModelAttribute CompanyFilterRequestDTO request) {
-        return new BaseResponse(companyService.getCompanies(request));
+        return BaseResponse.success("Lấy danh sách doanh nghiệp thành công", companyService.getCompanies(request));
     }
 
     @GetMapping("/{id}")
     public BaseResponse getCompanyDetail(@PathVariable Long id) {
-        return new BaseResponse(companyService.getCompanyDetail(id));
+        return BaseResponse.success("Lấy chi tiết doanh nghiệp thành công", companyService.getCompanyDetail(id));
     }
 
     @PatchMapping("/{id}/status")
@@ -41,7 +41,16 @@ public class AdminCompaniesController {
     ) {
         AuthorizedUser admin = SecurityUtils.getCurrentUser()
                 .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
-        return new BaseResponse(companyService.updateCompanyStatus(
+        return BaseResponse.success(statusMessage(request), companyService.updateCompanyStatus(
                 id, admin.getId(), request.getStatus(), request.getReason()));
+    }
+
+    private String statusMessage(CompanyStatusUpdateRequestDTO request) {
+        return switch (request.getStatus()) {
+            case ACTIVE -> "Phê duyệt doanh nghiệp thành công";
+            case REJECTED -> "Từ chối doanh nghiệp thành công";
+            case BLOCKED -> "Khóa doanh nghiệp thành công";
+            default -> "Cập nhật trạng thái doanh nghiệp thành công";
+        };
     }
 }

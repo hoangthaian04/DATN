@@ -12,14 +12,19 @@ const PASSWORD_MAX_LENGTH = 72;
 const passwordIsValid = (value: string) => value.length >= 8 && value.length <= PASSWORD_MAX_LENGTH && /[A-Z]/.test(value) && /\d/.test(value);
 const emailIsValid = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-export const LoginPage: React.FC = () => {
+interface LoginPageProps {
+  initialTab?: 'login' | 'register';
+}
+
+export const LoginPage: React.FC<LoginPageProps> = ({ initialTab }) => {
   const { login, register, user: sessionUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const defaultTab = useMemo(() => {
+    if (initialTab) return initialTab;
     const queryParams = new URLSearchParams(location.search);
     return queryParams.get('tab') === 'register' ? 'register' : 'login';
-  }, [location.search]);
+  }, [initialTab, location.search]);
 
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(defaultTab);
   const [loading, setLoading] = useState(false);

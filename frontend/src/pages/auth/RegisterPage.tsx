@@ -1,6 +1,6 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { LoginPage } from './LoginPage';
 
 export const RegisterPage: React.FC = () => {
-  return <Navigate to="/login?tab=register" replace />;
+  return <LoginPage initialTab="register" />;
 };

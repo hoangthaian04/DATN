@@ -44,7 +44,7 @@ api.interceptors.response.use(
       return api(request);
     } catch (refreshError) {
       const adminPath = window.location.pathname.startsWith('/admin');
-      const loginPath = adminPath ? '/admin/login' : '/login?reason=session-expired';
+      const loginPath = adminPath ? '/admin/login?reason=session-expired' : '/login?reason=session-expired';
       if (!window.location.pathname.includes('/login')) {
         window.location.assign(loginPath);
       }

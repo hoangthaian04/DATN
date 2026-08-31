@@ -24,10 +24,10 @@ public class AdminAuthController {
     @PostMapping("/login")
     public BaseResponse adminLogin(
             @Valid @RequestBody LoginRequestDTO request,
-            HttpServletResponse response
+        HttpServletResponse response
     ) {
         LoginResponseDTO session = authService.adminLogin(request);
         authCookieService.writeSession(response, session);
-        return new BaseResponse(session);
+        return BaseResponse.success("Đăng nhập Admin thành công", session);
     }
 }

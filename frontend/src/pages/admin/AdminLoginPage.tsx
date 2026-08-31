@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/useAuth';
 import {
   Activity,
@@ -14,11 +14,19 @@ import {
 export const AdminLoginPage: React.FC = () => {
   const { adminLogin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('admin@easytech.vn');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('reason') === 'session-expired') {
+      setErrorMessage('Phiên làm việc đã hết hạn.');
+    }
+  }, [location.search]);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();

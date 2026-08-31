@@ -26,19 +26,25 @@ public class CompanyRegistrationController {
 
     @GetMapping
     public BaseResponse getOwnRegistration() {
-        return new BaseResponse(companyService.getOwnRegistration(currentUser().getId()));
+        return BaseResponse.success(
+                "Lấy hồ sơ đăng ký doanh nghiệp thành công",
+                companyService.getOwnRegistration(currentUser().getId()));
     }
 
     @PatchMapping
     public BaseResponse updateOwnRegistration(
             @Valid @RequestBody CompanyRegistrationUpdateRequestDTO request
     ) {
-        return new BaseResponse(companyService.updateOwnRegistration(currentUser().getId(), request));
+        return BaseResponse.success(
+                "Cập nhật hồ sơ đăng ký doanh nghiệp thành công",
+                companyService.updateOwnRegistration(currentUser().getId(), request));
     }
 
     @PostMapping("/resubmit")
     public BaseResponse resubmitOwnRegistration() {
-        return new BaseResponse(companyService.resubmitOwnRegistration(currentUser().getId()));
+        return BaseResponse.success(
+                "Gửi lại hồ sơ đăng ký doanh nghiệp thành công",
+                companyService.resubmitOwnRegistration(currentUser().getId()));
     }
 
     private AuthorizedUser currentUser() {
