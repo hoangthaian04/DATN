@@ -32,7 +32,7 @@ export const OnboardingPage: React.FC = () => {
       navigate(target, { replace: true });
       return;
     }
-    if (user.onboardingCompleted) {
+    if (user.onboardingCompleted && user.profileCompleted !== false) {
       navigate('/dashboard', { replace: true });
       return;
     }

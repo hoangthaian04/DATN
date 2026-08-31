@@ -259,6 +259,7 @@ export const AdminDashboardPage: React.FC = () => {
               <tr>
                 <th className="px-6 py-4">Doanh nghiệp</th>
                 <th className="px-6 py-4">Liên hệ & Slug</th>
+                <th className="px-6 py-4">Mã số thuế</th>
                 <th className="px-6 py-4">Ngày đăng ký</th>
                 <th className="px-6 py-4">Trạng thái</th>
                 <th className="px-6 py-4 text-right">Thao tác</th>
@@ -267,14 +268,14 @@ export const AdminDashboardPage: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-16 text-slate-400">
+                  <td colSpan={6} className="text-center py-16 text-slate-400">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-[#0052cc]" />
                     <span>Đang tải danh sách doanh nghiệp...</span>
                   </td>
                 </tr>
               ) : companies.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-16 text-slate-400">
+                  <td colSpan={6} className="text-center py-16 text-slate-400">
                     <Building2 className="h-8 w-8 mx-auto mb-2 text-slate-300" />
                     <p className="font-semibold">Không tìm thấy doanh nghiệp nào</p>
                   </td>
@@ -300,6 +301,9 @@ export const AdminDashboardPage: React.FC = () => {
                           {c.slug}.easytech.vn
                         </p>
                         <p className="text-xs text-slate-500 mt-1">{c.phone || '—'}</p>
+                      </td>
+                      <td className="px-6 py-4 text-xs font-semibold text-slate-600">
+                        {c.taxCode || 'Chưa cập nhật'}
                       </td>
                       <td className="px-6 py-4 text-xs font-semibold text-slate-500">
                         {formatRegistrationDate(getCompanyCreatedAt(c))}

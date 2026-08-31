@@ -46,7 +46,11 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
     @Override
     public void sendCompanyRejected(String recipientEmail, String companyName, String reason) {
         send(recipientEmail, "Hồ sơ EasyTech chưa được phê duyệt",
-                "Doanh nghiệp " + companyName + " bị từ chối. Lý do: " + reason);
+                "Doanh nghiệp " + companyName + " chưa được phê duyệt.\n\n"
+                        + "Lý do: " + reason + "\n\n"
+                        + "Vui lòng đăng nhập EasyTech, mở trang Hồ sơ bị từ chối tại "
+                        + "/registration/rejected, chỉnh sửa thông tin theo lý do trên và gửi lại hồ sơ "
+                        + "để Admin xem xét lại.");
     }
 
     private void send(String recipient, String subject, String body) {
