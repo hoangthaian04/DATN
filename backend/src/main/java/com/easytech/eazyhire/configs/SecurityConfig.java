@@ -12,6 +12,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -48,10 +49,12 @@ public class SecurityConfig {
         CookieCsrfTokenRepository csrfRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrfRepository.setCookiePath("/");
         csrfRepository.setCookieCustomizer(cookie -> cookie.sameSite("Strict").secure(secureCookies));
+        CsrfTokenRequestAttributeHandler csrfRequestHandler = new CsrfTokenRequestAttributeHandler();
 
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfRepository)
+                        .csrfTokenRequestHandler(csrfRequestHandler)
                         .ignoringRequestMatchers(
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",

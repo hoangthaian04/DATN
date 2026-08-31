@@ -12,9 +12,13 @@ import type {
   User,
 } from '@/types/auth.types';
 
+const ensureCsrfToken = async (): Promise<void> => {
+  await api.get('/auth/csrf');
+};
+
 export const AuthService = {
   initializeCsrf: async (): Promise<void> => {
-    await api.get<BaseResponse<string>>('/auth/csrf');
+    await ensureCsrfToken();
   },
 
   register: async (data: RegisterRequest): Promise<RegistrationResponse> => {
@@ -48,12 +52,14 @@ export const AuthService = {
   },
 
   updateCompanyProfile: async (data: OnboardingRequest): Promise<CompanyProfile> => {
+    await ensureCsrfToken();
     const response = await api.patch<BaseResponse<import('@/types/auth.types').CompanyDetail>>('/company-profiles/me', data);
     if (!response.data.data.profile) throw new Error('Phản hồi hồ sơ công ty không hợp lệ');
     return response.data.data.profile;
   },
 
   uploadCompanyLogo: async (file: File): Promise<CompanyProfile> => {
+    await ensureCsrfToken();
     const body = new FormData();
     body.append('file', file);
     const response = await api.post<BaseResponse<import('@/types/auth.types').CompanyDetail>>('/company-profiles/me/logo', body, {
@@ -64,6 +70,7 @@ export const AuthService = {
   },
 
   completeOnboarding: async (skip = false): Promise<CompanyProfile> => {
+    await ensureCsrfToken();
     const response = await api.patch<BaseResponse<import('@/types/auth.types').CompanyDetail>>(
       '/company-profiles/me/onboarding',
       { skip },
@@ -78,16 +85,19 @@ export const AuthService = {
   },
 
   updateOwnRegistration: async (data: CompanyRegistrationUpdateRequest): Promise<CompanyDetail> => {
+    await ensureCsrfToken();
     const response = await api.patch<BaseResponse<CompanyDetail>>('/company-registration/me', data);
     return response.data.data;
   },
 
   resubmitOwnRegistration: async (): Promise<CompanyDetail> => {
+    await ensureCsrfToken();
     const response = await api.post<BaseResponse<CompanyDetail>>('/company-registration/me/resubmit');
     return response.data.data;
   },
 
   logout: async (): Promise<void> => {
+    await ensureCsrfToken();
     await api.post('/auth/logout');
   },
 };

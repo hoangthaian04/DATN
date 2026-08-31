@@ -6,6 +6,10 @@ import type {
   CompanySummary,
 } from '@/types/auth.types';
 
+const ensureCsrfToken = async (): Promise<void> => {
+  await api.get('/auth/csrf');
+};
+
 export const AdminService = {
   /** Lấy danh sách doanh nghiệp (phân trang + lọc theo trạng thái, từ khóa) */
   getCompanies: async (params?: CompanyFilterParams): Promise<BasePagination<CompanySummary>> => {
@@ -23,6 +27,7 @@ export const AdminService = {
 
   /** Duyệt doanh nghiệp (chuyển sang ACTIVE) */
   approveCompany: async (id: number): Promise<CompanySummary> => {
+    await ensureCsrfToken();
     const res = await api.patch<BaseResponse<CompanySummary>>(`/admin/companies/${id}/status`, {
       status: 'ACTIVE',
     });
@@ -31,6 +36,7 @@ export const AdminService = {
 
   /** Từ chối doanh nghiệp (chuyển sang REJECTED kèm lý do) */
   rejectCompany: async (id: number, reason: string): Promise<CompanySummary> => {
+    await ensureCsrfToken();
     const res = await api.patch<BaseResponse<CompanySummary>>(`/admin/companies/${id}/status`, {
       status: 'REJECTED',
       reason,
@@ -40,6 +46,7 @@ export const AdminService = {
 
   /** Khóa doanh nghiệp (chuyển sang BLOCKED) */
   blockCompany: async (id: number): Promise<CompanySummary> => {
+    await ensureCsrfToken();
     const res = await api.patch<BaseResponse<CompanySummary>>(`/admin/companies/${id}/status`, {
       status: 'BLOCKED',
       reason: 'Khóa bởi quản trị viên hệ thống',
