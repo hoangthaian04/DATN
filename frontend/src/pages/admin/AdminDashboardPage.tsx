@@ -12,6 +12,38 @@ import {
   X,
 } from 'lucide-react';
 
+type ApiDateValue = string | number | number[] | null | undefined;
+
+const getCompanyCreatedAt = (company: CompanySummary): ApiDateValue => {
+  const raw = company as CompanySummary & {
+    created_at?: ApiDateValue;
+    registeredAt?: ApiDateValue;
+    registrationDate?: ApiDateValue;
+    createdDate?: ApiDateValue;
+  };
+  return (raw.createdAt as unknown as ApiDateValue)
+    ?? raw.created_at
+    ?? raw.registeredAt
+    ?? raw.registrationDate
+    ?? raw.createdDate;
+};
+
+const formatRegistrationDate = (value: ApiDateValue): string => {
+  let date: Date | null = null;
+
+  if (Array.isArray(value) && value.length >= 3) {
+    const [year, month, day, hour = 0, minute = 0, second = 0, nano = 0] = value;
+    date = new Date(year, month - 1, day, hour, minute, second, Math.floor(nano / 1_000_000));
+  } else if (typeof value === 'string' && value.trim()) {
+    date = new Date(value);
+  } else if (typeof value === 'number') {
+    date = new Date(value);
+  }
+
+  if (!date || Number.isNaN(date.getTime())) return 'Chưa có dữ liệu';
+  return date.toLocaleDateString('vi-VN');
+};
+
 export const AdminDashboardPage: React.FC = () => {
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
   const [total, setTotal] = useState(0);
@@ -270,7 +302,7 @@ export const AdminDashboardPage: React.FC = () => {
                         <p className="text-xs text-slate-500 mt-1">{c.phone || '—'}</p>
                       </td>
                       <td className="px-6 py-4 text-xs font-semibold text-slate-500">
-                        {new Date(c.createdAt).toLocaleDateString('vi-VN')}
+                        {formatRegistrationDate(getCompanyCreatedAt(c))}
                       </td>
                       <td className="px-6 py-4">
                         <span

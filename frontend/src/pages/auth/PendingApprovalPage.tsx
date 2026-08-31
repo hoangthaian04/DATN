@@ -42,8 +42,10 @@ export const PendingApprovalPage: React.FC = () => {
     try {
       setLoggingOut(true);
       await logout();
-      navigate('/login', { replace: true });
+    } catch {
+      // Vẫn điều hướng về màn đăng nhập/đăng ký nếu API logout lỗi.
     } finally {
+      navigate('/login', { replace: true });
       setLoggingOut(false);
     }
   };
