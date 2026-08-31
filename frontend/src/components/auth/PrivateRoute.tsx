@@ -68,3 +68,24 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({
 
   return <>{children}</>;
 };
+
+export const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+          <p className="text-sm text-slate-500">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated && user) {
+    return <Navigate to={getPostLoginPath(user)} replace />;
+  }
+
+  return <>{children}</>;
+};

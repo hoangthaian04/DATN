@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, Building2, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/useAuth';
+import { AuthService } from '@/services/auth.service';
 import type { RegisterRequest } from '@/types/auth.types';
 import { getPostLoginPath } from '@/utils/authRouting';
 
@@ -39,6 +40,36 @@ export const LoginPage: React.FC = () => {
     if (isLoading || !sessionUser) return;
     navigate(getPostLoginPath(sessionUser), { replace: true });
   }, [isLoading, navigate, sessionUser]);
+
+  useEffect(() => {
+    const redirectAuthenticatedUser = async () => {
+      try {
+        const currentUser = sessionUser || await AuthService.getMe();
+        navigate(getPostLoginPath(currentUser), { replace: true });
+      } catch {
+        // Không có session hợp lệ thì giữ nguyên màn đăng nhập/đăng ký.
+      }
+    };
+
+    void redirectAuthenticatedUser();
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        void redirectAuthenticatedUser();
+      }
+    };
+    const handlePopState = () => {
+      void redirectAuthenticatedUser();
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [navigate, sessionUser]);
 
   const updateRegisterField = (field: keyof RegisterRequest, value: string) => {
     setRegisterForm((current) => ({ ...current, [field]: value }));

@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { PrivateRoute } from '@/components/auth/PrivateRoute';
+import { PrivateRoute, PublicOnlyRoute } from '@/components/auth/PrivateRoute';
 
 // ─── Layouts ─────────────────────────────────────────────────────────────────
 import { DashboardLayout } from '@/layouts/DashboardLayout';
@@ -47,8 +47,22 @@ export const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/login" replace /> },
 
   // ── Auth ──
-  { path: '/login', element: <LoginPage /> },
-  { path: '/register', element: <RegisterPage /> },
+  {
+    path: '/login',
+    element: (
+      <PublicOnlyRoute>
+        <LoginPage />
+      </PublicOnlyRoute>
+    ),
+  },
+  {
+    path: '/register',
+    element: (
+      <PublicOnlyRoute>
+        <RegisterPage />
+      </PublicOnlyRoute>
+    ),
+  },
   {
     path: '/onboarding',
     element: (
