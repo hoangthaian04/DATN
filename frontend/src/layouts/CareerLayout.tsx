@@ -6,7 +6,7 @@ export const CareerLayout: React.FC = () => {
       {/* Public Header placeholder */}
       <header className="border-b bg-white px-6 py-4 shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
-          <span className="text-lg font-bold text-blue-600">EasyTech Jobs</span>
+          <span className="text-lg font-bold text-blue-600">EasyHire Jobs</span>
         </div>
       </header>
 
@@ -15,7 +15,7 @@ export const CareerLayout: React.FC = () => {
       </main>
 
       <footer className="border-t bg-slate-50 px-6 py-8 text-center text-sm text-slate-500">
-        © 2026 EasyTech. Nền tảng tuyển dụng thông minh.
+        © 2026 EasyHire. Nền tảng tuyển dụng thông minh.
       </footer>
     </div>
   );

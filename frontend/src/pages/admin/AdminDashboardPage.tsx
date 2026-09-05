@@ -246,7 +246,7 @@ export const AdminDashboardPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <p className="text-xs font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded inline-block">
-                          {c.slug}.easytech.vn
+                          {c.slug}.EasyHire.vn
                         </p>
                         <p className="text-xs text-slate-500 mt-1">{c.phone || '—'}</p>
                       </td>
@@ -325,7 +325,7 @@ export const AdminDashboardPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-lg">{selectedCompany.name}</h3>
-                  <p className="text-xs text-slate-500 font-mono">{selectedCompany.slug}.easytech.vn</p>
+                  <p className="text-xs text-slate-500 font-mono">{selectedCompany.slug}.EasyHire.vn</p>
                 </div>
               </div>
               <button

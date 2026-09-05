@@ -8,6 +8,10 @@ import EazyTech.EazyHire.models.dtos.GoogleLoginRequestDTO;
 import EazyTech.EazyHire.models.dtos.LoginRequestDTO;
 import EazyTech.EazyHire.models.dtos.OnboardingRequestDTO;
 import EazyTech.EazyHire.models.dtos.RegisterRequestDTO;
+import EazyTech.EazyHire.models.dtos.ForgotPasswordRequestDTO;
+import EazyTech.EazyHire.models.dtos.VerifyOtpRequestDTO;
+import EazyTech.EazyHire.models.dtos.ResetPasswordRequestDTO;
+import EazyTech.EazyHire.models.dtos.ChangePasswordRequestDTO;
 import EazyTech.EazyHire.services.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -67,5 +71,37 @@ public class AuthController {
             throw new CustomException(400, "Refresh token không được để trống");
         }
         return new BaseResponse(authService.refreshToken(refreshToken));
+    }
+
+    @PostMapping("/forgot-password")
+    public BaseResponse forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO request) {
+        authService.forgotPassword(request.getEmail());
+        return new BaseResponse(); // Return empty success response
+    }
+
+    @PostMapping("/verify-otp")
+    public BaseResponse verifyOtp(@Valid @RequestBody VerifyOtpRequestDTO request) {
+        String resetToken = authService.verifyOtp(request.getEmail(), request.getOtp());
+        return new BaseResponse(Map.of("resetToken", resetToken));
+    }
+
+    @PostMapping("/reset-password")
+    public BaseResponse resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new CustomException(400, "Mật khẩu xác nhận không khớp");
+        }
+        authService.resetPassword(request.getResetToken(), request.getNewPassword());
+        return new BaseResponse();
+    }
+
+    @PostMapping("/change-password")
+    public BaseResponse changePassword(@Valid @RequestBody ChangePasswordRequestDTO request) {
+        AuthorizedUser user = SecurityUtils.getCurrentUser()
+                .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new CustomException(400, "Mật khẩu xác nhận không khớp");
+        }
+        authService.changePassword(user.getId(), request.getCurrentPassword(), request.getNewPassword());
+        return new BaseResponse();
     }
 }

@@ -39,6 +39,7 @@ public class RestResponseEntityExceptionHandler {
     // Xử lý lỗi không mong muốn (fallback)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResponse> handleGenericException(Exception ex) {
+        ex.printStackTrace(); // Log ra console để dễ debug
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(BaseResponse.fail("Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau."));
     }

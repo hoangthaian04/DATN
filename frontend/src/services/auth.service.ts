@@ -62,4 +62,21 @@ export const AuthService = {
   hasToken: (): boolean => {
     return !!localStorage.getItem('accessToken');
   },
+
+  forgotPassword: async (data: { email: string }): Promise<void> => {
+    await api.post<BaseResponse<null>>('/auth/forgot-password', data);
+  },
+
+  verifyOtp: async (data: { email: string; otp: string }): Promise<{ resetToken: string }> => {
+    const res = await api.post<BaseResponse<{ resetToken: string }>>('/auth/verify-otp', data);
+    return res.data.data;
+  },
+
+  resetPassword: async (data: any): Promise<void> => {
+    await api.post<BaseResponse<null>>('/auth/reset-password', data);
+  },
+
+  changePassword: async (data: any): Promise<void> => {
+    await api.post<BaseResponse<null>>('/auth/change-password', data);
+  },
 };

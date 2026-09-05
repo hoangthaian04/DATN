@@ -98,7 +98,7 @@ export const OnboardingPage: React.FC = () => {
             Thiết lập hồ sơ công ty trước khi vào HR Dashboard
           </h1>
           <p className="text-sm font-semibold text-slate-500 mt-2 max-w-3xl">
-            EasyTech cần thông tin doanh nghiệp để Admin duyệt, tạo Career Site riêng và gắn branding cho email/tin tuyển dụng.
+            EasyHire cần thông tin doanh nghiệp để Admin duyệt, tạo Career Site riêng và gắn branding cho email/tin tuyển dụng.
           </p>
         </div>
 
@@ -362,7 +362,7 @@ export const OnboardingPage: React.FC = () => {
 
                   <p className="text-xs text-slate-500 leading-relaxed">
                     Sau khi bấm <strong>"Gửi hồ sơ chờ duyệt"</strong>, hồ sơ của bạn sẽ chuyển sang trạng thái{' '}
-                    <span className="text-amber-600 font-bold">Chờ duyệt (PENDING)</span>. Quản trị viên EasyTech sẽ kiểm duyệt trong vòng 24h.
+                    <span className="text-amber-600 font-bold">Chờ duyệt (PENDING)</span>. Quản trị viên EasyHire sẽ kiểm duyệt trong vòng 24h.
                   </p>
 
                   <div className="flex items-center justify-between pt-4">

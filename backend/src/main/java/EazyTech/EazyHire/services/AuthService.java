@@ -23,4 +23,12 @@ public interface AuthService {
     UserResponseDTO getMe(Long userId);
 
     LoginResponseDTO refreshToken(String refreshToken);
+
+    void forgotPassword(String email);
+
+    String verifyOtp(String email, String otp);
+
+    void resetPassword(String resetToken, String newPassword);
+
+    void changePassword(Long userId, String currentPassword, String newPassword);
 }

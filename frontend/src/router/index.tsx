@@ -11,6 +11,7 @@ import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
 import { OnboardingPage } from '@/pages/auth/OnboardingPage';
 import { PendingApprovalPage } from '@/pages/auth/PendingApprovalPage';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 
 // ─── HR Dashboard Pages ───────────────────────────────────────────────────────
 import { DashboardPage } from '@/pages/hr/DashboardPage';
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
   // ── Auth ──
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/onboarding', element: <OnboardingPage /> },
   { path: '/pending', element: <PendingApprovalPage /> },
 

@@ -6,11 +6,11 @@ export const AdminAuditLogs: React.FC = () => {
 
   // Mock Audit Logs
   const logs = [
-    { id: 'log-1', timestamp: '2026-08-30 10:15:22', actor: 'admin@easytech.vn', role: 'SUPER_ADMIN', action: 'APPROVE_COMPANY', entity: 'companies', entityId: 'c-101', status: 'SUCCESS', ip: '192.168.1.100' },
+    { id: 'log-1', timestamp: '2026-08-30 10:15:22', actor: 'admin@EasyHire.vn', role: 'SUPER_ADMIN', action: 'APPROVE_COMPANY', entity: 'companies', entityId: 'c-101', status: 'SUCCESS', ip: '192.168.1.100' },
     { id: 'log-2', timestamp: '2026-08-30 09:42:10', actor: 'hr@techa.vn', role: 'HR', action: 'LOGIN', entity: 'auth', entityId: '-', status: 'SUCCESS', ip: '113.190.22.45' },
     { id: 'log-3', timestamp: '2026-08-29 16:20:05', actor: 'hr@cloudnine.io', role: 'HR', action: 'CREATE_JOB', entity: 'jobs', entityId: 'job-501', status: 'SUCCESS', ip: '203.119.55.12' },
     { id: 'log-4', timestamp: '2026-08-29 14:15:30', actor: 'unknown', role: 'GUEST', action: 'LOGIN_FAILED', entity: 'auth', entityId: '-', status: 'FAILED', ip: '45.22.100.99' },
-    { id: 'log-5', timestamp: '2026-08-28 11:05:00', actor: 'admin@easytech.vn', role: 'SUPER_ADMIN', action: 'BLOCK_COMPANY', entity: 'companies', entityId: 'c-105', status: 'SUCCESS', ip: '192.168.1.100' },
+    { id: 'log-5', timestamp: '2026-08-28 11:05:00', actor: 'admin@EasyHire.vn', role: 'SUPER_ADMIN', action: 'BLOCK_COMPANY', entity: 'companies', entityId: 'c-105', status: 'SUCCESS', ip: '192.168.1.100' },
     { id: 'log-6', timestamp: '2026-08-27 15:30:22', actor: 'system', role: 'SYSTEM', action: 'DAILY_BACKUP', entity: 'database', entityId: '-', status: 'SUCCESS', ip: '127.0.0.1' },
   ];
 
@@ -26,7 +26,7 @@ export const AdminAuditLogs: React.FC = () => {
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Audit Logs</h1>
         <p className="mt-1 text-sm font-semibold text-slate-500">
-          Giám sát các thao tác truy xuất và thay đổi dữ liệu trong hệ thống EasyTech.
+          Giám sát các thao tác truy xuất và thay đổi dữ liệu trong hệ thống EasyHire.
         </p>
       </div>
 

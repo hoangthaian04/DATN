@@ -23,13 +23,19 @@ import EazyTech.EazyHire.repositories.CompanyProfileRepository;
 import EazyTech.EazyHire.repositories.CompanyRepository;
 import EazyTech.EazyHire.repositories.UserRepository;
 import EazyTech.EazyHire.security.JwtTokenProvider;
+import EazyTech.EazyHire.core.RedisClient;
 import EazyTech.EazyHire.services.AuthService;
+import EazyTech.EazyHire.services.EmailService;
 import EazyTech.EazyHire.services.PasswordService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +47,8 @@ public class AuthServiceImpl implements AuthService {
     private final CareerSiteRepository careerSiteRepository;
     private final PasswordService passwordService;
     private final JwtTokenProvider tokenProvider;
+    private final RedisClient redisClient;
+    private final EmailService emailService;
 
     @Override
     @Transactional
@@ -162,10 +170,10 @@ public class AuthServiceImpl implements AuthService {
         String picture;
 
         try {
-            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+            RestTemplate restTemplate = new RestTemplate();
             String googleTokenUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken;
             @SuppressWarnings("unchecked")
-            java.util.Map<String, Object> tokenInfo = restTemplate.getForObject(googleTokenUrl, java.util.Map.class);
+            Map<String, Object> tokenInfo = restTemplate.getForObject(googleTokenUrl, Map.class);
 
             if (tokenInfo == null || tokenInfo.get("email") == null) {
                 throw new CustomException(401, "Google ID Token không hợp lệ");
@@ -318,6 +326,11 @@ public class AuthServiceImpl implements AuthService {
             throw new CustomException(403, "Tài khoản của bạn không hoạt động");
         }
 
+        Integer tokenVersion = tokenProvider.getTokenVersionFromToken(refreshToken);
+        if (tokenVersion != null && !tokenVersion.equals(user.getTokenVersion())) {
+            throw new CustomException(401, "Phiên đăng nhập đã hết hạn do mật khẩu thay đổi. Vui lòng đăng nhập lại.");
+        }
+
         return buildLoginResponse(user);
     }
 
@@ -332,6 +345,75 @@ public class AuthServiceImpl implements AuthService {
                 .expiresIn(tokenProvider.getAccessTokenExpirationMs() / 1000)
                 .user(mapToUserResponseDTO(user))
                 .build();
+    }
+
+    @Override
+    public void forgotPassword(String email) {
+        UserEntity user = userRepository.findByEmailWithCompany(email.trim().toLowerCase())
+                .orElse(null);
+        if (user == null) {
+            return; 
+        }
+
+        String otp = String.format("%06d", new Random().nextInt(1000000));
+        redisClient.set("OTP_FORGOT_PW_" + user.getEmail(), otp, 600); 
+
+        String emailContent = "Mã OTP để khôi phục mật khẩu của bạn là: " + otp + "\nMã này sẽ hết hạn trong 10 phút.";
+        emailService.sendEmail(user.getEmail(), "Khôi phục mật khẩu - EazyHire", emailContent);
+    }
+
+    @Override
+    public String verifyOtp(String email, String otp) {
+        String cachedOtp = redisClient.get("OTP_FORGOT_PW_" + email.trim().toLowerCase());
+        if (cachedOtp == null || !cachedOtp.equals(otp)) {
+            throw new CustomException(400, "Mã OTP không hợp lệ hoặc đã hết hạn");
+        }
+
+        UserEntity user = userRepository.findByEmailWithCompany(email.trim().toLowerCase())
+                .orElseThrow(() -> new CustomException(404, "Không tìm thấy người dùng"));
+
+        String resetToken = UUID.randomUUID().toString();
+        redisClient.set("RESET_PW_TOKEN_" + resetToken, user.getEmail(), 900); 
+        redisClient.set("OTP_FORGOT_PW_" + user.getEmail(), "", 1); 
+
+        return resetToken;
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(String resetToken, String newPassword) {
+        String email = redisClient.get("RESET_PW_TOKEN_" + resetToken);
+        if (email == null) {
+            throw new CustomException(400, "Token khôi phục mật khẩu không hợp lệ hoặc đã hết hạn");
+        }
+
+        UserEntity user = userRepository.findByEmailWithCompany(email)
+                .orElseThrow(() -> new CustomException(404, "Không tìm thấy người dùng"));
+
+        user.setPasswordHash(passwordService.encode(newPassword));
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
+
+        redisClient.set("RESET_PW_TOKEN_" + resetToken, "", 1); 
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(Long userId, String currentPassword, String newPassword) {
+        UserEntity user = userRepository.findByIdWithCompany(userId)
+                .orElseThrow(() -> new CustomException(404, "Không tìm thấy người dùng"));
+
+        if (!passwordService.matches(currentPassword, user.getPasswordHash())) {
+            throw new CustomException(400, "Mật khẩu hiện tại không chính xác");
+        }
+
+        if (passwordService.matches(newPassword, user.getPasswordHash())) {
+            throw new CustomException(400, "Mật khẩu mới không được trùng với mật khẩu hiện tại");
+        }
+
+        user.setPasswordHash(passwordService.encode(newPassword));
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        userRepository.save(user);
     }
 
     private UserResponseDTO mapToUserResponseDTO(UserEntity user) {
