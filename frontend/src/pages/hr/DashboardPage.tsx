@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { dashboardService } from '@/services/dashboard.service';
+import { AuthService } from '@/services/auth.service';
+import { useAuth } from '@/contexts/AuthContext';
 import type { DashboardOverviewResponse } from '@/types/dashboard.types';
+import type { CompanyDetail } from '@/types/auth.types';
 
 export const DashboardPage: React.FC = () => {
+  const { user } = useAuth();
   const [data, setData] = useState<DashboardOverviewResponse | null>(null);
+  const [company, setCompany] = useState<CompanyDetail | null>(null);
+  const [companyLoaded, setCompanyLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [range] = useState('30d');
+  const [range] = useState('6m');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,6 +31,19 @@ export const DashboardPage: React.FC = () => {
     fetchData();
   }, [range]);
 
+  useEffect(() => {
+    let active = true;
+    AuthService.getCompany()
+      .then((response) => {
+        if (active) setCompany(response);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setCompanyLoaded(true);
+      });
+    return () => { active = false; };
+  }, []);
+
   if (loading || !data) {
     return <div className="flex-1 p-8 bg-[#F8FAFC] min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -42,9 +61,33 @@ export const DashboardPage: React.FC = () => {
   
   const polylinePoints = points.map(p => `${p.x},${p.y}`).join(' ');
   const polygonPoints = `80,200 ${polylinePoints} 930,200`;
+  const completedSteps = company?.profile?.completedSteps ?? 0;
+  const needsProfileReminder = companyLoaded && (user?.profileCompleted === false || completedSteps < 3);
 
   return (
     <div className="flex-1 p-8 bg-[#F8FAFC] min-h-screen">
+      {needsProfileReminder && (
+        <div className="mb-6 max-w-[1440px] mx-auto rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-3 text-sm font-bold">
+                <span>Hồ sơ doanh nghiệp chưa hoàn thiện</span>
+                <span className="shrink-0">{completedSteps}/3 bước</span>
+              </div>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-amber-100">
+                <div
+                  className="h-full rounded-full bg-amber-500 transition-all"
+                  style={{ width: `${Math.min(100, (completedSteps / 3) * 100)}%` }}
+                />
+              </div>
+              <p className="mt-2 text-xs text-amber-800">Hãy bổ sung thông tin còn thiếu để Career Site hiển thị đầy đủ.</p>
+            </div>
+            <Link to="/dashboard/settings/company" className="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white hover:bg-amber-700">
+              Hoàn thiện hồ sơ công ty
+            </Link>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="mb-8 max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
