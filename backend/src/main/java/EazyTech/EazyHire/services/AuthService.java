@@ -1,7 +1,6 @@
 package EazyTech.EazyHire.services;
 
 import EazyTech.EazyHire.models.dtos.CompanyDetailResponseDTO;
-import EazyTech.EazyHire.models.dtos.GoogleLoginRequestDTO;
 import EazyTech.EazyHire.models.dtos.LoginRequestDTO;
 import EazyTech.EazyHire.models.dtos.LoginResponseDTO;
 import EazyTech.EazyHire.models.dtos.OnboardingRequestDTO;
@@ -16,8 +15,6 @@ public interface AuthService {
 
     LoginResponseDTO adminLogin(LoginRequestDTO request);
 
-    LoginResponseDTO googleLogin(GoogleLoginRequestDTO request);
-
     CompanyDetailResponseDTO onboarding(Long userId, OnboardingRequestDTO request);
 
     UserResponseDTO getMe(Long userId);
@@ -28,7 +25,7 @@ public interface AuthService {
 
     String verifyOtp(String email, String otp);
 
-    void resetPassword(String resetToken, String newPassword);
+    void resetPassword(String resetToken, String newPassword, String confirmPassword);
 
-    void changePassword(Long userId, String currentPassword, String newPassword);
+    LoginResponseDTO changePassword(Long userId, String currentPassword, String newPassword, String confirmPassword);
 }

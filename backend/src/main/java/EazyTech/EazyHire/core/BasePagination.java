@@ -19,7 +19,7 @@ public class BasePagination<T> implements Serializable {
 
     public BasePagination(Page<T> page) {
         this.current_page = page.getPageable().getPageNumber() + 1;
-        this.last_page = page.nextOrLastPageable().getPageNumber() + 1;
+        this.last_page = Math.max(1, page.getTotalPages());
         this.total = page.getTotalElements();
         this.data = page.getContent();
     }

@@ -2,6 +2,7 @@ package EazyTech.EazyHire.controllers;
 
 import EazyTech.EazyHire.core.AuthorizedUser;
 import EazyTech.EazyHire.core.BaseResponse;
+import EazyTech.EazyHire.core.BasePagination;
 import EazyTech.EazyHire.core.exceptions.CustomException;
 import EazyTech.EazyHire.core.utils.SecurityUtils;
 import EazyTech.EazyHire.models.dtos.CompanyFilterRequestDTO;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import EazyTech.EazyHire.models.dtos.CompanyStatusRequestDTO;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,12 +29,35 @@ public class AdminCompaniesController {
 
     @GetMapping
     public BaseResponse getCompanies(@Valid @ModelAttribute CompanyFilterRequestDTO request) {
-        return new BaseResponse(companyService.getCompanies(request));
+        return BaseResponse.success(
+                "Lấy danh sách doanh nghiệp thành công",
+                new BasePagination<>(companyService.getCompanies(request))
+        );
     }
 
     @GetMapping("/{id}")
     public BaseResponse getCompanyDetail(@PathVariable Long id) {
-        return new BaseResponse(companyService.getCompanyDetail(id));
+        return BaseResponse.success(
+                "Lấy chi tiết doanh nghiệp thành công",
+                companyService.getCompanyDetail(id)
+        );
+    }
+
+    @PatchMapping("/{id}/status")
+    public BaseResponse changeCompanyStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody CompanyStatusRequestDTO request
+    ) {
+        AuthorizedUser admin = SecurityUtils.getCurrentUser()
+                .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
+
+        String message = switch (request.getStatus()) {
+            case ACTIVE -> "Phê duyệt doanh nghiệp thành công";
+            case REJECTED -> "Từ chối doanh nghiệp thành công";
+            case BLOCKED -> "Khóa doanh nghiệp thành công";
+            default -> "Cập nhật trạng thái doanh nghiệp thành công";
+        };
+        return BaseResponse.success(message, companyService.changeStatus(id, admin.getId(), request));
     }
 
     @PutMapping("/{id}/approve")

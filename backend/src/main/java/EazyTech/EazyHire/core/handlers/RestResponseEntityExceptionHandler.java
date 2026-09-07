@@ -36,6 +36,21 @@ public class RestResponseEntityExceptionHandler {
                 .body(BaseResponse.fail(errorMessage));
     }
 
+    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
+        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
+        org.springframework.web.bind.MissingServletRequestParameterException.class,
+        org.springframework.web.multipart.support.MissingServletRequestPartException.class})
+    public ResponseEntity<BaseResponse> handleBadRequest(Exception ex){
+      return ResponseEntity.badRequest().body(BaseResponse.fail("Dữ liệu không hợp lệ. Vui lòng kiểm tra các trường, định dạng và trạng thái."));
+    }
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<BaseResponse> handleConflict(Exception ex){
+      return ResponseEntity.status(409).body(BaseResponse.fail("Dữ liệu bị trùng hoặc không còn hợp lệ. Vui lòng tải lại và kiểm tra email, mã số thuế, subdomain."));
+    }
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<BaseResponse> handleUpload(Exception ex){
+      return ResponseEntity.badRequest().body(BaseResponse.fail("Logo không hợp lệ hoặc vượt quá dung lượng cho phép."));
+    }
     // Xử lý lỗi không mong muốn (fallback)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResponse> handleGenericException(Exception ex) {

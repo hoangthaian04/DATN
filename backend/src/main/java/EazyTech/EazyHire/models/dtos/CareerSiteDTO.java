@@ -13,6 +13,7 @@ import lombok.Setter;
 @Builder
 public class CareerSiteDTO {
     private Long id;
+    private String logoUrl;
     private String siteTitle;
     private String tagline;
     private String heroImageUrl;

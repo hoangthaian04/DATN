@@ -43,11 +43,14 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(String.valueOf(user.getId()))
+                .claim("type","ACCESS")
+                .claim("tokenVersion",user.getTokenVersion())
                 .claim("email", user.getEmail())
                 .claim("fullName", user.getFullName())
                 .claim("role", user.getRole().name())
                 .claim("companyId", companyId)
                 .claim("companyStatus", companyStatus)
+                .id(java.util.UUID.randomUUID().toString())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
@@ -62,6 +65,7 @@ public class JwtTokenProvider {
                 .subject(String.valueOf(user.getId()))
                 .claim("type", "REFRESH")
                 .claim("tokenVersion", user.getTokenVersion())
+                .id(java.util.UUID.randomUUID().toString())
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(key)
@@ -119,6 +123,10 @@ public class JwtTokenProvider {
         return claims.get("tokenVersion", Integer.class);
     }
 
+    public boolean isTokenType(String token,String type) {
+        return type.equals(Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload().get("type",String.class));
+    }
+    public long getRefreshTokenExpirationMs(){return refreshTokenExpirationMs;}
     public long getAccessTokenExpirationMs() {
         return accessTokenExpirationMs;
     }

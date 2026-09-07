@@ -11,11 +11,11 @@ public class ResetPasswordRequestDTO {
     private String resetToken;
 
     @NotBlank(message = "Mật khẩu mới không được để trống")
-    @Size(min = 8, message = "Mật khẩu mới phải dài ít nhất 8 ký tự")
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9]).+$", 
-             message = "Mật khẩu phải chứa ít nhất 1 chữ in hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt")
+    @Size(min = 8, max = 72, message = "Mật khẩu phải từ 8 đến 72 ký tự")
+    @Pattern(regexp = "^(?=.*[A-Z])(?=.*[0-9]).+$", message = "Mật khẩu phải có chữ hoa và chữ số")
     private String newPassword;
 
     @NotBlank(message = "Xác nhận mật khẩu không được để trống")
+    @Size(max = 72, message = "Xác nhận mật khẩu tối đa 72 ký tự")
     private String confirmPassword;
 }

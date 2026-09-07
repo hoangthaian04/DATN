@@ -1,107 +1,48 @@
 package EazyTech.EazyHire.controllers;
-
-import EazyTech.EazyHire.core.AuthorizedUser;
-import EazyTech.EazyHire.core.BaseResponse;
-import EazyTech.EazyHire.core.exceptions.CustomException;
+import EazyTech.EazyHire.core.*;
 import EazyTech.EazyHire.core.utils.SecurityUtils;
-import EazyTech.EazyHire.models.dtos.GoogleLoginRequestDTO;
-import EazyTech.EazyHire.models.dtos.LoginRequestDTO;
-import EazyTech.EazyHire.models.dtos.OnboardingRequestDTO;
-import EazyTech.EazyHire.models.dtos.RegisterRequestDTO;
-import EazyTech.EazyHire.models.dtos.ForgotPasswordRequestDTO;
-import EazyTech.EazyHire.models.dtos.VerifyOtpRequestDTO;
-import EazyTech.EazyHire.models.dtos.ResetPasswordRequestDTO;
-import EazyTech.EazyHire.models.dtos.ChangePasswordRequestDTO;
-import EazyTech.EazyHire.services.AuthService;
+import EazyTech.EazyHire.core.exceptions.CustomException;
+import EazyTech.EazyHire.models.dtos.*;
+import EazyTech.EazyHire.services.*;
+import jakarta.servlet.http.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
+import org.springframework.security.web.csrf.CsrfToken;
 import java.util.Map;
-
-@RestController
-@RequestMapping("/api/v1/auth")
-@RequiredArgsConstructor
+@RestController @RequestMapping("/api/v1/auth") @RequiredArgsConstructor
 public class AuthController {
-
-    private final AuthService authService;
-
-    @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public BaseResponse register(@Valid @RequestBody RegisterRequestDTO request) {
-        return new BaseResponse(authService.register(request));
-    }
-
-    @PostMapping("/login")
-    public BaseResponse login(@Valid @RequestBody LoginRequestDTO request) {
-        return new BaseResponse(authService.login(request));
-    }
-
-    @PostMapping("/google")
-    public BaseResponse googleLogin(@Valid @RequestBody GoogleLoginRequestDTO request) {
-        return new BaseResponse(authService.googleLogin(request));
-    }
-
-    @PostMapping("/onboarding")
-    public BaseResponse onboarding(@Valid @RequestBody OnboardingRequestDTO request) {
-        AuthorizedUser user = SecurityUtils.getCurrentUser()
-                .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
-
-        return new BaseResponse(authService.onboarding(user.getId(), request));
-    }
-
-    @GetMapping("/me")
-    public BaseResponse getMe() {
-        AuthorizedUser user = SecurityUtils.getCurrentUser()
-                .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
-
-        return new BaseResponse(authService.getMe(user.getId()));
-    }
-
-    @PostMapping("/refresh")
-    public BaseResponse refresh(@RequestBody Map<String, String> request) {
-        String refreshToken = request.get("refreshToken");
-        if (refreshToken == null || refreshToken.isBlank()) {
-            throw new CustomException(400, "Refresh token không được để trống");
-        }
-        return new BaseResponse(authService.refreshToken(refreshToken));
-    }
-
-    @PostMapping("/forgot-password")
-    public BaseResponse forgotPassword(@Valid @RequestBody ForgotPasswordRequestDTO request) {
-        authService.forgotPassword(request.getEmail());
-        return new BaseResponse(); // Return empty success response
-    }
-
-    @PostMapping("/verify-otp")
-    public BaseResponse verifyOtp(@Valid @RequestBody VerifyOtpRequestDTO request) {
-        String resetToken = authService.verifyOtp(request.getEmail(), request.getOtp());
-        return new BaseResponse(Map.of("resetToken", resetToken));
-    }
-
-    @PostMapping("/reset-password")
-    public BaseResponse resetPassword(@Valid @RequestBody ResetPasswordRequestDTO request) {
-        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new CustomException(400, "Mật khẩu xác nhận không khớp");
-        }
-        authService.resetPassword(request.getResetToken(), request.getNewPassword());
-        return new BaseResponse();
-    }
-
-    @PostMapping("/change-password")
-    public BaseResponse changePassword(@Valid @RequestBody ChangePasswordRequestDTO request) {
-        AuthorizedUser user = SecurityUtils.getCurrentUser()
-                .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
-        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new CustomException(400, "Mật khẩu xác nhận không khớp");
-        }
-        authService.changePassword(user.getId(), request.getCurrentPassword(), request.getNewPassword());
-        return new BaseResponse();
-    }
+ private final AuthService authService;
+ private final AuthCookieService cookies;
+ @PostMapping("/register") @ResponseStatus(HttpStatus.CREATED)
+ public BaseResponse register(@Valid @RequestBody RegisterRequestDTO request,HttpServletResponse response){
+  LoginResponseDTO login=cookies.write(response,authService.register(request));
+  return BaseResponse.success("Đăng ký thành công, hồ sơ đang chờ Admin phê duyệt",Map.of("email",login.getUser().getEmail(),"companyName",login.getUser().getCompanyName(),"companyStatus",login.getUser().getCompanyStatus()));
+ }
+ @PostMapping("/login") public BaseResponse login(@Valid @RequestBody LoginRequestDTO request,HttpServletResponse response){
+  return BaseResponse.success("Đăng nhập thành công",cookies.write(response,authService.login(request)));
+ }
+ @GetMapping("/me") public BaseResponse me(){return BaseResponse.success("Lấy thông tin tài khoản thành công",authService.getMe(currentId()));}
+ @GetMapping("/csrf") public BaseResponse csrf(CsrfToken token){return BaseResponse.success(Map.of("token",token.getToken()));}
+ @PostMapping("/refresh") public BaseResponse refresh(HttpServletRequest request,HttpServletResponse response){
+  return BaseResponse.success("Làm mới phiên thành công",cookies.refresh(request,response));
+ }
+ @PostMapping("/logout") public BaseResponse logout(HttpServletRequest request,HttpServletResponse response){cookies.logout(request,response);return BaseResponse.success("Đăng xuất thành công");}
+ @PostMapping("/forgot-password") public BaseResponse forgot(@Valid @RequestBody ForgotPasswordRequestDTO request){
+  authService.forgotPassword(request.getEmail());
+  return BaseResponse.success("Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi.");
+ }
+ @PostMapping("/verify-otp") public BaseResponse verify(@Valid @RequestBody VerifyOtpRequestDTO request){
+  return BaseResponse.success("Xác thực OTP thành công.",Map.of("resetToken",authService.verifyOtp(request.getEmail(),request.getOtp()),"expiresInSeconds",900));
+ }
+ @PostMapping("/reset-password") public BaseResponse reset(@Valid @RequestBody ResetPasswordRequestDTO request){
+  authService.resetPassword(request.getResetToken(),request.getNewPassword(),request.getConfirmPassword());
+  return BaseResponse.success("Đặt lại mật khẩu thành công.");
+ }
+ @PostMapping("/change-password") public BaseResponse change(@Valid @RequestBody ChangePasswordRequestDTO request,HttpServletResponse response){
+  cookies.write(response,authService.changePassword(currentId(),request.getCurrentPassword(),request.getNewPassword(),request.getConfirmPassword()));
+  return BaseResponse.success("Đổi mật khẩu thành công.");
+ }
+ public static Long currentId(){return SecurityUtils.getCurrentUser().orElseThrow(()->new CustomException(401,"Vui lòng đăng nhập.")).getId();}
 }
