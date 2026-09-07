@@ -10,15 +10,15 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
+    List<UserEntity> findByCompanyId(Long companyId);
     Optional<UserEntity> findByEmail(String email);
 
     boolean existsByEmail(String email);
-
-    Optional<UserEntity> findByGoogleId(String googleId);
 
     @Query("SELECT u FROM UserEntity u LEFT JOIN FETCH u.company WHERE u.id = :id")
     Optional<UserEntity> findByIdWithCompany(@Param("id") Long id);
