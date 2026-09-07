@@ -82,7 +82,7 @@ export const DashboardPage: React.FC = () => {
               </div>
               <p className="mt-2 text-xs text-amber-800">Hãy bổ sung thông tin còn thiếu để Career Site hiển thị đầy đủ.</p>
             </div>
-            <Link to="/dashboard/settings/company" className="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white hover:bg-amber-700">
+            <Link to="/dashboard/settings" className="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white hover:bg-amber-700">
               Hoàn thiện hồ sơ công ty
             </Link>
           </div>

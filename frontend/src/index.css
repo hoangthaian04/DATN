@@ -4,6 +4,7 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --color-primary-50: #f0f9fd;
   --color-primary-100: #e0f2fa;
   --color-primary-200: #b9e5f6;
@@ -35,9 +36,20 @@ body {
   padding: 0;
   min-height: 100vh;
   background-color: #f8fafc;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   color: #334155;
-  -webkit-font-smoothing: antialiased;
+}
+
+/* Keep native form controls and Tailwind's font-sans utility consistent. */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.font-sans {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────── */

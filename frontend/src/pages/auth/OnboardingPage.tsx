@@ -131,10 +131,10 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans">
-      <PublicHeader />
+      {!settings && <PublicHeader />}
 
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 md:p-12">
-        <div className="mb-8 text-left">
+        {!settings && <div className="mb-8 text-left">
           <div className="flex items-center justify-between gap-4">
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[#0052cc] text-xs font-bold">
               <Sparkles className="h-3.5 w-3.5" />
@@ -157,7 +157,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
           <p className="text-sm font-semibold text-slate-500 mt-2 max-w-3xl">
             Hoàn thiện hồ sơ để tạo Career Site riêng và gắn thương hiệu cho email, tin tuyển dụng.
           </p>
-        </div>
+        </div>}
 
         {errorMessage && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-700">
@@ -452,7 +452,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
         </div>
       </main>
 
-      <PublicFooter />
+      {!settings && <PublicFooter />}
     </div>
   );
 };
