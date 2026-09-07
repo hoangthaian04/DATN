@@ -15,7 +15,11 @@ const verifyOtpSchema = z.object({
 });
 
 const resetPasswordSchema = z.object({
-  newPassword: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
+  newPassword: z.string()
+    .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+    .max(72, 'Mật khẩu không được vượt quá 72 ký tự')
+    .regex(/[A-Z]/, 'Mật khẩu phải có ít nhất 1 chữ hoa')
+    .regex(/\d/, 'Mật khẩu phải có ít nhất 1 chữ số'),
   confirmPassword: z.string().min(1, 'Vui lòng xác nhận mật khẩu'),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: 'Mật khẩu xác nhận không khớp',
@@ -192,6 +196,7 @@ export const ForgotPasswordPage: React.FC = () => {
               <label className="mb-1 block text-sm font-medium text-slate-700">Mật khẩu mới</label>
               <input
                 type="password"
+                maxLength={72}
                 {...form3.register('newPassword')}
                 className="w-full rounded-lg border border-slate-300 p-3 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 placeholder="••••••••"
@@ -205,6 +210,7 @@ export const ForgotPasswordPage: React.FC = () => {
               <label className="mb-1 block text-sm font-medium text-slate-700">Xác nhận mật khẩu</label>
               <input
                 type="password"
+                maxLength={72}
                 {...form3.register('confirmPassword')}
                 className="w-full rounded-lg border border-slate-300 p-3 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 placeholder="••••••••"

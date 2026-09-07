@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Activity,
@@ -14,9 +14,10 @@ import {
 export const AdminLoginPage: React.FC = () => {
   const { adminLogin } = useAuth();
   const navigate = useNavigate();
+  const [params]=useSearchParams();
 
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('admin@EasyHire.vn');
+  const [email, setEmail] = useState('admin@easytech.vn');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -31,13 +32,13 @@ export const AdminLoginPage: React.FC = () => {
       setLoading(true);
       setErrorMessage(null);
 
-      const user = await adminLogin({ email, password });
+      const user = await adminLogin({ email: email.trim().toLowerCase(), password });
       if (user.role !== 'ADMIN') {
         setErrorMessage('Tài khoản không có quyền quản trị hệ thống');
         return;
       }
 
-      navigate('/admin', { replace: true });
+      navigate('/admin/dashboard', { replace: true });
     } catch (err: unknown) {
       const msg = (err as { customMessage?: string })?.customMessage || 'Đăng nhập quản trị thất bại';
       setErrorMessage(msg);
@@ -61,6 +62,7 @@ export const AdminLoginPage: React.FC = () => {
               Khu vực hạn chế. Đăng nhập để truy cập hệ thống quản trị lõi của nền tảng EasyHire.
             </p>
 
+            {params.get('reason')==='session-expired' && <p role="alert">Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.</p>}
             {errorMessage && (
               <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-700 animate-in fade-in">
                 <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
@@ -78,7 +80,8 @@ export const AdminLoginPage: React.FC = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@EasyHire.vn"
+                  placeholder="admin@easytech.vn"
+                  autoComplete="username"
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-slate-700 bg-slate-50 focus:bg-white"
                   required
                 />
@@ -93,6 +96,8 @@ export const AdminLoginPage: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  maxLength={72}
+                  autoComplete="current-password"
                   className="w-full px-4 py-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-slate-700 bg-slate-50 focus:bg-white"
                   required
                 />

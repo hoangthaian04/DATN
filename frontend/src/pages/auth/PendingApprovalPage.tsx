@@ -1,28 +1,27 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { errorMessage } from '@/services/api';
 import { Building2, Clock, LogOut, Mail, RefreshCw, ShieldCheck } from 'lucide-react';
 
 export const PendingApprovalPage: React.FC = () => {
   const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const [error,setError]=React.useState('');
   const [isRefreshing, setIsRefreshing] = React.useState(false);
 
   const handleRefresh = async () => {
     try {
       setIsRefreshing(true);
       await refreshUser();
-      if (user?.companyStatus === 'ACTIVE') {
-        navigate('/dashboard', { replace: true });
-      }
-    } finally {
+
+    } catch(e){setError(errorMessage(e));} finally {
       setIsRefreshing(false);
     }
   };
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/login', { replace: true });
+    try{await logout();navigate('/login', {replace:true});}catch(e){setError(errorMessage(e));}
   };
 
   return (
@@ -38,6 +37,7 @@ export const PendingApprovalPage: React.FC = () => {
           Hồ sơ đang chờ phê duyệt
         </div>
 
+        {error&&<p role="alert" className="text-red-600">{error}</p>}
         <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
           Chào mừng {user?.fullName || 'bạn'}!
         </h1>
@@ -57,7 +57,7 @@ export const PendingApprovalPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-2 text-amber-700 font-medium">
             <Clock className="h-4 w-4 text-amber-500" />
-            <span>Thời gian xét duyệt thông thường: 1 - 2 giờ làm việc</span>
+            <span>Bạn sẽ nhận email khi có kết quả xét duyệt.</span>
           </div>
         </div>
 

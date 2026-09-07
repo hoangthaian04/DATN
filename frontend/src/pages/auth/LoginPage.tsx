@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
+import { getPostLoginPath } from '@/components/auth/PrivateRoute';
 import {
   AlertCircle,
   ArrowLeft,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
-  const { login, register, loginWithGoogle } = useAuth();
+  const { login, register } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,6 +24,9 @@ export const LoginPage: React.FC = () => {
   // Tabs: Login or Register
   const queryParams = new URLSearchParams(location.search);
   const defaultTab = queryParams.get('tab') === 'register' ? 'register' : 'login';
+  const sessionMessage = queryParams.get('reason') === 'session-expired'
+    ? 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.'
+    : null;
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(defaultTab);
 
   // Login state
@@ -63,16 +66,7 @@ export const LoginPage: React.FC = () => {
       setErrorMessage(null);
       const user = await login({ email, password });
 
-      if (user.companyStatus === 'PENDING') {
-        navigate('/pending', { replace: true });
-      } else if (user.companyStatus === 'REJECTED') {
-        setErrorMessage('Hồ sơ doanh nghiệp của bạn đã bị từ chối. Vui lòng liên hệ hỗ trợ.');
-      } else if (user.companyStatus === 'BLOCKED') {
-        setErrorMessage('Tài khoản doanh nghiệp của bạn đã bị khóa.');
-      } else {
-        const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
-        navigate(from, { replace: true });
-      }
+      navigate(getPostLoginPath(user), { replace: true });
     } catch (err: unknown) {
       const msg = (err as { customMessage?: string })?.customMessage || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
       setErrorMessage(msg);
@@ -84,12 +78,12 @@ export const LoginPage: React.FC = () => {
   // Bước 1 đăng ký chuyển sang bước 2
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName || !regEmail || !phone || !regPassword) {
+    if (!fullName || !position || !regEmail || !phone || !regPassword) {
       setErrorMessage('Vui lòng điền đầy đủ các thông tin bắt buộc (*)');
       return;
     }
-    if (regPassword.length < 6) {
-      setErrorMessage('Mật khẩu phải có ít nhất 6 ký tự');
+    if (regPassword.length < 8 || regPassword.length > 72 || !/[A-Z]/.test(regPassword) || !/\d/.test(regPassword)) {
+      setErrorMessage('Mật khẩu phải từ 8 đến 72 ký tự, có ít nhất 1 chữ hoa và 1 chữ số');
       return;
     }
     setErrorMessage(null);
@@ -99,10 +93,17 @@ export const LoginPage: React.FC = () => {
   // Hoàn tất đăng ký
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!companyName) {
-      setErrorMessage('Vui lòng nhập tên công ty pháp lý');
+    if (!companyName || !taxId || !industry || !companySize || !address || !city) {
+      setErrorMessage('Vui lòng điền đầy đủ các thông tin doanh nghiệp bắt buộc (*)');
       return;
     }
+    const generatedSubdomain = companyName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 50) || `doanh-nghiep-${Date.now()}`;
 
     try {
       setLoading(true);
@@ -113,30 +114,18 @@ export const LoginPage: React.FC = () => {
         password: regPassword,
         companyName,
         phone,
+        taxCode: taxId,
+        address: `${address}, ${city}`,
+        subdomain: generatedSubdomain,
+        industry,
+        companySize,
+        description: businessType
+          ? `Loại hình doanh nghiệp: ${businessType}`
+          : `Doanh nghiệp hoạt động trong lĩnh vực ${industry}`,
       });
-      navigate('/onboarding', { replace: true });
+      navigate('/pending', { replace: true });
     } catch (err: unknown) {
       const msg = (err as { customMessage?: string })?.customMessage || 'Đăng ký tài khoản thất bại. Vui lòng thử lại.';
-      setErrorMessage(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Xử lý Google OAuth
-  const handleGoogleSuccess = async (idToken: string) => {
-    try {
-      setLoading(true);
-      setErrorMessage(null);
-      const user = await loginWithGoogle(idToken);
-      if (user.companyStatus === 'PENDING') {
-        navigate('/pending', { replace: true });
-      } else {
-        const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
-        navigate(from, { replace: true });
-      }
-    } catch (err: unknown) {
-      const msg = (err as { customMessage?: string })?.customMessage || 'Đăng nhập Google thất bại';
       setErrorMessage(msg);
     } finally {
       setLoading(false);
@@ -197,10 +186,10 @@ export const LoginPage: React.FC = () => {
             </div>
 
             {/* Error banner */}
-            {errorMessage && (
+            {(errorMessage || sessionMessage) && (
               <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-700 animate-in fade-in">
                 <AlertCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5" />
-                <span>{errorMessage}</span>
+                <span>{errorMessage || sessionMessage}</span>
               </div>
             )}
 
@@ -226,6 +215,7 @@ export const LoginPage: React.FC = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     className={inputClassName}
+                    maxLength={72}
                     required
                   />
                 </div>
@@ -257,18 +247,6 @@ export const LoginPage: React.FC = () => {
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Sign In'}
                 </button>
 
-                <div className="flex items-center gap-4 my-6">
-                  <div className="flex-1 h-[1px] bg-slate-200" />
-                  <span className="text-xs text-slate-400 font-medium px-2">or</span>
-                  <div className="flex-1 h-[1px] bg-slate-200" />
-                </div>
-
-                <GoogleLoginButton
-                  onSuccess={handleGoogleSuccess}
-                  isLoading={loading}
-                  text="Đăng nhập với Google"
-                  mode="login"
-                />
               </form>
             )}
 
@@ -368,9 +346,10 @@ export const LoginPage: React.FC = () => {
                         type="password"
                         value={regPassword}
                         onChange={(e) => setRegPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className={inputClassName}
-                        required
+                          placeholder="••••••••"
+                          className={inputClassName}
+                          maxLength={72}
+                          required
                       />
                     </div>
 
@@ -406,13 +385,14 @@ export const LoginPage: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className={labelClassName}>Mã số thuế (MST)</label>
+                        <label className={labelClassName}>Mã số thuế (MST) *</label>
                         <input
                           type="text"
                           value={taxId}
                           onChange={(e) => setTaxId(e.target.value)}
                           placeholder="0101xxxxxx"
                           className={inputClassName}
+                          required
                         />
                       </div>
                       <div>
@@ -433,11 +413,12 @@ export const LoginPage: React.FC = () => {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className={labelClassName}>Lĩnh vực hoạt động</label>
+                        <label className={labelClassName}>Lĩnh vực hoạt động *</label>
                         <select
                           value={industry}
                           onChange={(e) => setIndustry(e.target.value)}
                           className={inputClassName}
+                          required
                         >
                           <option value="">Chọn lĩnh vực</option>
                           <option value="it">IT - Phần mềm</option>
@@ -447,11 +428,12 @@ export const LoginPage: React.FC = () => {
                         </select>
                       </div>
                       <div>
-                        <label className={labelClassName}>Quy mô nhân sự</label>
+                        <label className={labelClassName}>Quy mô nhân sự *</label>
                         <select
                           value={companySize}
                           onChange={(e) => setCompanySize(e.target.value)}
                           className={inputClassName}
+                          required
                         >
                           <option value="">Chọn quy mô</option>
                           <option value="1-10">1 - 10</option>
@@ -463,22 +445,24 @@ export const LoginPage: React.FC = () => {
                     </div>
 
                     <div>
-                      <label className={labelClassName}>Địa chỉ trụ sở</label>
+                      <label className={labelClassName}>Địa chỉ trụ sở *</label>
                       <input
                         type="text"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         placeholder="Số nhà, Đường, Phường/Xã..."
                         className={inputClassName}
+                        required
                       />
                     </div>
 
                     <div>
-                      <label className={labelClassName}>Tỉnh / Thành phố</label>
+                      <label className={labelClassName}>Tỉnh / Thành phố *</label>
                       <select
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         className={inputClassName}
+                        required
                       >
                         <option value="">Chọn Tỉnh/Thành phố</option>
                         <option value="hanoi">Hà Nội</option>
@@ -507,18 +491,6 @@ export const LoginPage: React.FC = () => {
                   </form>
                 )}
 
-                <div className="flex items-center gap-4 my-6">
-                  <div className="flex-1 h-[1px] bg-slate-200" />
-                  <span className="text-xs text-slate-400 font-medium px-2">hoặc</span>
-                  <div className="flex-1 h-[1px] bg-slate-200" />
-                </div>
-
-                <GoogleLoginButton
-                  onSuccess={handleGoogleSuccess}
-                  isLoading={loading}
-                  text="Đăng ký với Google"
-                  mode="register"
-                />
               </div>
             )}
 

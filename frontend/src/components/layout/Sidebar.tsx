@@ -14,6 +14,8 @@ export const Sidebar: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   const navItems = [
     { id: 'dashboard', href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -34,6 +36,34 @@ export const Sidebar: React.FC = () => {
   const handleLogout = async () => {
     await AuthService.logout();
     navigate('/login');
+  };
+
+  const handleChangePassword = async () => {
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Vui lòng nhập đầy đủ các trường bắt buộc.');
+      return;
+    }
+    if (newPassword.length < 8 || newPassword.length > 72 || !/[A-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      setPasswordError('Mật khẩu mới phải từ 8 đến 72 ký tự, có ít nhất 1 chữ hoa và 1 chữ số.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Mật khẩu xác nhận không khớp.');
+      return;
+    }
+    try {
+      setPasswordLoading(true);
+      setPasswordError('');
+      await AuthService.changePassword({ currentPassword: oldPassword, newPassword, confirmPassword });
+      setPasswordModalOpen(false);
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: unknown) {
+      setPasswordError((err as { customMessage?: string })?.customMessage || 'Đổi mật khẩu thất bại. Vui lòng thử lại.');
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   return (
@@ -162,6 +192,7 @@ export const Sidebar: React.FC = () => {
                     onChange={e => setOldPassword(e.target.value)}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
                     placeholder="Nhập mật khẩu hiện tại"
+                    maxLength={72}
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -177,6 +208,7 @@ export const Sidebar: React.FC = () => {
                     onChange={e => setNewPassword(e.target.value)}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
                     placeholder="Nhập mật khẩu mới"
+                    maxLength={72}
                   />
                 </div>
               </div>
@@ -189,9 +221,11 @@ export const Sidebar: React.FC = () => {
                     onChange={e => setConfirmPassword(e.target.value)}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-colors"
                     placeholder="Nhập lại mật khẩu mới"
+                    maxLength={72}
                   />
                 </div>
               </div>
+              {passwordError && <p className="text-xs font-medium text-red-600">{passwordError}</p>}
             </div>
             <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
               <button 
@@ -201,13 +235,11 @@ export const Sidebar: React.FC = () => {
                 Hủy bỏ
               </button>
               <button 
-                onClick={() => {
-                  alert('Chức năng đang cập nhật');
-                  setPasswordModalOpen(false);
-                }}
+                onClick={handleChangePassword}
+                disabled={passwordLoading}
                 className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm shadow-blue-500/20 cursor-pointer"
               >
-                Lưu thay đổi
+                {passwordLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
               </button>
             </div>
           </div>

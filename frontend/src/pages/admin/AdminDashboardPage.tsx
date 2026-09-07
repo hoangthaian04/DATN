@@ -1,4 +1,7 @@
+import {useLocation} from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
+import {Confirm} from '@/components/auth/FormFields';
+import {errorMessage} from '@/services/api';
 import { AdminService } from '@/services/admin.service';
 import type { CompanyDetail, CompanyStatus, CompanySummary } from '@/types/auth.types';
 import {
@@ -13,9 +16,12 @@ import {
 } from 'lucide-react';
 
 export const AdminDashboardPage: React.FC = () => {
+  const location=useLocation();
+  const [page,setPage]=useState(1),[lastPage,setLastPage]=useState(1);
+  const [blockingId,setBlockingId]=useState<number|null>(null);
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
   const [total, setTotal] = useState(0);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>(location.pathname.endsWith('/pending')?'PENDING':'all');
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,12 +45,14 @@ export const AdminDashboardPage: React.FC = () => {
       const res = await AdminService.getCompanies({
         status: statusParam,
         searchText: search || undefined,
-        limit: 50,
+        limit: 20,
+        page,
       });
       setCompanies(res.data);
       setTotal(res.total);
-    } catch {
-      showToast('error', 'Không thể tải danh sách doanh nghiệp');
+      setLastPage(res.last_page);
+    } catch (e) {
+      showToast('error', errorMessage(e));
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +60,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   useEffect(() => {
     void fetchCompanies();
-  }, [filterStatus]);
+  }, [filterStatus,page]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,8 +73,8 @@ export const AdminDashboardPage: React.FC = () => {
       const detail = await AdminService.getCompanyDetail(id);
       setSelectedCompany(detail);
       setDetailTab('company');
-    } catch {
-      showToast('error', 'Không thể lấy thông tin chi tiết doanh nghiệp');
+    } catch (e) {
+      showToast('error', errorMessage(e));
     } finally {
       setActionLoadingId(null);
     }
@@ -81,8 +89,8 @@ export const AdminDashboardPage: React.FC = () => {
         setSelectedCompany({ ...selectedCompany, status: 'ACTIVE' });
       }
       await fetchCompanies();
-    } catch {
-      showToast('error', 'Phê duyệt thất bại. Vui lòng thử lại.');
+    } catch (e) {
+      showToast('error', errorMessage(e));
     } finally {
       setActionLoadingId(null);
     }
@@ -106,15 +114,15 @@ export const AdminDashboardPage: React.FC = () => {
         });
       }
       await fetchCompanies();
-    } catch {
-      showToast('error', 'Từ chối thất bại. Vui lòng thử lại.');
+    } catch (e) {
+      showToast('error', errorMessage(e));
     } finally {
       setActionLoadingId(null);
     }
   };
 
   const handleBlock = async (id: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn khóa doanh nghiệp này?')) return;
+    setBlockingId(null);
     try {
       setActionLoadingId(id);
       await AdminService.blockCompany(id);
@@ -123,8 +131,8 @@ export const AdminDashboardPage: React.FC = () => {
         setSelectedCompany({ ...selectedCompany, status: 'BLOCKED' });
       }
       await fetchCompanies();
-    } catch {
-      showToast('error', 'Khóa doanh nghiệp thất bại.');
+    } catch (e) {
+      showToast('error', errorMessage(e));
     } finally {
       setActionLoadingId(null);
     }
@@ -139,6 +147,8 @@ export const AdminDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6 text-left">
+      {blockingId!==null&&<Confirm busy={actionLoadingId!==null} text="Khóa doanh nghiệp sẽ ngắt quyền truy cập workspace của HR và ghi nhật ký thao tác." onConfirm={()=>void handleBlock(blockingId)} onCancel={()=>setBlockingId(null)}/>}
+      <div className="flex gap-4"><button disabled={page<=1||isLoading} onClick={()=>setPage(page-1)}>Trang trước</button><span>Trang {page}/{lastPage}</span><button disabled={page>=lastPage||isLoading} onClick={()=>setPage(page+1)}>Trang sau</button></div>
       {/* Toast Notification */}
       {toastMessage && (
         <div
@@ -187,7 +197,7 @@ export const AdminDashboardPage: React.FC = () => {
         <div className="relative">
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => (setPage(1),setFilterStatus(e.target.value))}
             className="appearance-none pl-4 pr-10 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#0052cc] text-sm font-bold text-slate-700 shadow-xs cursor-pointer"
           >
             <option value="all">Tất cả trạng thái</option>
@@ -294,7 +304,7 @@ export const AdminDashboardPage: React.FC = () => {
 
                           {c.status === 'ACTIVE' && (
                             <button
-                              onClick={() => handleBlock(c.id)}
+                              onClick={() => setBlockingId(c.id)}
                               disabled={actionLoadingId === c.id}
                               title="Khóa doanh nghiệp"
                               className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition cursor-pointer disabled:opacity-50"
@@ -459,7 +469,7 @@ export const AdminDashboardPage: React.FC = () => {
 
               {selectedCompany.status === 'ACTIVE' && (
                 <button
-                  onClick={() => handleBlock(selectedCompany.id)}
+                  onClick={() => setBlockingId(selectedCompany.id)}
                   className="px-4 py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 shadow-md shadow-red-600/20 cursor-pointer"
                 >
                   Khóa doanh nghiệp
