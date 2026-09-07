@@ -12,6 +12,7 @@ import java.util.List;
 @Repository
 public interface ApplicationRepository extends JpaRepository<ApplicationEntity, Long> {
 
+    List<ApplicationEntity> findByCompanyIdAndCreatedAtBetween(Long companyId,LocalDateTime start,LocalDateTime end);
     Long countByCompanyIdAndStatusAndCreatedAtBetween(
             Long companyId, String status, LocalDateTime startDate, LocalDateTime endDate);
 

@@ -8,7 +8,8 @@ import java.time.LocalDateTime;
 @Table(name = "applications", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"job_id", "candidate_id"})
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -45,7 +46,7 @@ public class ApplicationEntity {
 
     @Builder.Default
     @Column(length = 50, nullable = false)
-    private String status = "NEW";
+    private String status = "ACTIVE";
 
     @Builder.Default
     @Column(length = 100)
@@ -68,7 +69,7 @@ public class ApplicationEntity {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (appliedAt == null) appliedAt = LocalDateTime.now();
-        if (status == null) status = "NEW";
+        if (status == null) status = "ACTIVE";
         if (source == null) source = "CAREER_SITE";
         if (currentStep == null) currentStep = 0;
     }

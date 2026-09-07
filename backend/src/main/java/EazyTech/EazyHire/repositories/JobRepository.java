@@ -13,6 +13,7 @@ import java.util.List;
 @Repository
 public interface JobRepository extends JpaRepository<JobEntity, Long> {
 
+    List<JobEntity> findByCompanyIdAndIsDeletedFalse(Long companyId);
     Long countByCompanyIdAndStatusAndIsDeletedFalseAndCreatedAtBetween(
             Long companyId, String status, LocalDateTime startDate, LocalDateTime endDate);
 
