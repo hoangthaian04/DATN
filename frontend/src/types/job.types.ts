@@ -18,13 +18,17 @@ export interface Job {
   salaryMax?: number;
   salaryCurrency: string;
   jobType: JobType;
+  workingType?: string;
   experienceLevel: ExperienceLevel;
+  experienceYearsMin?: number;
+  roundCount?: number;
   description?: string;
   requirements?: string;
   benefits?: string;
   status: JobStatus;
-  applicantCount: number;
+  applicantCount?: number;
   publishedAt?: string;
+  closedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -59,4 +63,25 @@ export interface JobStats {
   active: number;
   inactive: number;
   closed: number;
+}
+
+export interface UpdateJobRequest {
+  title: string;
+  description?: string;
+  requirements?: string;
+  benefits?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  currency?: string;
+  location?: string;
+  workingType?: string;
+  employmentType?: string;
+  experienceLevel?: string;
+  experienceYearsMin?: number;
+  roundCount?: number;
+}
+
+export interface SaveJobPipelineRequest {
+  job: UpdateJobRequest;
+  rounds: import('./hiring-round.types').HiringRoundRequest[];
 }
