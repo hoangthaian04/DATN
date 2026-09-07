@@ -19,7 +19,7 @@ RUN addgroup -S easytech && adduser -S easytech -G easytech
 
 COPY --from=builder /app/target/*.jar app.jar
 
-RUN chown easytech:easytech app.jar
+RUN mkdir -p /app/uploads && chown -R easytech:easytech app.jar /app/uploads
 USER easytech
 
 EXPOSE 8080
