@@ -31,6 +31,7 @@ public class CareerSiteEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "logo_url", columnDefinition = "TEXT") private String logoUrl;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false, unique = true)

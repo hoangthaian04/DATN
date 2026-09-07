@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { PrivateRoute } from '@/components/auth/PrivateRoute';
+import { PrivateRoute, PublicOnlyRoute } from '@/components/auth/PrivateRoute';
 
 // ─── Layouts ─────────────────────────────────────────────────────────────────
 import { DashboardLayout } from '@/layouts/DashboardLayout';
@@ -9,8 +9,10 @@ import { CareerLayout } from '@/layouts/CareerLayout';
 // ─── Auth Pages ───────────────────────────────────────────────────────────────
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { RejectedRegistrationPage } from '@/pages/auth/RejectedRegistrationPage';
 import { OnboardingPage } from '@/pages/auth/OnboardingPage';
 import { PendingApprovalPage } from '@/pages/auth/PendingApprovalPage';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 
 // ─── HR Dashboard Pages ───────────────────────────────────────────────────────
 import { DashboardPage } from '@/pages/hr/DashboardPage';
@@ -45,11 +47,14 @@ export const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/login" replace /> },
 
   // ── Auth ──
-  { path: '/login', element: <LoginPage /> },
-  { path: '/register', element: <RegisterPage /> },
-  { path: '/onboarding', element: <OnboardingPage /> },
-  { path: '/pending', element: <PendingApprovalPage /> },
+  { path: '/login', element: <PublicOnlyRoute><LoginPage /></PublicOnlyRoute> },
+  { path: '/register', element: <PublicOnlyRoute><RegisterPage /></PublicOnlyRoute> },
+  { path: '/forgot-password', element: <PublicOnlyRoute><ForgotPasswordPage /></PublicOnlyRoute> },
+  { path: '/onboarding', element: <PrivateRoute role="HR" restricted><OnboardingPage /></PrivateRoute> },
+  { path: '/pending', element: <PrivateRoute role="HR" restricted><PendingApprovalPage /></PrivateRoute> },
 
+  {path:'/registration/rejected',element:<PrivateRoute role="HR" restricted><RejectedRegistrationPage/></PrivateRoute>},
+  {path:'/403',element:<div className="p-8">Tài khoản không có quyền truy cập. Vui lòng liên hệ quản trị viên.</div>},
   // ── HR Dashboard (yêu cầu đăng nhập, role HR) ──
   {
     path: '/dashboard',
@@ -67,13 +72,14 @@ export const router = createBrowserRouter([
       { path: 'applications/kanban', element: <KanbanPage /> },
       { path: 'applications/list', element: <CandidatesListPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      {path:'settings/company',element:<OnboardingPage settings/>},
       { path: 'career-site', element: <CareerSiteSettingsPage /> },
       { path: 'notifications', element: <NotificationsPage /> },
     ],
   },
 
   // ── Admin (yêu cầu role ADMIN) ──
-  { path: '/admin/login', element: <AdminLoginPage /> },
+  { path: '/admin/login', element: <PublicOnlyRoute><AdminLoginPage /></PublicOnlyRoute> },
   {
     path: '/admin',
     element: (
@@ -82,7 +88,9 @@ export const router = createBrowserRouter([
       </PrivateRoute>
     ),
     children: [
-      { index: true, element: <AdminDashboardPage /> },
+      { index: true, element: <Navigate to="/admin/dashboard" replace /> },
+      {path:'dashboard',element:<AdminDashboardPage/>},
+      {path:'companies/pending',element:<AdminDashboardPage/>},
       { path: 'companies', element: <AdminDashboardPage /> },
       { path: 'categories', element: <AdminJobCategories /> },
       { path: 'logs', element: <AdminAuditLogs /> },

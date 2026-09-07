@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -31,6 +32,8 @@ public class CompanyDetailResponseDTO {
     private String rejectedReason;
     private CompanyProfileDTO profile;
     private CareerSiteDTO careerSite;
+    @Builder.Default
+    private List<String> duplicateWarnings = List.of();
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

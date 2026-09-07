@@ -1,48 +1,20 @@
 package EazyTech.EazyHire.models.dtos;
-
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import jakarta.validation.constraints.*;
+import EazyTech.EazyHire.models.enums.CompanyStatus;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class OnboardingRequestDTO {
-
-    @NotBlank(message = "Tên công ty không được để trống")
-    @Size(max = 255, message = "Tên công ty không quá 255 ký tự")
-    private String companyName;
-
-    @Size(max = 100, message = "Mã số thuế không quá 100 ký tự")
-    private String taxCode;
-
-    @Size(max = 50, message = "Số điện thoại không quá 50 ký tự")
-    private String phone;
-
-    @Email(message = "Email công ty không đúng định dạng")
-    @Size(max = 255, message = "Email công ty không quá 255 ký tự")
-    private String email;
-
-    @Size(max = 255, message = "Website không quá 255 ký tự")
-    private String website;
-
-    private String address;
-
-    private String logoUrl;
-
-    private String bannerUrl;
-
-    @Size(max = 20, message = "Mã màu không hợp lệ")
-    private String primaryColor;
-
-    private String description;
-
-    private String benefits;
+@Size(max=255) private String industry;
+@Pattern(regexp="^(1-10|11-50|50-100|51-200|201-500|501-1000|1000\\+|1001\\+)?$", message="Quy mô công ty không hợp lệ") private String companySize;
+@Pattern(regexp="^(https?://[^\\s]+)?$", message="Website phải bắt đầu bằng http:// hoặc https://") @Size(max=255) private String website;
+@Size(max=5000) private String description;
+@Pattern(regexp="^(\\+?[0-9][0-9 .()-]{7,19})?$", message="Số điện thoại không hợp lệ") private String phone;
+@Size(max=2000) private String address;
+@Pattern(regexp="^#[0-9a-fA-F]{6}$", message="Màu thương hiệu không hợp lệ") private String primaryColor;
+@Size(max=5000) private String benefits;
+@Size(max=255) private String businessType;
+@Email @Size(max=255) private String contactEmail;
+private Boolean onboardingCompleted;
 }

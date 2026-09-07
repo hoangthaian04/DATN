@@ -2,6 +2,7 @@ package EazyTech.EazyHire.models.dtos;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,5 +21,6 @@ public class LoginRequestDTO {
     private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống")
+    @Size(max = 72, message = "Mật khẩu tối đa 72 ký tự")
     private String password;
 }

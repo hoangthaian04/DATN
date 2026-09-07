@@ -31,6 +31,12 @@ public class CompanyProfileEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String industry;
+    @Column(name = "company_size") private String companySize;
+    @Column(name = "business_type") private String businessType;
+    @Column(name = "contact_email") private String contactEmail;
+    @Column(name = "onboarding_completed", nullable = false)
+    @Builder.Default private Boolean onboardingCompleted = false;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false, unique = true)

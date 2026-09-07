@@ -7,14 +7,12 @@ export const PublicHeader: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo and Brand */}
         <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-amber-500 text-white shadow-md">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-6 w-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-            </svg>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm overflow-hidden">
+            <img src="/logo.png" alt="EasyHire Logo" className="h-full w-full object-contain" />
           </div>
           <div>
-            <span className="text-base font-extrabold text-slate-800 tracking-tight block">EasyTech</span>
-            <span className="text-[10px] font-semibold text-slate-400 block -mt-1 uppercase tracking-wider">EasyTech Platform</span>
+            <span className="text-base font-extrabold text-slate-800 tracking-tight block">EasyHire</span>
+            <span className="text-[10px] font-semibold text-slate-400 block -mt-1 uppercase tracking-wider">EasyHire Platform</span>
           </div>
         </Link>
 

@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { AuthService } from '@/services/auth.service';
 import { PublicHeader } from '@/components/layout/PublicHeader';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 import {
@@ -19,8 +20,8 @@ import {
   Upload,
 } from 'lucide-react';
 
-export const OnboardingPage: React.FC = () => {
-  const { user, onboarding } = useAuth();
+export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = false }) => {
+  const { user, onboarding, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -37,6 +38,25 @@ export const OnboardingPage: React.FC = () => {
   const slug = user?.companySlug || '';
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
+  useEffect(() => {
+    let active = true;
+    AuthService.getCompany()
+      .then((company) => {
+        if (!active) return;
+        setCompanyName(company.name || '');
+        setTaxCode(company.taxCode || '');
+        setServices(company.profile?.description || '');
+        setPhoneNumber(company.phone || '');
+        setAddress(company.address || '');
+        setWebsite(company.website || '');
+        setLogoUrl(company.careerSite?.logoUrl || company.profile?.logoUrl || null);
+      })
+      .catch((err: unknown) => {
+        if (active) setErrorMessage((err as { customMessage?: string })?.customMessage || 'Không tải được hồ sơ doanh nghiệp.');
+      });
+    return () => { active = false; };
+  }, []);
+
   const completeness = useMemo(() => {
     let score = 15;
     if (companyName.trim()) score += 20;
@@ -48,9 +68,20 @@ export const OnboardingPage: React.FC = () => {
     return Math.min(score, 100);
   }, [address, companyName, phoneNumber, services, slug, website]);
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setLogoUrl(URL.createObjectURL(e.target.files[0]));
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const previewUrl = URL.createObjectURL(file);
+    setLogoUrl(previewUrl);
+    try {
+      setLoading(true);
+      setErrorMessage(null);
+      const company = await AuthService.uploadLogo(file);
+      setLogoUrl(company.careerSite?.logoUrl || company.profile?.logoUrl || previewUrl);
+    } catch (err: unknown) {
+      setErrorMessage((err as { customMessage?: string })?.customMessage || 'Tải logo thất bại. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,19 +97,33 @@ export const OnboardingPage: React.FC = () => {
       setErrorMessage(null);
 
       await onboarding({
-        companyName,
-        taxCode: taxCode || undefined,
         phone: phoneNumber || undefined,
-        website: website || undefined,
+        website: website
+          ? (/^https?:\/\//i.test(website) ? website : `https://${website}`)
+          : undefined,
         address: address || undefined,
         description: services || undefined,
-        logoUrl: logoUrl || undefined,
+        contactEmail: user?.email,
+        onboardingCompleted: true,
       });
-
-      navigate('/pending', { replace: true });
+      await refreshUser();
+      navigate(settings ? '/dashboard/settings' : '/dashboard', { replace: true });
     } catch (err: unknown) {
       const msg = (err as { customMessage?: string })?.customMessage || 'Lưu thông tin thất bại. Vui lòng thử lại.';
       setErrorMessage(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    try {
+      setLoading(true);
+      setErrorMessage(null);
+      await onboarding({ onboardingCompleted: true });
+      navigate('/dashboard', { replace: true });
+    } catch (err: unknown) {
+      setErrorMessage((err as { customMessage?: string })?.customMessage || 'Không thể bỏ qua onboarding. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -90,15 +135,27 @@ export const OnboardingPage: React.FC = () => {
 
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 md:p-12">
         <div className="mb-8 text-left">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[#0052cc] text-xs font-bold">
-            <Sparkles className="h-3.5 w-3.5" />
-            Lần đăng nhập đầu tiên
-          </span>
+          <div className="flex items-center justify-between gap-4">
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[#0052cc] text-xs font-bold">
+              <Sparkles className="h-3.5 w-3.5" />
+              {settings ? 'Cập nhật hồ sơ doanh nghiệp' : 'Lần đăng nhập đầu tiên'}
+            </span>
+            {!settings && (
+              <button
+                type="button"
+                onClick={handleSkip}
+                disabled={loading}
+                className="text-xs font-bold text-slate-500 hover:text-[#0052cc] disabled:opacity-60 cursor-pointer"
+              >
+                Bỏ qua, thiết lập sau
+              </button>
+            )}
+          </div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mt-4">
-            Thiết lập hồ sơ công ty trước khi vào HR Dashboard
+            {settings ? 'Thiết lập hồ sơ công ty' : 'Thiết lập hồ sơ công ty trước khi vào HR Dashboard'}
           </h1>
           <p className="text-sm font-semibold text-slate-500 mt-2 max-w-3xl">
-            EasyTech cần thông tin doanh nghiệp để Admin duyệt, tạo Career Site riêng và gắn branding cho email/tin tuyển dụng.
+            Hoàn thiện hồ sơ để tạo Career Site riêng và gắn thương hiệu cho email, tin tuyển dụng.
           </p>
         </div>
 
@@ -215,9 +272,9 @@ export const OnboardingPage: React.FC = () => {
                     </label>
                     <input
                       value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
                       placeholder="VD: TechA Solutions JSC"
                       className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
+                      readOnly
                       required
                     />
                   </div>
@@ -228,9 +285,9 @@ export const OnboardingPage: React.FC = () => {
                     </label>
                     <input
                       value={taxCode}
-                      onChange={(e) => setTaxCode(e.target.value)}
                       placeholder="VD: 0101234567"
                       className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
+                      readOnly
                     />
                   </div>
 
@@ -361,8 +418,7 @@ export const OnboardingPage: React.FC = () => {
                   </div>
 
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    Sau khi bấm <strong>"Gửi hồ sơ chờ duyệt"</strong>, hồ sơ của bạn sẽ chuyển sang trạng thái{' '}
-                    <span className="text-amber-600 font-bold">Chờ duyệt (PENDING)</span>. Quản trị viên EasyTech sẽ kiểm duyệt trong vòng 24h.
+                    Sau khi bấm <strong>"Hoàn tất thiết lập"</strong>, thông tin sẽ được lưu và bạn có thể sử dụng HR Dashboard.
                   </p>
 
                   <div className="flex items-center justify-between pt-4">
@@ -384,7 +440,7 @@ export const OnboardingPage: React.FC = () => {
                       ) : (
                         <>
                           <Send className="h-4 w-4" />
-                          <span>Gửi hồ sơ chờ duyệt</span>
+                          <span>{settings ? 'Lưu thay đổi' : 'Hoàn tất thiết lập'}</span>
                         </>
                       )}
                     </button>

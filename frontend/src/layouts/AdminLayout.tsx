@@ -36,7 +36,7 @@ export const AdminLayout: React.FC = () => {
             <ShieldAlert className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-extrabold text-slate-800 tracking-wider">EasyTech</p>
+            <p className="text-sm font-extrabold text-slate-800 tracking-wider">EasyHire</p>
             <p className="text-[9px] font-bold text-[#0052cc] uppercase tracking-widest -mt-0.5">
               Admin Command Panel
             </p>
@@ -50,7 +50,7 @@ export const AdminLayout: React.FC = () => {
             </div>
             <div className="text-left">
               <p className="text-xs font-bold text-slate-800">{user?.fullName || 'System Administrator'}</p>
-              <p className="text-[9px] text-slate-500 font-semibold">{user?.email || 'admin@easytech.vn'}</p>
+              <p className="text-[9px] text-slate-500 font-semibold">{user?.email || 'admin@EasyHire.vn'}</p>
             </div>
           </div>
 

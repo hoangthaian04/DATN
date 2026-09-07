@@ -24,7 +24,7 @@ export const AdminJobCategories: React.FC = () => {
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Danh mục Nghề nghiệp</h1>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            Quản lý các Job Categories dùng chung cho hệ thống tuyển dụng EasyTech.
+            Quản lý các Job Categories dùng chung cho hệ thống tuyển dụng EasyHire.
           </p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2.5 bg-[#0052cc] text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-xs cursor-pointer">

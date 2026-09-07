@@ -22,6 +22,16 @@ public class RedisClient {
         this.mapper = mapper;
     }
 
+    public boolean putIfAbsent(String key,String value,long seconds){return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(key,value,Duration.ofSeconds(seconds)));}
+    public void delete(String key){redisTemplate.delete(key);}
+    public long incrementWithExpiry(String key,long seconds){
+        String lua="local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],ARGV[1]) end; return n";
+        return redisTemplate.execute(new org.springframework.data.redis.core.script.DefaultRedisScript<Long>(lua,Long.class),List.of(key),String.valueOf(seconds));
+    }
+    public boolean consumeIfEqual(String key,String value){
+        String lua="if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) else return 0 end";
+        return Long.valueOf(1).equals(redisTemplate.execute(new org.springframework.data.redis.core.script.DefaultRedisScript<Long>(lua,Long.class),List.of(key),value));
+    }
     public String get(String key) {
         return redisTemplate.opsForValue().get(key);
     }

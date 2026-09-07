@@ -7,6 +7,9 @@ plugins {
 group = 'EazyTech'
 version = '0.0.1-SNAPSHOT'
 
+// Allow isolated verification when a local server holds the default build directory.
+layout.buildDirectory = file(findProperty('buildOutput') ?: 'build')
+
 java {
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
@@ -23,6 +26,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
 	// Database Drivers & Migration
 	runtimeOnly 'org.postgresql:postgresql'

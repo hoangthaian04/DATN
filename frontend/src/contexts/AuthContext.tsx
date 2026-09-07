@@ -12,7 +12,6 @@ interface AuthContextValue {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (data: LoginRequest) => Promise<User>;
-  loginWithGoogle: (idToken: string) => Promise<User>;
   adminLogin: (data: LoginRequest) => Promise<User>;
   register: (data: RegisterRequest) => Promise<User>;
   onboarding: (data: OnboardingRequest) => Promise<void>;
@@ -25,19 +24,23 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  useEffect(()=>{
+    const clear=()=>setUser(null);
+    const check=()=>{void AuthService.getMe().then(setUser).catch(()=>setUser(null));};
+    window.addEventListener('auth:expired',clear);
+    window.addEventListener('pageshow',check);
+    return ()=>{window.removeEventListener('auth:expired',clear);window.removeEventListener('pageshow',check);};
+  },[]);
 
   // Khôi phục session khi mount
   useEffect(() => {
     const restoreSession = async () => {
-      if (!AuthService.hasToken()) {
-        setIsLoading(false);
-        return;
-      }
+
       try {
         const me = await AuthService.getMe();
         setUser(me);
       } catch {
-        await AuthService.logout();
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -47,30 +50,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = useCallback(async (data: LoginRequest): Promise<User> => {
     const response = await AuthService.login(data);
-    AuthService.saveTokens(response);
-    setUser(response.user);
-    return response.user;
-  }, []);
-
-  const loginWithGoogle = useCallback(async (idToken: string): Promise<User> => {
-    const response = await AuthService.googleLogin({ idToken });
-    AuthService.saveTokens(response);
     setUser(response.user);
     return response.user;
   }, []);
 
   const adminLogin = useCallback(async (data: LoginRequest): Promise<User> => {
     const response = await AuthService.adminLogin(data);
-    AuthService.saveTokens(response);
     setUser(response.user);
     return response.user;
   }, []);
 
   const register = useCallback(async (data: RegisterRequest): Promise<User> => {
     const response = await AuthService.register(data);
-    AuthService.saveTokens(response);
-    setUser(response.user);
-    return response.user;
+    setUser(response);
+    return response;
   }, []);
 
   const onboarding = useCallback(async (data: OnboardingRequest): Promise<void> => {
@@ -96,7 +89,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         isAuthenticated: !!user,
         login,
-        loginWithGoogle,
         adminLogin,
         register,
         onboarding,

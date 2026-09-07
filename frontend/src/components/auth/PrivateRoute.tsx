@@ -1,47 +1,29 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import type { UserRole } from '@/types/auth.types';
-
-interface PrivateRouteProps {
-  children: React.ReactNode;
-  /** Nếu có, chỉ cho phép role này truy cập */
-  role?: UserRole;
-  /** Redirect đến đây nếu chưa đăng nhập (mặc định: /login) */
-  redirectTo?: string;
+import {Navigate,useLocation} from 'react-router-dom';
+import {useAuth} from '@/contexts/AuthContext';
+import type {User,UserRole} from '@/types/auth.types';
+export function getPostLoginPath(user:User):string{
+ if(user.status==='BLOCKED'||user.status==='INACTIVE'||user.companyStatus==='BLOCKED')return '/403';
+ if(user.role==='ADMIN')return user.status==='ACTIVE'?'/admin/dashboard':'/403';
+ if(user.companyStatus==='PENDING')return '/pending';
+ if(user.companyStatus==='REJECTED')return '/registration/rejected';
+ if(user.status!=='ACTIVE'||user.companyStatus!=='ACTIVE')return '/403';
+ return user.onboardingCompleted?'/dashboard':'/onboarding';
 }
-
-/**
- * Bảo vệ route — redirect về /login nếu chưa đăng nhập,
- * hoặc 403 nếu không đúng role.
- */
-export const PrivateRoute: React.FC<PrivateRouteProps> = ({
-  children,
-  role,
-  redirectTo = '/login',
-}) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
-  const location = useLocation();
-
-  if (isLoading) {
-    // Đang kiểm tra token → hiển thị loading toàn màn hình
-    return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-          <p className="text-sm text-slate-500">Đang tải...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to={redirectTo} state={{ from: location }} replace />;
-  }
-
-  if (role && user?.role !== role) {
-    return <Navigate to="/403" replace />;
-  }
-
-  return <>{children}</>;
-};
+export function PublicOnlyRoute({children}:{children:React.ReactNode}){
+ const {user,isLoading}=useAuth();
+ if(isLoading)return <p role="status">Đang kiểm tra phiên đăng nhập…</p>;
+ return user?<Navigate to={getPostLoginPath(user)} replace/>:<>{children}</>;
+}
+export function PrivateRoute({children,role,redirectTo='/login',restricted=false}:{children:React.ReactNode;role?:UserRole;redirectTo?:string;restricted?:boolean}){
+ const {user,isLoading}=useAuth();const location=useLocation();
+ if(isLoading)return <p role="status">Đang kiểm tra phiên đăng nhập…</p>;
+ if(!user)return <Navigate to={redirectTo} replace/>;
+ const target=getPostLoginPath(user);
+ if(role==='ADMIN'&&user.role!=='ADMIN'||role==='HR'&&user.role==='ADMIN')return <Navigate to={target} replace/>;
+ if(target==='/403')return <Navigate to="/403" replace/>;
+ if(user.role!=='ADMIN'){
+  if(restricted && location.pathname!==target)return <Navigate to={target} replace/>;
+  if(!restricted && target!=='/dashboard')return <Navigate to={target} replace/>;
+ }
+ return <>{children}</>;
+}

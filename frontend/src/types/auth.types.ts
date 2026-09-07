@@ -1,4 +1,4 @@
-export type UserRole = 'HR' | 'ADMIN';
+export type UserRole = 'HR_ADMIN' | 'HR' | 'ADMIN';
 
 export type CompanyStatus = 'PENDING' | 'ACTIVE' | 'REJECTED' | 'BLOCKED';
 
@@ -8,17 +8,17 @@ export interface User {
   fullName: string;
   avatarUrl?: string;
   role: UserRole;
-  status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
+  status: 'PENDING' | 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
   companyId?: number;
   companyName?: string;
   companySlug?: string;
   companyStatus?: CompanyStatus;
+  onboardingCompleted: boolean;
+  profileCompleted: boolean;
   createdAt: string;
 }
 
 export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
   tokenType: string;
   expiresIn: number;
 }
@@ -26,10 +26,6 @@ export interface AuthTokens {
 export interface LoginRequest {
   email: string;
   password: string;
-}
-
-export interface GoogleLoginRequest {
-  idToken: string;
 }
 
 export interface LoginResponse extends AuthTokens {
@@ -41,24 +37,26 @@ export interface RegisterRequest {
   password: string;
   fullName: string;
   companyName: string;
-  phone?: string;
+  phone: string;
+  taxCode: string;
+  address: string;
+  subdomain: string;
+  industry: string;
+  companySize: string;
+  website?: string;
+  description: string;
+  logoUrl?: string;
 }
 
 export interface OnboardingRequest {
-  companyName: string;
-  taxCode?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  address?: string;
-  logoUrl?: string;
-  bannerUrl?: string;
-  primaryColor?: string;
-  description?: string;
-  benefits?: string;
+ industry?: string; companySize?: string; website?: string; description?: string;
+ phone?: string; address?: string; primaryColor?: string; benefits?: string;
+ businessType?: string; contactEmail?: string; onboardingCompleted?: boolean;
 }
 
 export interface CompanyProfile {
+ industry?: string; companySize?: string; businessType?: string; contactEmail?: string;
+ onboardingCompleted: boolean; profileCompleted: boolean; completedSteps: number; careerSiteLogoUrl?: string;
   id: number;
   logoUrl?: string;
   bannerUrl?: string;
@@ -69,6 +67,7 @@ export interface CompanyProfile {
 }
 
 export interface CareerSiteSettings {
+ logoUrl?: string;
   id: number;
   siteTitle?: string;
   tagline?: string;
@@ -111,3 +110,7 @@ export interface CompanyFilterParams {
   limit?: number;
   orderBy?: string;
 }
+
+export interface PasswordResetRequest {resetToken:string;newPassword:string;confirmPassword:string;}
+export interface PasswordChangeRequest {currentPassword:string;newPassword:string;confirmPassword:string;}
+export type RegistrationUpdate=Pick<RegisterRequest,'companyName'|'taxCode'|'phone'|'address'|'subdomain'>;

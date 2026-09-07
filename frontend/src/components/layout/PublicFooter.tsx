@@ -7,7 +7,7 @@ export const PublicFooter: React.FC = () => {
         {/* Left Side Info */}
         <div className="text-center md:text-left">
           <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">
-            © {new Date().getFullYear()} EasyTech Platform
+            © {new Date().getFullYear()} EasyHire Platform
           </p>
           <p className="text-[10px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">
             Hệ thống quản trị và tự động hóa quy trình tuyển dụng

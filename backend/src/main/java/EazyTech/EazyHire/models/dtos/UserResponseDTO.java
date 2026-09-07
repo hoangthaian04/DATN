@@ -18,6 +18,8 @@ import java.time.LocalDateTime;
 @Builder
 public class UserResponseDTO {
     private Long id;
+    private boolean onboardingCompleted;
+    private boolean profileCompleted;
     private String email;
     private String fullName;
     private String avatarUrl;

@@ -6,9 +6,9 @@ export const AdminUsers: React.FC = () => {
 
   // Mock Admin Users
   const users = [
-    { id: '1', name: 'System Administrator', email: 'admin@easytech.vn', role: 'SUPER_ADMIN', status: 'ACTIVE', lastLogin: '2026-08-30 10:15' },
-    { id: '2', name: 'Jane Smith', email: 'jane.smith@easytech.vn', role: 'SYSTEM_MANAGER', status: 'ACTIVE', lastLogin: '2026-08-29 14:22' },
-    { id: '3', name: 'Mike Johnson', email: 'mike.j@easytech.vn', role: 'SUPPORT', status: 'INACTIVE', lastLogin: '2026-08-15 09:00' },
+    { id: '1', name: 'System Administrator', email: 'admin@EasyHire.vn', role: 'SUPER_ADMIN', status: 'ACTIVE', lastLogin: '2026-08-30 10:15' },
+    { id: '2', name: 'Jane Smith', email: 'jane.smith@EasyHire.vn', role: 'SYSTEM_MANAGER', status: 'ACTIVE', lastLogin: '2026-08-29 14:22' },
+    { id: '3', name: 'Mike Johnson', email: 'mike.j@EasyHire.vn', role: 'SUPPORT', status: 'INACTIVE', lastLogin: '2026-08-15 09:00' },
   ];
 
   const filtered = users.filter((u) =>
