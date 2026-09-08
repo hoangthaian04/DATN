@@ -72,7 +72,7 @@ export const router = createBrowserRouter([
       { path: 'applications/kanban', element: <KanbanPage /> },
       { path: 'applications/list', element: <CandidatesListPage /> },
       { path: 'settings', element: <SettingsPage /> },
-      {path:'settings/company',element:<OnboardingPage settings/>},
+      { path: 'settings/company', element: <Navigate to="/dashboard/settings" replace /> },
       { path: 'career-site', element: <CareerSiteSettingsPage /> },
       { path: 'notifications', element: <NotificationsPage /> },
     ],

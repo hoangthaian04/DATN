@@ -13,6 +13,10 @@ import java.util.List;
 public interface ApplicationRepository extends JpaRepository<ApplicationEntity, Long> {
 
     List<ApplicationEntity> findByCompanyIdAndCreatedAtBetween(Long companyId,LocalDateTime start,LocalDateTime end);
+
+    boolean existsByJobIdAndCurrentRoundId(Long jobId, Long currentRoundId);
+
+
     Long countByCompanyIdAndStatusAndCreatedAtBetween(
             Long companyId, String status, LocalDateTime startDate, LocalDateTime endDate);
 
