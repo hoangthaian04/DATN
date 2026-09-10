@@ -17,7 +17,7 @@ export const JobsTable: React.FC<Props> = ({ jobsPagination, isLoading, onPageCh
   const getStatusBadge = (status: string) => {
     const isDraft = status === 'INACTIVE' || status === 'CLOSED';
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
         isDraft 
           ? 'bg-slate-100 text-slate-500 border-slate-200' 
           : 'bg-emerald-50 text-emerald-500 border-emerald-100'
@@ -71,7 +71,7 @@ export const JobsTable: React.FC<Props> = ({ jobsPagination, isLoading, onPageCh
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider select-none">
+            <tr className="border-b border-slate-100 bg-slate-50/50 text-xs font-extrabold text-slate-400 uppercase tracking-wider select-none">
               <th className="px-6 py-4 whitespace-nowrap">Tiêu đề</th>
               <th className="px-6 py-4 whitespace-nowrap">Loại hình</th>
               <th className="px-6 py-4 whitespace-nowrap">Địa điểm</th>

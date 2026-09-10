@@ -57,7 +57,7 @@ export const JobsPage: React.FC = () => {
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
             <span>Dashboard</span>
-            <span className="text-[10px]">&gt;</span>
+            <span className="text-xs">&gt;</span>
             <span className="text-slate-500">Tin tuyển dụng</span>
           </div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Danh sách tin tuyển dụng</h1>

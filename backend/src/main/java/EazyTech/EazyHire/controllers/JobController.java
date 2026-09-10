@@ -10,7 +10,9 @@ import EazyTech.EazyHire.models.dtos.JobStatsResponseDTO;
 import EazyTech.EazyHire.models.dtos.JobDetailResponseDTO;
 import EazyTech.EazyHire.models.dtos.UpdateJobRequestDTO;
 import EazyTech.EazyHire.models.dtos.SaveJobPipelineRequestDTO;
+import EazyTech.EazyHire.models.dtos.ApplicationListResponseDTO;
 import EazyTech.EazyHire.services.JobService;
+import EazyTech.EazyHire.services.ApplicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class JobController {
 
     private final JobService jobService;
+    private final ApplicationService applicationService;
 
     @GetMapping
     public ResponseEntity<BaseResponse> getJobs(
@@ -54,6 +57,7 @@ public class JobController {
         JobDetailResponseDTO job = jobService.getJobById(jobId, user.getCompanyId());
         return ResponseEntity.ok(new BaseResponse(1, "Lấy chi tiết job thành công", job));
     }
+
 
     @PutMapping("/{jobId}")
     public ResponseEntity<BaseResponse> updateJob(

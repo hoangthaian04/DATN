@@ -18,6 +18,8 @@ import org.springframework.data.domain.Pageable;
 public interface JobRepository extends JpaRepository<JobEntity, Long> {
 
     List<JobEntity> findByCompanyIdAndIsDeletedFalse(Long companyId);
+    
+    boolean existsByIdAndCompanyId(Long id, Long companyId);
     Long countByCompanyIdAndStatusAndIsDeletedFalseAndCreatedAtBetween(
             Long companyId, String status, LocalDateTime startDate, LocalDateTime endDate);
 

@@ -10,10 +10,12 @@ import EazyTech.EazyHire.models.dtos.SaveJobPipelineRequestDTO;
 import EazyTech.EazyHire.models.dtos.PipelineRoundRequestDTO;
 import EazyTech.EazyHire.models.entities.JobEntity;
 import EazyTech.EazyHire.models.entities.HiringRoundEntity;
+import EazyTech.EazyHire.models.enums.EmailTemplateType;
 import EazyTech.EazyHire.repositories.ApplicationRepository;
 import EazyTech.EazyHire.repositories.HiringRoundRepository;
 import EazyTech.EazyHire.repositories.JobRepository;
 import EazyTech.EazyHire.services.JobService;
+import EazyTech.EazyHire.services.EmailTemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +32,7 @@ public class JobServiceImpl implements JobService {
     private final JobRepository jobRepository;
     private final HiringRoundRepository hiringRoundRepository;
     private final ApplicationRepository applicationRepository;
+    private final EmailTemplateService emailTemplateService;
 
     @Override
     public Page<JobListResponseDTO> getJobs(Long companyId, String keyword, String status, PaginationRequest paginationRequest) {
@@ -132,6 +135,8 @@ public class JobServiceImpl implements JobService {
         List<HiringRoundEntity> ordered = new ArrayList<>();
         for (int index = 0; index < request.getRounds().size(); index++) {
             PipelineRoundRequestDTO input = request.getRounds().get(index);
+            emailTemplateService.validateRoundTemplate(companyId, input.getPassEmailTemplateId(), EmailTemplateType.PASS);
+            emailTemplateService.validateRoundTemplate(companyId, input.getFailEmailTemplateId(), EmailTemplateType.FAIL);
             HiringRoundEntity round = input.getId() == null
                     ? HiringRoundEntity.builder().company(job.getCompany()).job(job).isDeleted(false).build()
                     : existingById.get(input.getId());

@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import EazyTech.EazyHire.models.dtos.ApplicationListResponseDTO;
 
 @Repository
 public interface ApplicationRepository extends JpaRepository<ApplicationEntity, Long> {
@@ -35,4 +38,17 @@ public interface ApplicationRepository extends JpaRepository<ApplicationEntity, 
             
     // Fetch NEW applications for Todo list
     List<ApplicationEntity> findTop5ByCompanyIdAndStatusOrderByCreatedAtDesc(Long companyId, String status);
+
+    @Query("SELECT new EazyTech.EazyHire.models.dtos.ApplicationListResponseDTO(" +
+           "a.id, c.id, c.fullName, j.title, c.phone, c.email, a.status) " +
+           "FROM ApplicationEntity a " +
+           "JOIN a.candidate c " +
+           "JOIN a.job j " +
+           "WHERE (:jobId IS NULL OR j.id = :jobId) AND a.company.id = :companyId " +
+           "AND (:status IS NULL OR a.status = :status)")
+    Page<ApplicationListResponseDTO> findApplicationsForListView(
+            @Param("jobId") Long jobId, 
+            @Param("companyId") Long companyId, 
+            @Param("status") String status, 
+            Pageable pageable);
 }

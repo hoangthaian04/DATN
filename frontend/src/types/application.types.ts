@@ -67,3 +67,13 @@ export interface ApplicationListResponse {
   totalPages: number;
   currentPage: number;
 }
+
+export interface ApplicationListDTO {
+  applicationId: number;
+  candidateId: number;
+  fullName: string;
+  jobTitle: string;
+  phone: string;
+  email: string;
+  applicationStatus: string;
+}

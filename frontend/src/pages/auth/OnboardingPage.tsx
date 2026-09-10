@@ -136,7 +136,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
       <main className="flex-1 max-w-7xl mx-auto w-full p-6 md:p-12">
         {!settings && <div className="mb-8 text-left">
           <div className="flex items-center justify-between gap-4">
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[#0052cc] text-xs font-bold">
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[#2563eb] text-xs font-bold">
               <Sparkles className="h-3.5 w-3.5" />
               {settings ? 'Cập nhật hồ sơ doanh nghiệp' : 'Lần đăng nhập đầu tiên'}
             </span>
@@ -145,7 +145,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                 type="button"
                 onClick={handleSkip}
                 disabled={loading}
-                className="text-xs font-bold text-slate-500 hover:text-[#0052cc] disabled:opacity-60 cursor-pointer"
+                className="text-xs font-bold text-slate-500 hover:text-[#2563eb] disabled:opacity-60 cursor-pointer"
               >
                 Bỏ qua, thiết lập sau
               </button>
@@ -166,10 +166,10 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 items-start w-full">
           {/* Stepper Sidebar */}
-          <aside className="lg:col-span-1 premium-card bg-white p-6 space-y-6 text-left">
-            <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest">
+          <aside className="lg:col-span-1 premium-card bg-white p-6 space-y-5 text-left">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
               Luồng bắt buộc
             </h3>
             <div className="space-y-6 relative pl-2">
@@ -188,7 +188,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                   <span
                     className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
                       currentStep >= item.step
-                        ? 'bg-[#0052cc] text-white'
+                        ? 'bg-[#2563eb] text-white'
                         : 'bg-slate-100 text-slate-400'
                     }`}
                   >
@@ -210,11 +210,11 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
             <div className="pt-4 border-t border-slate-100">
               <div className="flex items-center justify-between text-xs font-bold mb-1.5">
                 <span className="text-slate-600">Độ hoàn thiện</span>
-                <span className="text-[#0052cc]">{completeness}%</span>
+                <span className="text-[#2563eb]">{completeness}%</span>
               </div>
               <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#0052cc] transition-all duration-300 rounded-full"
+                  className="h-full bg-[#2563eb] transition-all duration-300 rounded-full"
                   style={{ width: `${completeness}%` }}
                 />
               </div>
@@ -222,10 +222,10 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
           </aside>
 
           {/* Center Form Section */}
-          <section className="lg:col-span-3 premium-card bg-white p-8 space-y-6">
+          <section className="lg:col-span-3 premium-card bg-white p-6 space-y-4">
             <div className="pb-4 border-b border-slate-100 flex items-center justify-between">
               <div className="text-left">
-                <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+                <h2 className="text-xl font-bold text-slate-800 tracking-tight">
                   {currentStep === 1 && '1. Thông tin doanh nghiệp'}
                   {currentStep === 2 && '2. Liên hệ & Cấu hình Career Site'}
                   {currentStep === 3 && '3. Xác nhận & Gửi hồ sơ'}
@@ -234,13 +234,13 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                   Các trường này sẽ được dùng cho Admin Approval và Career Site riêng.
                 </p>
               </div>
-              <Building2 className="h-6 w-6 text-[#0052cc]" />
+              <Building2 className="h-6 w-6 text-[#2563eb]" />
             </div>
 
-            <form onSubmit={handleComplete} className="space-y-6 text-left">
+            <form onSubmit={handleComplete} className="space-y-5 text-left">
               {currentStep === 1 && (
-                <div className="space-y-6">
-                  <div className="space-y-2">
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Logo công ty
                     </label>
@@ -256,7 +256,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                           <Building2 className="h-6 w-6" />
                         </div>
                       )}
-                      <label className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-600 cursor-pointer">
+                      <label className="px-4 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[13px] font-semibold text-slate-600 cursor-pointer transition-colors">
                         <span className="flex items-center gap-1.5">
                           <Upload className="h-4 w-4" />
                           Tải ảnh lên
@@ -266,32 +266,32 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Tên công ty *
                     </label>
                     <input
                       value={companyName}
                       placeholder="VD: TechA Solutions JSC"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-200 outline-none focus:border-[#2563eb] text-sm font-medium text-slate-800"
                       readOnly
                       required
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Mã số thuế (MST)
                     </label>
                     <input
                       value={taxCode}
                       placeholder="VD: 0101234567"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-200 outline-none focus:border-[#2563eb] text-sm font-medium text-slate-800"
                       readOnly
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Dịch vụ cung cấp / Mô tả hoạt động *
                     </label>
@@ -300,7 +300,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                       onChange={(e) => setServices(e.target.value)}
                       rows={3}
                       placeholder="VD: Tuyển dụng IT, outsourcing, sản phẩm AI, phát triển nền tảng Cloud..."
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800 resize-none"
+                      className="w-full px-4 py-3 rounded-lg border border-slate-200 outline-none focus:border-[#2563eb] text-sm font-medium resize-none"
                       required
                     />
                   </div>
@@ -309,7 +309,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                     <button
                       type="button"
                       onClick={() => setCurrentStep(2)}
-                      className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl bg-[#0052cc] hover:bg-[#0047b3] text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-[#2563eb] hover:bg-blue-600 text-white text-[13px] font-semibold transition-colors cursor-pointer"
                     >
                       Tiếp tục
                       <ArrowRight className="h-4 w-4" />
@@ -319,8 +319,8 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
               )}
 
               {currentStep === 2 && (
-                <div className="space-y-6">
-                  <div className="space-y-2">
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Địa chỉ trụ sở
                     </label>
@@ -330,13 +330,13 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         placeholder="Quận 1, TP. Hồ Chí Minh..."
-                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
+                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#2563eb] text-sm font-semibold text-slate-800"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                         Số điện thoại hotline
                       </label>
@@ -346,12 +346,12 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                           value={phoneNumber}
                           onChange={(e) => setPhoneNumber(e.target.value)}
                           placeholder="09xx xxx xxx"
-                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
+                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#2563eb] text-sm font-semibold text-slate-800"
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                         Website công ty
                       </label>
@@ -361,7 +361,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                           value={website}
                           onChange={(e) => setWebsite(e.target.value)}
                           placeholder="www.company.vn"
-                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#0052cc] text-sm font-semibold text-slate-800"
+                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#2563eb] text-sm font-semibold text-slate-800"
                         />
                       </div>
                     </div>
@@ -379,7 +379,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                     <button
                       type="button"
                       onClick={() => setCurrentStep(3)}
-                      className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl bg-[#0052cc] hover:bg-[#0047b3] text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl bg-[#2563eb] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer"
                     >
                       Tiếp tục
                       <ArrowRight className="h-4 w-4" />
@@ -389,10 +389,10 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
               )}
 
               {currentStep === 3 && (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <div className="rounded-2xl bg-blue-50/70 border border-blue-100 p-6 space-y-4">
                     <div className="flex items-center gap-3">
-                      <CheckCircle2 className="h-6 w-6 text-[#0052cc]" />
+                      <CheckCircle2 className="h-6 w-6 text-[#2563eb]" />
                       <h4 className="text-base font-bold text-slate-900">
                         Xác nhận thông tin doanh nghiệp
                       </h4>
@@ -433,7 +433,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                     <button
                       type="submit"
                       disabled={loading}
-                      className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-[#0052cc] hover:bg-[#0047b3] text-white text-sm font-bold shadow-lg shadow-blue-500/25 cursor-pointer disabled:opacity-60"
+                      className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-[#2563eb] hover:bg-blue-600 text-white text-sm font-bold shadow-lg shadow-blue-500/25 cursor-pointer disabled:opacity-60"
                     >
                       {loading ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
