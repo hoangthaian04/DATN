@@ -64,6 +64,10 @@ public class CareerSiteEntity {
     @Column(name = "footer_text", columnDefinition = "TEXT")
     private String footerText;
 
+    @Column(name = "is_published", nullable = false)
+    @Builder.Default
+    private Boolean isPublished = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -85,6 +89,9 @@ public class CareerSiteEntity {
         }
         if (this.showBenefits == null) {
             this.showBenefits = true;
+        }
+        if (this.isPublished == null) {
+            this.isPublished = true;
         }
     }
 

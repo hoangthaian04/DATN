@@ -193,6 +193,7 @@ public class CompanyServiceImpl implements CompanyService {
                 .showCompanyDescription(careerSite.getShowCompanyDescription())
                 .showBenefits(careerSite.getShowBenefits())
                 .footerText(careerSite.getFooterText())
+                .isPublished(careerSite.getIsPublished())
                 .build() : null;
 
         return CompanyDetailResponseDTO.builder()
