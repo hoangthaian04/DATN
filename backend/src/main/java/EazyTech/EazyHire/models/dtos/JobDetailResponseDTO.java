@@ -14,6 +14,9 @@ import java.time.LocalDateTime;
 @Builder
 public class JobDetailResponseDTO {
     private Long id;
+    private Long categoryId;
+    private String categoryName;
+    private String categorySlug;
     private String title;
     private String slug;
     private String description;

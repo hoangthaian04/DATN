@@ -2,23 +2,29 @@ package EazyTech.EazyHire.models.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class JobListResponseDTO {
+public class PublicJobSummaryResponseDTO {
     private Long id;
     private String title;
+    private String slug;
     private String location;
+    private String workingType;
     private String employmentType;
-    private Integer roundCount;
-    private String status;
-    private Long applicantCount;
+    private BigDecimal salaryMin;
+    private BigDecimal salaryMax;
+    private String currency;
+    private String categoryName;
+    private String categorySlug;
     private LocalDateTime publishedAt;
-    private LocalDateTime createdAt;
 }

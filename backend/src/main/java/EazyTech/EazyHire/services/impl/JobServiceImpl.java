@@ -2,17 +2,27 @@ package EazyTech.EazyHire.services.impl;
 
 import EazyTech.EazyHire.core.PaginationRequest;
 import EazyTech.EazyHire.core.exceptions.CustomException;
+import EazyTech.EazyHire.core.utils.StringUtils;
+import EazyTech.EazyHire.models.dtos.CreateJobRequestDTO;
 import EazyTech.EazyHire.models.dtos.JobListResponseDTO;
 import EazyTech.EazyHire.models.dtos.JobStatsResponseDTO;
 import EazyTech.EazyHire.models.dtos.JobDetailResponseDTO;
 import EazyTech.EazyHire.models.dtos.UpdateJobRequestDTO;
 import EazyTech.EazyHire.models.dtos.SaveJobPipelineRequestDTO;
 import EazyTech.EazyHire.models.dtos.PipelineRoundRequestDTO;
+import EazyTech.EazyHire.models.entities.JobCategoryEntity;
 import EazyTech.EazyHire.models.entities.JobEntity;
 import EazyTech.EazyHire.models.entities.HiringRoundEntity;
+import EazyTech.EazyHire.models.entities.CompanyEntity;
+import EazyTech.EazyHire.models.entities.UserEntity;
+import EazyTech.EazyHire.models.enums.JobCategoryStatus;
 import EazyTech.EazyHire.repositories.ApplicationRepository;
 import EazyTech.EazyHire.repositories.HiringRoundRepository;
+import EazyTech.EazyHire.repositories.JobCategoryRepository;
 import EazyTech.EazyHire.repositories.JobRepository;
+import EazyTech.EazyHire.repositories.CompanyRepository;
+import EazyTech.EazyHire.repositories.UserRepository;
+import EazyTech.EazyHire.services.AuditService;
 import EazyTech.EazyHire.services.JobService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,6 +38,10 @@ import java.util.*;
 public class JobServiceImpl implements JobService {
 
     private final JobRepository jobRepository;
+    private final JobCategoryRepository jobCategoryRepository;
+    private final CompanyRepository companyRepository;
+    private final UserRepository userRepository;
+    private final AuditService auditService;
     private final HiringRoundRepository hiringRoundRepository;
     private final ApplicationRepository applicationRepository;
 
@@ -75,6 +89,100 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @Transactional
+    public JobDetailResponseDTO createJob(CreateJobRequestDTO request, Long companyId, Long userId) {
+        if (companyId == null || userId == null) {
+            throw new CustomException(403, "Tài khoản chưa thuộc workspace tuyển dụng hợp lệ");
+        }
+        CompanyEntity company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new CustomException(404, "Không tìm thấy doanh nghiệp"));
+        UserEntity creator = userRepository.findByIdWithCompany(userId)
+                .orElseThrow(() -> new CustomException(401, "Phiên làm việc không hợp lệ"));
+        if (creator.getCompany() == null || !companyId.equals(creator.getCompany().getId())) {
+            throw new CustomException(403, "Bạn không có quyền tạo Job cho doanh nghiệp này");
+        }
+
+        JobCategoryEntity category = jobCategoryRepository
+                .findByIdAndStatusAndIsDeletedFalse(request.getCategoryId(), JobCategoryStatus.ACTIVE)
+                .orElseThrow(() -> new CustomException(
+                        400,
+                        "Chỉ được chọn danh mục đang ACTIVE và chưa bị xóa."
+                ));
+        validateJobOptions(request);
+
+        JobEntity job = JobEntity.builder()
+                .company(company)
+                .createdBy(creator)
+                .category(category)
+                .title(request.getTitle().trim())
+                .slug(uniqueJobSlug(companyId, request.getTitle()))
+                .description(request.getDescription())
+                .requirements(request.getRequirements())
+                .benefits(request.getBenefits())
+                .salaryMin(request.getSalaryMin())
+                .salaryMax(request.getSalaryMax())
+                .currency(normalizeOrDefault(request.getCurrency(), "VND"))
+                .location(request.getLocation().trim())
+                .workingType(request.getWorkingType().trim().toUpperCase(Locale.ROOT))
+                .employmentType(request.getEmploymentType().trim().toUpperCase(Locale.ROOT))
+                .experienceLevel(normalizeOrDefault(request.getExperienceLevel(), "MID"))
+                .experienceYearsMin(request.getExperienceYearsMin())
+                .roundCount(0)
+                .status("INACTIVE")
+                .isDeleted(false)
+                .build();
+
+        return mapToJobDetailDTO(jobRepository.save(job));
+    }
+
+    @Override
+    @Transactional
+    public JobDetailResponseDTO publishJob(Long jobId, Long companyId, Long userId) {
+        JobEntity job = getTransitionableJob(jobId, companyId);
+        if (!"INACTIVE".equals(job.getStatus())) {
+            throw new CustomException(409, "Chỉ có thể publish Job đang ở trạng thái INACTIVE");
+        }
+        validatePublishable(job);
+        job.setStatus("ACTIVE");
+        job.setPublishedAt(java.time.LocalDateTime.now());
+        job.setClosedAt(null);
+        JobEntity saved = jobRepository.save(job);
+        auditService.recordTarget(userId, companyId, "JOB", saved.getId(), "PUBLISH_JOB", "Publish Job: " + saved.getTitle());
+        return mapToJobDetailDTO(saved);
+    }
+
+    @Override
+    @Transactional
+    public JobDetailResponseDTO closeJob(Long jobId, Long companyId, Long userId) {
+        JobEntity job = getTransitionableJob(jobId, companyId);
+        if (!"ACTIVE".equals(job.getStatus())) {
+            throw new CustomException(409, "Chỉ có thể đóng Job đang ở trạng thái ACTIVE");
+        }
+        job.setStatus("CLOSED");
+        job.setClosedAt(java.time.LocalDateTime.now());
+        JobEntity saved = jobRepository.save(job);
+        auditService.recordTarget(userId, companyId, "JOB", saved.getId(), "CLOSE_JOB", "Đóng Job: " + saved.getTitle());
+        return mapToJobDetailDTO(saved);
+    }
+
+    @Override
+    @Transactional
+    public JobDetailResponseDTO reopenJob(Long jobId, Long companyId, Long userId) {
+        JobEntity job = getTransitionableJob(jobId, companyId);
+        if (!"CLOSED".equals(job.getStatus())) {
+            throw new CustomException(409, "Chỉ có thể mở lại Job đang ở trạng thái CLOSED");
+        }
+        validatePublishable(job);
+        job.setStatus("ACTIVE");
+        job.setPublishedAt(java.time.LocalDateTime.now());
+        job.setClosedAt(null);
+        JobEntity saved = jobRepository.save(job);
+        auditService.recordTarget(userId, companyId, "JOB", saved.getId(), "REOPEN_JOB", "Mở lại Job: " + saved.getTitle());
+        return mapToJobDetailDTO(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public JobDetailResponseDTO getJobById(Long jobId, Long companyId) {
         JobEntity job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new CustomException(404, "Không tìm thấy Job"));
@@ -158,16 +266,96 @@ public class JobServiceImpl implements JobService {
         return job;
     }
 
+    private JobEntity getTransitionableJob(Long jobId, Long companyId) {
+        JobEntity job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new CustomException(404, "Không tìm thấy Job"));
+        if (!job.getCompany().getId().equals(companyId)) {
+            throw new CustomException(404, "Không tìm thấy Job trong workspace hiện tại");
+        }
+        if (Boolean.TRUE.equals(job.getIsDeleted())) {
+            throw new CustomException(404, "Job này đã bị xóa");
+        }
+        return job;
+    }
+
+    private void validatePublishable(JobEntity job) {
+        if (job.getTitle() == null || job.getTitle().isBlank()) {
+            throw new CustomException(400, "Job cần có tiêu đề trước khi publish");
+        }
+        if (job.getDescription() == null || job.getDescription().isBlank()) {
+            throw new CustomException(400, "Job cần có mô tả công việc trước khi publish");
+        }
+        if (job.getLocation() == null || job.getLocation().isBlank()) {
+            throw new CustomException(400, "Job cần có địa điểm trước khi publish");
+        }
+        if (job.getSalaryMin() == null || job.getSalaryMax() == null
+                || job.getSalaryMax().compareTo(job.getSalaryMin()) < 0) {
+            throw new CustomException(400, "Job cần có khoảng lương hợp lệ trước khi publish");
+        }
+        if (job.getCategory() == null || Boolean.TRUE.equals(job.getCategory().getIsDeleted())) {
+            throw new CustomException(400, "Job cần liên kết với danh mục chưa bị xóa trước khi publish");
+        }
+        // Category INACTIVE is allowed here for an existing Job. US-07 prohibits
+        // selecting it for new/change requests but preserves old Job associations.
+    }
+
     private void applyJobUpdate(JobEntity job, UpdateJobRequestDTO request) {
+        if (request.getCategoryId() != null) {
+            JobCategoryEntity category = jobCategoryRepository
+                    .findByIdAndStatusAndIsDeletedFalse(request.getCategoryId(), JobCategoryStatus.ACTIVE)
+                    .orElseThrow(() -> new CustomException(
+                            400,
+                            "Chỉ được chọn danh mục đang ACTIVE và chưa bị xóa."
+                    ));
+            job.setCategory(category);
+        }
         job.setTitle(request.getTitle()); job.setDescription(request.getDescription()); job.setRequirements(request.getRequirements());
         job.setBenefits(request.getBenefits()); job.setSalaryMin(request.getSalaryMin()); job.setSalaryMax(request.getSalaryMax());
         job.setCurrency(request.getCurrency()); job.setLocation(request.getLocation()); job.setWorkingType(request.getWorkingType());
         job.setEmploymentType(request.getEmploymentType()); job.setExperienceLevel(request.getExperienceLevel()); job.setExperienceYearsMin(request.getExperienceYearsMin());
     }
 
+    private void validateJobOptions(CreateJobRequestDTO request) {
+        if (request.getSalaryMax().compareTo(request.getSalaryMin()) < 0) {
+            throw new CustomException(400, "Mức lương tối đa phải lớn hơn hoặc bằng mức lương tối thiểu");
+        }
+        validateAllowed("currency", normalizeOrDefault(request.getCurrency(), "VND"), Set.of("VND", "USD"));
+        validateAllowed("workingType", request.getWorkingType().trim().toUpperCase(Locale.ROOT), Set.of("ONSITE", "REMOTE", "HYBRID"));
+        validateAllowed("employmentType", request.getEmploymentType().trim().toUpperCase(Locale.ROOT), Set.of("FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"));
+        if (request.getExperienceLevel() != null && !request.getExperienceLevel().isBlank()) {
+            validateAllowed("experienceLevel", request.getExperienceLevel().trim().toUpperCase(Locale.ROOT), Set.of("INTERN", "JUNIOR", "MID", "SENIOR", "LEAD"));
+        }
+    }
+
+    private void validateAllowed(String field, String value, Set<String> allowed) {
+        if (!allowed.contains(value)) {
+            throw new CustomException(400, field + " không hợp lệ");
+        }
+    }
+
+    private String normalizeOrDefault(String value, String defaultValue) {
+        return value == null || value.isBlank() ? defaultValue : value.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String uniqueJobSlug(Long companyId, String title) {
+        String base = StringUtils.toSlug(title);
+        if (base.isBlank()) {
+            throw new CustomException(400, "Không thể tạo slug từ tiêu đề Job");
+        }
+        String candidate = base;
+        int suffix = 2;
+        while (jobRepository.existsByCompanyIdAndSlug(companyId, candidate)) {
+            candidate = base + "-" + suffix++;
+        }
+        return candidate;
+    }
+
     private JobDetailResponseDTO mapToJobDetailDTO(JobEntity job) {
         return JobDetailResponseDTO.builder()
                 .id(job.getId())
+                .categoryId(job.getCategory() != null ? job.getCategory().getId() : null)
+                .categoryName(job.getCategory() != null ? job.getCategory().getName() : null)
+                .categorySlug(job.getCategory() != null ? job.getCategory().getSlug() : null)
                 .title(job.getTitle())
                 .slug(job.getSlug())
                 .description(job.getDescription())

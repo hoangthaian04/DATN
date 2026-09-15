@@ -14,6 +14,12 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class UpdateJobRequestDTO {
+    /**
+     * Optional when editing an existing Job. If omitted, the current category
+     * association is preserved, including when that category is INACTIVE.
+     */
+    private Long categoryId;
+
     @NotBlank(message = "Tiêu đề không được để trống")
     private String title;
     
