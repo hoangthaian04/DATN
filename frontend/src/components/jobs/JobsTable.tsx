@@ -8,7 +8,7 @@ interface Props {
   jobsPagination?: BasePagination<JobSummary>;
   isLoading: boolean;
   onPageChange: (page: number) => void;
-  onDeleteJob: (id: string) => void;
+  onDeleteJob: (id: number) => void;
 }
 
 export const JobsTable: React.FC<Props> = ({ jobsPagination, isLoading, onPageChange, onDeleteJob }) => {
@@ -96,7 +96,7 @@ export const JobsTable: React.FC<Props> = ({ jobsPagination, isLoading, onPageCh
                   </span>
                 </td>
                 <td className="px-6 py-4 text-slate-500 font-medium">
-                  {getJobTypeLabel(job.jobType)}
+                  {getJobTypeLabel(job.employmentType)}
                 </td>
                 <td className="px-6 py-4 text-slate-500 font-medium">
                   {job.location}
@@ -105,8 +105,7 @@ export const JobsTable: React.FC<Props> = ({ jobsPagination, isLoading, onPageCh
                   {getStatusBadge(job.status)}
                 </td>
                 <td className="px-6 py-4 text-center text-slate-600">
-                  {/* Sử dụng cứng 3 vòng do schema hiện tại chưa tracking cụ thể */}
-                  3
+                  {job.roundCount || 0}
                 </td>
                 <td className="px-6 py-4 text-center text-slate-800 font-bold">
                   {job.applicantCount || 0}

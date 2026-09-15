@@ -22,7 +22,7 @@ export const AdminLayout: React.FC = () => {
 
   const adminNavItems = [
     { id: 'companies', label: 'Quản lý Doanh nghiệp', icon: Building2, path: '/admin' },
-    { id: 'categories', label: 'Danh mục (Job)', icon: Tags, path: '/admin/categories' },
+    { id: 'categories', label: 'Danh mục (Job)', icon: Tags, path: '/admin/job-categories' },
     { id: 'logs', label: 'Audit Logs', icon: ScrollText, path: '/admin/logs' },
     { id: 'users', label: 'Tài khoản Admin', icon: Users, path: '/admin/users' },
   ];

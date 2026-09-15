@@ -9,14 +9,17 @@ import {
   Calendar, 
   DollarSign,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  CheckCircle
 } from 'lucide-react';
 import { EditJobModal } from '../../components/modals/EditJobModal';
-// import { PublishJobModal } from '../../components/modals/PublishJobModal'; // Uncomment if we implement it
+import { JobStatusActionModal } from '../../components/modals/JobStatusActionModal';
 
 import { jobService } from '../../services/job.service';
-import type { SaveJobPipelineRequest } from '../../types/job.types';
+import type { JobStatus, SaveJobPipelineRequest } from '../../types/job.types';
 import { hiringRoundService } from '../../services/hiring-round.service';
+
+type JobStatusAction = 'publish' | 'close' | 'reopen';
 
 const renderMarkdown = (text: string) => {
   if (!text) return null;
@@ -52,6 +55,8 @@ export const JobDetailPage: React.FC = () => {
   const [editModalOpen, setEditModalOpen] = useState(() => {
     return new URLSearchParams(location.search).get('edit') === 'true';
   });
+  const [statusAction, setStatusAction] = useState<JobStatusAction | null>(null);
+  const [showPublishSuccess, setShowPublishSuccess] = useState(false);
 
   // Lấy chi tiết Job
   const { data: job, isLoading, isError, error } = useQuery({
@@ -93,6 +98,31 @@ export const JobDetailPage: React.FC = () => {
     updateMutation.mutate(updatedData);
   };
 
+  const statusMutation = useMutation({
+    mutationFn: (action: JobStatusAction) => {
+      if (action === 'publish') return jobService.publishJob(id!);
+      if (action === 'close') return jobService.closeJob(id!);
+      return jobService.reopenJob(id!);
+    },
+    onSuccess: (_, action) => {
+      setStatusAction(null);
+      setShowPublishSuccess(action === 'publish');
+      toast.success(action === 'publish' ? 'Tin tuyển dụng đã được đăng công khai' : action === 'close' ? 'Đã đóng Job' : 'Đã mở lại Job');
+      queryClient.invalidateQueries({ queryKey: ['job', id] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['jobStats'] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Không thể cập nhật trạng thái Job');
+    }
+  });
+
+  React.useEffect(() => {
+    if (!showPublishSuccess) return;
+    const timeout = window.setTimeout(() => setShowPublishSuccess(false), 4000);
+    return () => window.clearTimeout(timeout);
+  }, [showPublishSuccess]);
+
   if (isLoading) {
     return (
       <div className="flex-1 p-8 bg-[#F8FAFC] min-h-[calc(100vh-4rem)] flex items-center justify-center">
@@ -114,6 +144,15 @@ export const JobDetailPage: React.FC = () => {
 
   return (
     <div className="flex-1 p-8 bg-[#F8FAFC] min-h-[calc(100vh-4rem)] space-y-6 relative overflow-hidden">
+      {showPublishSuccess && (
+        <div className="flex items-center justify-between gap-3 rounded-2xl bg-emerald-500 p-4 text-white shadow-lg" role="status">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5" />
+            <span className="text-xs font-bold uppercase tracking-wider">Chúc mừng! Tin tuyển dụng đã được xuất bản lên Career Site.</span>
+          </div>
+          <span className="rounded bg-white/20 px-2 py-1 text-xs font-extrabold">ĐÃ ĐĂNG</span>
+        </div>
+      )}
       
       {/* Header section with Breadcrumbs */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none">
@@ -164,7 +203,7 @@ export const JobDetailPage: React.FC = () => {
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Mức lương</span>
               <span className="text-xs font-extrabold text-slate-800 flex items-center gap-1">
                 <DollarSign className="h-4 w-4 text-primary-500" />
-                {job.salaryMin ? job.salaryMin.toLocaleString() : 0} - {job.salaryMax ? job.salaryMax.toLocaleString() : 0} {job.salaryCurrency || 'VND'}
+                {job.salaryMin ? job.salaryMin.toLocaleString() : 0} - {job.salaryMax ? job.salaryMax.toLocaleString() : 0} {job.currency || 'VND'}
               </span>
             </div>
 
@@ -182,7 +221,7 @@ export const JobDetailPage: React.FC = () => {
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Hình thức</span>
               <span className="text-xs font-extrabold text-slate-800 flex items-center gap-1">
                 <Briefcase className="h-4 w-4 text-primary-500" />
-                {job.workingType === 'ONSITE' ? 'Tại văn phòng' : job.workingType === 'HYBRID' ? 'Linh hoạt' : job.workingType === 'REMOTE' ? 'Từ xa' : job.jobType}
+                {job.workingType === 'ONSITE' ? 'Tại văn phòng' : job.workingType === 'HYBRID' ? 'Linh hoạt' : job.workingType === 'REMOTE' ? 'Từ xa' : job.employmentType}
               </span>
             </div>
 
@@ -243,33 +282,29 @@ export const JobDetailPage: React.FC = () => {
         <div className="lg:col-span-1 space-y-6">
           
           {/* Widget 1: Publish Now */}
-          {(job.status === 'INACTIVE' || job.status === 'ACTIVE') && (
-            <div className={`premium-card p-6 space-y-4 text-left ${job.status === 'INACTIVE' ? 'bg-primary-500/5 border border-primary-500/10' : 'bg-red-500/5 border border-red-500/10'}`}>
+          <div className={`premium-card p-6 space-y-4 text-left ${job.status === 'INACTIVE' ? 'bg-primary-500/5 border border-primary-500/10' : job.status === 'ACTIVE' ? 'bg-red-500/5 border border-red-500/10' : 'bg-emerald-500/5 border border-emerald-500/10'}`}>
               <div className="space-y-1.5 select-none">
                 <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
-                  {job.status === 'INACTIVE' ? 'Đăng tuyển ngay' : 'Ngừng tuyển ngay'}
+                  {job.status === 'INACTIVE' ? 'Đăng tuyển ngay' : job.status === 'ACTIVE' ? 'Ngừng tuyển ngay' : 'Mở lại Job'}
                 </h3>
                 <p className="text-[11px] font-semibold text-slate-400 leading-relaxed">
                   {job.status === 'INACTIVE' 
                     ? <span dangerouslySetInnerHTML={{ __html: 'Tin tuyển dụng hiện ở trạng thái <strong>Bản nháp</strong>. Xuất bản để thu hút hồ sơ ứng viên ngay lập tức.' }} />
-                    : <span dangerouslySetInnerHTML={{ __html: 'Tin tuyển dụng đang được <strong>Công khai</strong>. Ngừng tuyển để ẩn tin tuyển dụng khỏi trang Career Site.' }} />
+                    : job.status === 'ACTIVE'
+                      ? <span dangerouslySetInnerHTML={{ __html: 'Tin tuyển dụng đang được <strong>Công khai</strong>. Ngừng tuyển để ẩn tin tuyển dụng khỏi trang Career Site.' }} />
+                      : <span dangerouslySetInnerHTML={{ __html: 'Tin tuyển dụng đã <strong>Đóng</strong>. Mở lại để tiếp tục nhận hồ sơ mới.' }} />
                   }
                 </p>
               </div>
 
               <button
-                onClick={() => {
-                  if (job.status === 'INACTIVE') {
-                    // Mở publish modal (hiện chưa implement, chỉ là nút placeholder)
-                    toast('Chức năng xuất bản sẽ sớm ra mắt', { icon: '🚧' });
-                  }
-                }}
-                className={`w-full py-3 rounded-xl text-white text-xs font-bold transition-all shadow-md cursor-pointer select-none flex items-center justify-center gap-1.5 ${job.status === 'INACTIVE' ? 'bg-primary-500 hover:bg-primary-600 shadow-primary-500/15' : 'bg-red-500 hover:bg-red-600 shadow-red-500/15'}`}
+                onClick={() => setStatusAction(job.status === 'INACTIVE' ? 'publish' : job.status === 'ACTIVE' ? 'close' : 'reopen')}
+                disabled={statusMutation.isPending}
+                className={`w-full py-3 rounded-xl text-white text-xs font-bold transition-all shadow-md cursor-pointer select-none flex items-center justify-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-60 ${job.status === 'INACTIVE' ? 'bg-primary-500 hover:bg-primary-600 shadow-primary-500/15' : job.status === 'ACTIVE' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/15' : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/15'}`}
               >
-                <span>{job.status === 'INACTIVE' ? 'Đăng Tuyển' : 'Ngừng tuyển'}</span>
+                <span>{job.status === 'INACTIVE' ? 'Đăng tuyển' : job.status === 'ACTIVE' ? 'Đóng Job' : 'Mở lại Job'}</span>
               </button>
             </div>
-          )}
 
           {/* Widget 2: Interview Rounds */}
           <div className="premium-card bg-white p-6 space-y-4 text-left">
@@ -314,6 +349,17 @@ export const JobDetailPage: React.FC = () => {
         jobData={job}
         onSave={handleSaveJob}
         isPending={updateMutation.isPending}
+      />
+
+      <JobStatusActionModal
+        isOpen={statusAction !== null}
+        action={statusAction || 'publish'}
+        jobTitle={job.title}
+        location={job.location}
+        currentStatus={job.status as JobStatus}
+        isPending={statusMutation.isPending}
+        onClose={() => setStatusAction(null)}
+        onConfirm={() => statusAction && statusMutation.mutate(statusAction)}
       />
     </div>
   );
