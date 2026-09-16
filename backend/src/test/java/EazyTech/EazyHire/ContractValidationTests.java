@@ -3,6 +3,7 @@ package EazyTech.EazyHire;
 import EazyTech.EazyHire.models.dtos.ChangePasswordRequestDTO;
 import EazyTech.EazyHire.models.dtos.CompanyStatusRequestDTO;
 import EazyTech.EazyHire.models.dtos.RegisterRequestDTO;
+import EazyTech.EazyHire.models.dtos.UpdateJobRequestDTO;
 import EazyTech.EazyHire.models.enums.CompanyStatus;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -57,5 +58,21 @@ class ContractValidationTests {
 
         request.setStatus(CompanyStatus.ACTIVE);
         assertThat(validator.validate(request)).isEmpty();
+    }
+
+    @Test
+    void jobRoundCountAllowsZeroButRejectsNegative() {
+        UpdateJobRequestDTO request = UpdateJobRequestDTO.builder()
+                .title("No Interview Job")
+                .roundCount(0)
+                .build();
+
+        assertThat(validator.validate(request))
+                .noneMatch(violation -> violation.getPropertyPath().toString().equals("roundCount"));
+
+        request.setRoundCount(-1);
+
+        assertThat(validator.validate(request))
+                .anyMatch(violation -> violation.getPropertyPath().toString().equals("roundCount"));
     }
 }

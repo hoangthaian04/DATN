@@ -42,6 +42,7 @@ public class UpdateJobRequestDTO {
     @Min(value = 0, message = "Số năm kinh nghiệm không hợp lệ")
     private Integer experienceYearsMin;
     
-    @Min(value = 1, message = "Số vòng phỏng vấn tối thiểu là 1")
+    /** Zero is valid for jobs that do not require an interview process. */
+    @Min(value = 0, message = "Số vòng phỏng vấn không được âm")
     private Integer roundCount;
 }
