@@ -41,6 +41,7 @@ import { CareerApplyFormPage } from '@/pages/career/CareerApplyFormPage';
 import { InterviewResponsePage } from '@/pages/career/InterviewResponsePage';
 import { CandidateTrackPage } from '@/pages/career/CandidateTrackPage';
 import { CandidateStatusPage } from '@/pages/career/CandidateStatusPage';
+import { CandidateTrackRequestPage } from '@/pages/career/CandidateTrackRequestPage';
 
 const CompanyCareerRedirect: React.FC = () => {
   const { companySlug = '' } = useParams<{ companySlug: string }>();
@@ -99,7 +100,8 @@ export const router = createBrowserRouter([
       { path: 'companies', element: <AdminDashboardPage /> },
       { path: 'job-categories', element: <AdminJobCategories /> },
       { path: 'categories', element: <Navigate to="/admin/job-categories" replace /> },
-      { path: 'logs', element: <AdminAuditLogs /> },
+      { path: 'audit-logs', element: <AdminAuditLogs /> },
+      { path: 'logs', element: <Navigate to="/admin/audit-logs" replace /> },
       { path: 'users', element: <AdminUsers /> },
     ],
   },
@@ -115,6 +117,7 @@ export const router = createBrowserRouter([
       { path: ':companySlug/jobs/:slug/apply', element: <CareerApplyFormPage /> },
       { path: 'applications/track', element: <CandidateTrackPage /> },
       { path: 'applications/status', element: <CandidateStatusPage /> },
+      { path: ':companySlug/track-request', element: <CandidateTrackRequestPage /> },
       { path: 'interviews/respond', element: <InterviewResponsePage /> },
     ],
   },

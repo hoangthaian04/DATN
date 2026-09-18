@@ -71,3 +71,26 @@ export interface PublicFormField {
 }
 
 export type PublicJobPage = BasePagination<PublicJobSummary>;
+
+export interface PublicInterviewSummary {
+  id: number;
+  status: string;
+  interviewTime: string;
+  duration?: number;
+  location?: string;
+  candidateNote?: string;
+  rescheduleTime?: string;
+  rescheduleReason?: string;
+}
+
+export interface PublicApplicationStatus {
+  applicationId: number;
+  candidateName: string;
+  jobTitle: string;
+  companyName: string;
+  applicationStatus: string;
+  currentStage: string;
+  lastUpdatedAt?: string;
+  expiresAt?: string;
+  interviews: PublicInterviewSummary[];
+}
