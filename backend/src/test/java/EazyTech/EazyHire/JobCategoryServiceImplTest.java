@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -87,7 +88,7 @@ class JobCategoryServiceImplTest {
     }
 
     @Test
-    void deleteCategoryRejectsCategoryUsedByAnActiveJob() {
+    void deleteCategoryRejectsCategoryUsedByAnyNonDeletedJob() {
         JobCategoryEntity category = category(1L, "Technology", "technology");
         when(categoryRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(category));
         when(jobRepository.countByCategoryIdAndIsDeletedFalse(1L)).thenReturn(1L);
@@ -100,6 +101,20 @@ class JobCategoryServiceImplTest {
         assertEquals(409, exception.getStatusCode());
         verify(categoryRepository, never()).save(any(JobCategoryEntity.class));
         verify(audit, never()).recordGlobal(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void deleteCategorySoftDeletesWhenNoNonDeletedJobUsesIt() {
+        JobCategoryEntity category = category(1L, "Technology", "technology");
+        when(categoryRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(category));
+        when(jobRepository.countByCategoryIdAndIsDeletedFalse(1L)).thenReturn(0L);
+        when(categoryRepository.save(category)).thenReturn(category);
+
+        service.deleteCategory(1L, 99L);
+
+        assertEquals(true, category.getIsDeleted());
+        verify(categoryRepository).save(category);
+        verify(audit).recordGlobal(99L, "JOB_CATEGORY", 1L, "DELETE_JOB_CATEGORY", "Xóa mềm danh mục: Technology");
     }
 
     @Test
@@ -154,6 +169,46 @@ class JobCategoryServiceImplTest {
 
         assertEquals(400, exception.getStatusCode());
         verify(categoryRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void reorderCategoriesRejectsNullCategoryId() {
+        when(categoryRepository.findByIsDeletedFalseOrderBySortOrderAscCreatedAtAscIdAsc())
+                .thenReturn(List.of(
+                        category(1L, "Technology", "technology"),
+                        category(2L, "Finance", "finance")
+                ));
+        ReorderJobCategoriesRequestDTO request = reorderRequest(Arrays.asList(1L, null));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> service.reorderCategories(request, 99L)
+        );
+
+        assertEquals(400, exception.getStatusCode());
+        verify(categoryRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void reorderCategoriesPersistsContiguousOrderIncludingInactiveCategory() {
+        JobCategoryEntity active = category(1L, "Technology", "technology");
+        JobCategoryEntity inactive = category(2L, "Finance", "finance");
+        inactive.setStatus(JobCategoryStatus.INACTIVE);
+        active.setSortOrder(4);
+        inactive.setSortOrder(8);
+        when(categoryRepository.findByIsDeletedFalseOrderBySortOrderAscCreatedAtAscIdAsc())
+                .thenReturn(List.of(active, inactive));
+        when(jobRepository.countByCategoryIdAndIsDeletedFalse(1L)).thenReturn(0L);
+        when(jobRepository.countByCategoryIdAndIsDeletedFalse(2L)).thenReturn(0L);
+
+        var result = service.reorderCategories(reorderRequest(List.of(2L, 1L)), 99L);
+
+        assertEquals(List.of(2L, 1L), result.stream().map(item -> item.getId()).toList());
+        assertEquals(0, inactive.getSortOrder());
+        assertEquals(1, active.getSortOrder());
+        verify(categoryRepository).saveAll(List.of(active, inactive));
+        verify(audit).recordGlobal(99L, "JOB_CATEGORY", null,
+                "REORDER_JOB_CATEGORIES", "Cập nhật thứ tự danh mục");
     }
 
     private ReorderJobCategoriesRequestDTO reorderRequest(List<Long> orderedIds) {

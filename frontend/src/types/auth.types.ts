@@ -101,6 +101,8 @@ export interface CompanySummary {
 export interface CompanyDetail extends CompanySummary {
   profile?: CompanyProfile;
   careerSite?: CareerSiteSettings;
+  registrant?: User;
+  duplicateWarnings?: string[];
 }
 
 export interface CompanyFilterParams {
