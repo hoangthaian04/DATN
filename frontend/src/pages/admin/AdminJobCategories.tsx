@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   AlertCircle,
   ArrowDown,
@@ -23,6 +23,7 @@ type CategoryForm = {
   status: JobCategoryStatus;
 };
 
+const CATEGORY_PAGE_SIZE = 100;
 const emptyForm: CategoryForm = { name: '', status: 'ACTIVE' };
 
 export const AdminJobCategories: React.FC = () => {
@@ -50,13 +51,13 @@ export const AdminJobCategories: React.FC = () => {
     window.setTimeout(() => setToast(null), 4000);
   };
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setIsLoading(true);
       setLoadError(null);
       const result = await AdminService.getJobCategories({
         page,
-        limit: 100,
+        limit: CATEGORY_PAGE_SIZE,
         search: submittedSearch || undefined,
       });
       setCategories(result.data);
@@ -67,11 +68,11 @@ export const AdminJobCategories: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, submittedSearch]);
 
   useEffect(() => {
     void fetchCategories();
-  }, [page, submittedSearch]);
+  }, [fetchCategories]);
 
   const openCreate = () => {
     setModalMode('create');
@@ -157,8 +158,19 @@ export const AdminJobCategories: React.FC = () => {
     setCategories(nextCategories);
     try {
       setIsSavingOrder(true);
-      const saved = await AdminService.reorderJobCategories(nextCategories.map((category) => category.id));
-      setCategories(saved);
+      const allCategories = await AdminService.getAllJobCategories();
+      const allIds = allCategories.map((category) => category.id);
+      const visiblePositions = categories.map((category) => allIds.indexOf(category.id));
+      if (visiblePositions.some((position) => position < 0)) {
+        throw new Error('Danh sách danh mục đã thay đổi. Vui lòng tải lại trước khi sắp xếp.');
+      }
+
+      const orderedIds = [...allIds];
+      visiblePositions.forEach((position, index) => {
+        orderedIds[position] = nextCategories[index].id;
+      });
+      const saved = await AdminService.reorderJobCategories(orderedIds);
+      setCategories(saved.slice((page - 1) * CATEGORY_PAGE_SIZE, page * CATEGORY_PAGE_SIZE));
       showToast('success', 'Đã lưu thứ tự danh mục.');
     } catch (error) {
       setCategories(previous);

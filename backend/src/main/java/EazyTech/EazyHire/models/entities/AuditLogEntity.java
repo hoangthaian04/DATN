@@ -12,5 +12,8 @@ public class AuditLogEntity {
  @Column(name="target_type",nullable=false,length=100) private String targetType;
  @Column(name="target_id") private Long targetId;
  @Column(columnDefinition="TEXT") private String metadata;
+ @Column(name="ip_address",length=100) private String ipAddress;
+ @Column(name="user_agent",columnDefinition="TEXT") private String userAgent;
+ @Column(name="request_id",length=100) private String requestId;
  @Column(name="created_at",nullable=false) private LocalDateTime createdAt;
 }

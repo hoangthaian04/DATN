@@ -21,9 +21,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1/admin/job-categories")
+@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class AdminJobCategoriesController {
 
@@ -32,12 +34,11 @@ public class AdminJobCategoriesController {
     @GetMapping
     public BaseResponse getCategories(
             @RequestParam(defaultValue = "1") @Positive Integer page,
-            @RequestParam(required = false) @Positive Integer size,
             @RequestParam(required = false) @Positive Integer limit,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String searchText
     ) {
-        int pageSize = size != null ? size : limit != null ? limit : 10;
+        int pageSize = limit != null ? limit : 10;
         String keyword = search != null ? search : searchText;
         return BaseResponse.success(
                 "Lấy danh sách danh mục ngành nghề thành công.",
@@ -55,7 +56,7 @@ public class AdminJobCategoriesController {
 
     @PutMapping("/{id}")
     public BaseResponse updateCategory(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @Valid @RequestBody UpdateJobCategoryRequestDTO request
     ) {
         return BaseResponse.success(
@@ -73,7 +74,7 @@ public class AdminJobCategoriesController {
     }
 
     @DeleteMapping("/{id}")
-    public BaseResponse deleteCategory(@PathVariable Long id) {
+    public BaseResponse deleteCategory(@PathVariable @Positive Long id) {
         categoryService.deleteCategory(id, currentAdminId());
         return BaseResponse.success("Đã xóa danh mục thành công.");
     }

@@ -19,6 +19,7 @@ export const AdminDashboardPage: React.FC = () => {
   const location=useLocation();
   const [page,setPage]=useState(1),[lastPage,setLastPage]=useState(1);
   const [blockingId,setBlockingId]=useState<number|null>(null);
+  const [approvingId,setApprovingId]=useState<number|null>(null);
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
   const [total, setTotal] = useState(0);
   const [filterStatus, setFilterStatus] = useState<string>(location.pathname.endsWith('/pending')?'PENDING':'all');
@@ -81,6 +82,7 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   const handleApprove = async (id: number) => {
+    setApprovingId(null);
     try {
       setActionLoadingId(id);
       await AdminService.approveCompany(id);
@@ -98,7 +100,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   const handleRejectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rejectingCompanyId || !rejectReason.trim()) return;
+    if (!rejectingCompanyId || rejectReason.trim().length < 10) return;
 
     try {
       setActionLoadingId(rejectingCompanyId);
@@ -148,6 +150,7 @@ export const AdminDashboardPage: React.FC = () => {
   return (
     <div className="space-y-6 text-left">
       {blockingId!==null&&<Confirm busy={actionLoadingId!==null} text="Khóa doanh nghiệp sẽ ngắt quyền truy cập workspace của HR và ghi nhật ký thao tác." onConfirm={()=>void handleBlock(blockingId)} onCancel={()=>setBlockingId(null)}/>}
+      {approvingId!==null&&<Confirm busy={actionLoadingId!==null} text="Phê duyệt sẽ chuyển doanh nghiệp sang ACTIVE, kích hoạt các tài khoản HR đang chờ và tạo Career Site mặc định. Bạn có chắc chắn không?" onConfirm={()=>void handleApprove(approvingId)} onCancel={()=>setApprovingId(null)}/>}
       <div className="flex gap-4"><button disabled={page<=1||isLoading} onClick={()=>setPage(page-1)}>Trang trước</button><span>Trang {page}/{lastPage}</span><button disabled={page>=lastPage||isLoading} onClick={()=>setPage(page+1)}>Trang sau</button></div>
       {/* Toast Notification */}
       {toastMessage && (
@@ -284,7 +287,7 @@ export const AdminDashboardPage: React.FC = () => {
                           {c.status === 'PENDING' && (
                             <>
                               <button
-                                onClick={() => handleApprove(c.id)}
+                                onClick={() => setApprovingId(c.id)}
                                 disabled={actionLoadingId === c.id}
                                 title="Phê duyệt"
                                 className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition cursor-pointer disabled:opacity-50"
@@ -426,21 +429,25 @@ export const AdminDashboardPage: React.FC = () => {
                   <div className="p-4 bg-slate-50 rounded-xl space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-[#0052cc] text-white flex items-center justify-center font-bold">
-                        HR
+                        {(selectedCompany.registrant?.fullName || 'HR').slice(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-bold text-slate-800 text-sm">Quản trị viên Doanh nghiệp</p>
-                        <p className="text-slate-500">{selectedCompany.email}</p>
+                        <p className="font-bold text-slate-800 text-sm">
+                          {selectedCompany.registrant?.fullName || 'Chưa có tài khoản đăng ký'}
+                        </p>
+                        <p className="text-slate-500">
+                          {selectedCompany.registrant?.email || selectedCompany.email || 'Chưa cập nhật email'}
+                        </p>
                       </div>
                     </div>
                     <div className="pt-3 border-t border-slate-200 grid grid-cols-2 gap-2 text-slate-600">
                       <div>
                         <span className="font-bold block">Vai trò:</span>
-                        <span>HR Administrator</span>
+                        <span>{selectedCompany.registrant?.role === 'HR_ADMIN' ? 'HR Administrator' : selectedCompany.registrant?.role || '—'}</span>
                       </div>
                       <div>
-                        <span className="font-bold block">Hotline liên hệ:</span>
-                        <span>{selectedCompany.phone || 'Chưa cập nhật'}</span>
+                        <span className="font-bold block">Trạng thái:</span>
+                        <span>{selectedCompany.registrant?.status || 'Chưa cập nhật'}</span>
                       </div>
                     </div>
                   </div>
@@ -459,7 +466,7 @@ export const AdminDashboardPage: React.FC = () => {
                     Từ chối hồ sơ
                   </button>
                   <button
-                    onClick={() => handleApprove(selectedCompany.id)}
+                    onClick={() => setApprovingId(selectedCompany.id)}
                     className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-md shadow-emerald-600/20 cursor-pointer"
                   >
                     Phê duyệt ACTIVE
@@ -499,6 +506,9 @@ export const AdminDashboardPage: React.FC = () => {
                 className="w-full rounded-xl border border-slate-200 p-3 text-xs focus:border-[#0052cc] focus:outline-none"
                 required
               />
+              <p className={`text-xs ${rejectReason.trim().length > 0 && rejectReason.trim().length < 10 ? 'text-rose-600' : 'text-slate-500'}`}>
+                Lý do phải từ 10 đến 1000 ký tự ({rejectReason.trim().length}/1000).
+              </p>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
@@ -512,7 +522,7 @@ export const AdminDashboardPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={!rejectReason.trim() || actionLoadingId !== null}
+                  disabled={rejectReason.trim().length < 10 || actionLoadingId !== null}
                   className="rounded-xl bg-rose-600 px-5 py-2 text-xs font-semibold text-white hover:bg-rose-700 cursor-pointer disabled:opacity-60"
                 >
                   Xác nhận từ chối

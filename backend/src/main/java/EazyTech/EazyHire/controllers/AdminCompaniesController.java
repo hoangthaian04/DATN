@@ -19,9 +19,11 @@ import EazyTech.EazyHire.models.dtos.CompanyStatusRequestDTO;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1/admin/companies")
+@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class AdminCompaniesController {
 
