@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ApplicationRepository extends JpaRepository<ApplicationEntity, Long> {
@@ -35,4 +36,28 @@ public interface ApplicationRepository extends JpaRepository<ApplicationEntity, 
             
     // Fetch NEW applications for Todo list
     List<ApplicationEntity> findTop5ByCompanyIdAndStatusOrderByCreatedAtDesc(Long companyId, String status);
+
+    Optional<ApplicationEntity> findByJobIdAndCandidateIdAndStatus(
+            Long jobId,
+            Long candidateId,
+            String status
+    );
+
+    Optional<ApplicationEntity> findBySecureToken(String secureToken);
+
+    @Query("""
+            SELECT a FROM ApplicationEntity a
+            JOIN a.company company
+            JOIN a.candidate candidate
+            WHERE LOWER(company.slug) = LOWER(:companySlug)
+              AND LOWER(candidate.email) = LOWER(:email)
+              AND a.status = :status
+              AND (candidate.isDeleted IS NULL OR candidate.isDeleted = false)
+            ORDER BY a.appliedAt DESC
+            """)
+    List<ApplicationEntity> findByCompanySlugAndCandidateEmailAndStatus(
+            @Param("companySlug") String companySlug,
+            @Param("email") String email,
+            @Param("status") String status
+    );
 }

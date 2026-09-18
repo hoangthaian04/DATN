@@ -57,6 +57,11 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-false}
+      MAIL_STARTTLS_ENABLE: ${MAIL_STARTTLS_ENABLE:-false}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@easyhire.local}
       JWT_SECRET: ${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
       JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS:-604800000}
@@ -71,6 +76,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     networks:
       - easytech-network
     healthcheck:
@@ -79,6 +86,19 @@ services:
       timeout: 10s
       retries: 10
       start_period: 90s
+
+  # ===========================================================
+  # Local SMTP sink for deterministic application E2E tests
+  # ===========================================================
+  mailpit:
+    image: axllent/mailpit:v1.20
+    container_name: easytech-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - easytech-network
 
   # ===========================================================
   # Frontend React (Nginx)

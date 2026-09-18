@@ -15,7 +15,7 @@ public class EmailServiceImpl implements EmailService {
 
     private final MailSender mailSender;
 
-    @Value("${spring.mail.username}")
+    @Value("${app.mail-from:${spring.mail.username:no-reply@easyhire.local}}")
     private String fromEmail;
 
     @Override
