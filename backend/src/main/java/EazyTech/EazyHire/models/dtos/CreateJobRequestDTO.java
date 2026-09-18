@@ -4,6 +4,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +24,7 @@ public class CreateJobRequestDTO {
     private String title;
 
     @NotNull(message = "Danh mục là bắt buộc")
+    @Positive(message = "Danh mục không hợp lệ")
     private Long categoryId;
 
     @NotBlank(message = "Địa điểm làm việc không được để trống")

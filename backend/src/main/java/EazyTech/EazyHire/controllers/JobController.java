@@ -95,6 +95,7 @@ public class JobController {
     }
 
     @GetMapping("/{jobId}")
+    @PreAuthorize("hasAnyRole('HR', 'HR_ADMIN')")
     public ResponseEntity<BaseResponse> getJobById(@PathVariable Long jobId) {
         AuthorizedUser user = SecurityUtils.getCurrentUser()
                 .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
@@ -104,6 +105,7 @@ public class JobController {
     }
 
     @PutMapping("/{jobId}")
+    @PreAuthorize("hasAnyRole('HR', 'HR_ADMIN')")
     public ResponseEntity<BaseResponse> updateJob(
             @PathVariable Long jobId,
             @Valid @RequestBody UpdateJobRequestDTO request
@@ -111,18 +113,19 @@ public class JobController {
         AuthorizedUser user = SecurityUtils.getCurrentUser()
                 .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
         
-        JobDetailResponseDTO updatedJob = jobService.updateJob(jobId, request, user.getCompanyId());
+        JobDetailResponseDTO updatedJob = jobService.updateJob(jobId, request, user.getCompanyId(), user.getId());
         return ResponseEntity.ok(new BaseResponse(1, "Cập nhật job thành công", updatedJob));
     }
 
     @PutMapping("/{jobId}/pipeline")
+    @PreAuthorize("hasAnyRole('HR', 'HR_ADMIN')")
     public ResponseEntity<BaseResponse> saveJobPipeline(
             @PathVariable Long jobId,
             @Valid @RequestBody SaveJobPipelineRequestDTO request
     ) {
         AuthorizedUser user = SecurityUtils.getCurrentUser()
                 .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
-        JobDetailResponseDTO updatedJob = jobService.saveJobPipeline(jobId, request, user.getCompanyId());
+        JobDetailResponseDTO updatedJob = jobService.saveJobPipeline(jobId, request, user.getCompanyId(), user.getId());
         return ResponseEntity.ok(new BaseResponse(1, "Lưu tin tuyển dụng và pipeline thành công", updatedJob));
     }
 

@@ -24,6 +24,8 @@ export const FormFieldsEditor: React.FC<Props> = ({ fields, onChange, disabled =
   };
 
   const removeField = (index: number) => {
+    const field = fields[index];
+    if (field?.id != null && !window.confirm('Xóa câu hỏi sẽ không ảnh hưởng đến các đơn đã nộp, nhưng câu hỏi sẽ không còn hiển thị cho ứng viên mới.')) return;
     onChange(fields.filter((_, fieldIndex) => fieldIndex !== index).map((field, displayOrder) => ({ ...field, displayOrder })));
   };
 

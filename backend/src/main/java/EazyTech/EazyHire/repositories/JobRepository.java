@@ -23,6 +23,8 @@ public interface JobRepository extends JpaRepository<JobEntity, Long> {
 
     boolean existsByCompanyIdAndSlug(Long companyId, String slug);
 
+    long countByCreatedByIdAndIsDeletedFalse(Long createdById);
+
     @Query("SELECT COUNT(j) FROM JobEntity j WHERE j.category.id = :categoryId AND j.isDeleted = false")
     long countByCategoryIdAndIsDeletedFalse(@Param("categoryId") Long categoryId);
 

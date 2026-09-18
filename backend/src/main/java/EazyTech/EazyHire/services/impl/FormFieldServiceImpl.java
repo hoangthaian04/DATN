@@ -10,6 +10,7 @@ import EazyTech.EazyHire.repositories.FormFieldRepository;
 import EazyTech.EazyHire.repositories.JobRepository;
 import EazyTech.EazyHire.services.AuditService;
 import EazyTech.EazyHire.services.FormFieldService;
+import EazyTech.EazyHire.services.UserAccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,10 +30,12 @@ public class FormFieldServiceImpl implements FormFieldService {
     private final FormFieldRepository formFieldRepository;
     private final JobRepository jobRepository;
     private final AuditService auditService;
+    private final UserAccountService accounts;
 
     @Override
     @Transactional(readOnly = true)
-    public List<FormFieldResponseDTO> getFormFields(Long jobId, Long companyId) {
+    public List<FormFieldResponseDTO> getFormFields(Long jobId, Long companyId, Long userId) {
+        ensureActiveWorkspace(companyId, userId);
         getAccessibleJob(jobId, companyId);
         return formFieldRepository
                 .findByJobIdAndCompanyIdAndIsDeletedFalseOrderByOrderIndexAscIdAsc(jobId, companyId)
@@ -44,6 +47,7 @@ public class FormFieldServiceImpl implements FormFieldService {
     @Override
     @Transactional
     public FormFieldResponseDTO createFormField(Long jobId, Long companyId, Long actorId, FormFieldRequestDTO request) {
+        ensureActiveWorkspace(companyId, actorId);
         JobEntity job = getEditableJob(jobId, companyId);
         FormFieldType fieldType = parseFieldType(request.getFieldType());
         List<String> options = normalizeOptions(fieldType, request.getOptions());
@@ -85,6 +89,7 @@ public class FormFieldServiceImpl implements FormFieldService {
             Long actorId,
             FormFieldRequestDTO request
     ) {
+        ensureActiveWorkspace(companyId, actorId);
         getEditableJob(jobId, companyId);
         FormFieldEntity field = getField(jobId, fieldId, companyId);
         FormFieldType fieldType = parseFieldType(request.getFieldType());
@@ -116,6 +121,7 @@ public class FormFieldServiceImpl implements FormFieldService {
     @Override
     @Transactional
     public void deleteFormField(Long jobId, Long fieldId, Long companyId, Long actorId) {
+        ensureActiveWorkspace(companyId, actorId);
         getEditableJob(jobId, companyId);
         FormFieldEntity field = getField(jobId, fieldId, companyId);
         field.setIsDeleted(true);
@@ -134,6 +140,7 @@ public class FormFieldServiceImpl implements FormFieldService {
     @Override
     @Transactional
     public List<FormFieldResponseDTO> reorderFormFields(Long jobId, Long companyId, Long actorId, List<Long> orderedIds) {
+        ensureActiveWorkspace(companyId, actorId);
         getEditableJob(jobId, companyId);
         List<FormFieldEntity> fields = formFieldRepository
                 .findByJobIdAndCompanyIdAndIsDeletedFalseOrderByOrderIndexAscIdAsc(jobId, companyId);
@@ -164,7 +171,7 @@ public class FormFieldServiceImpl implements FormFieldService {
         JobEntity job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new CustomException(404, "Không tìm thấy Job"));
         if (job.getCompany() == null || !job.getCompany().getId().equals(companyId)) {
-            throw new CustomException(403, "Bạn không có quyền truy cập Job này");
+            throw new CustomException(404, "Không tìm thấy Job trong workspace hiện tại");
         }
         if (Boolean.TRUE.equals(job.getIsDeleted())) {
             throw new CustomException(404, "Job này đã bị xóa");
@@ -259,6 +266,16 @@ public class FormFieldServiceImpl implements FormFieldService {
                 .findByJobIdAndCompanyIdAndIsDeletedFalseOrderByOrderIndexAscIdAsc(jobId, companyId);
         for (int index = 0; index < fields.size(); index++) fields.get(index).setOrderIndex(index);
         formFieldRepository.saveAll(fields);
+    }
+
+    private void ensureActiveWorkspace(Long companyId, Long userId) {
+        if (companyId == null || userId == null) {
+            throw new CustomException(403, "Tài khoản chưa thuộc workspace tuyển dụng hợp lệ");
+        }
+        var user = accounts.requireHr(userId, true);
+        if (user.getCompany() == null || !companyId.equals(user.getCompany().getId())) {
+            throw new CustomException(403, "Bạn không có quyền thao tác trong workspace này");
+        }
     }
 
     private FormFieldResponseDTO toResponse(FormFieldEntity field) {

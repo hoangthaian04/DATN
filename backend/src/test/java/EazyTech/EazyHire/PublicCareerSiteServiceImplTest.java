@@ -148,6 +148,25 @@ class PublicCareerSiteServiceImplTest {
     }
 
     @Test
+    void getJobsReturnsEmptyPageForInactiveCategoryFilter() {
+        CompanyEntity company = company();
+        CareerSiteEntity site = CareerSiteEntity.builder().company(company).isPublished(true).build();
+
+        when(companyRepository.findBySlug("easytech")).thenReturn(Optional.of(company));
+        when(careerSiteRepository.findByCompanyId(1L)).thenReturn(Optional.of(site));
+        when(companyProfileRepository.findByCompanyId(1L)).thenReturn(Optional.empty());
+        when(jobRepository.findPublicJobs(eq("easytech"), eq(""), eq(""), eq("inactive-category"), eq(PageRequest.of(0, 20))))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 20), 0));
+
+        var result = service.getJobs("easytech", null, null, " Inactive-Category ", 1, 20);
+
+        assertEquals(0, result.getTotalElements());
+        verify(jobRepository).findPublicJobs(
+                eq("easytech"), eq(""), eq(""), eq("inactive-category"), eq(PageRequest.of(0, 20))
+        );
+    }
+
+    @Test
     void getJobsRejectsInvalidPagination() {
         CompanyEntity company = company();
         CareerSiteEntity site = CareerSiteEntity.builder().company(company).isPublished(true).build();

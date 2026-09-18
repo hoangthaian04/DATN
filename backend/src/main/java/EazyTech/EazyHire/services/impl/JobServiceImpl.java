@@ -15,7 +15,9 @@ import EazyTech.EazyHire.models.entities.JobEntity;
 import EazyTech.EazyHire.models.entities.HiringRoundEntity;
 import EazyTech.EazyHire.models.entities.CompanyEntity;
 import EazyTech.EazyHire.models.entities.UserEntity;
+import EazyTech.EazyHire.models.enums.CompanyStatus;
 import EazyTech.EazyHire.models.enums.JobCategoryStatus;
+import EazyTech.EazyHire.models.enums.UserStatus;
 import EazyTech.EazyHire.repositories.ApplicationRepository;
 import EazyTech.EazyHire.repositories.HiringRoundRepository;
 import EazyTech.EazyHire.repositories.JobCategoryRepository;
@@ -31,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 @Service
@@ -101,6 +104,12 @@ public class JobServiceImpl implements JobService {
         if (creator.getCompany() == null || !companyId.equals(creator.getCompany().getId())) {
             throw new CustomException(403, "Bạn không có quyền tạo Job cho doanh nghiệp này");
         }
+        if (company.getStatus() != CompanyStatus.ACTIVE) {
+            throw new CustomException(403, "Doanh nghiệp chưa ở trạng thái ACTIVE để tạo Job");
+        }
+        if (creator.getStatus() != UserStatus.ACTIVE) {
+            throw new CustomException(403, "Tài khoản chưa ở trạng thái ACTIVE để tạo Job");
+        }
 
         JobCategoryEntity category = jobCategoryRepository
                 .findByIdAndStatusAndIsDeletedFalse(request.getCategoryId(), JobCategoryStatus.ACTIVE)
@@ -115,7 +124,7 @@ public class JobServiceImpl implements JobService {
                 .createdBy(creator)
                 .category(category)
                 .title(request.getTitle().trim())
-                .slug(uniqueJobSlug(companyId, request.getTitle()))
+                .slug(uniqueJobSlug(companyId, request.getTitle().trim()))
                 .description(request.getDescription())
                 .requirements(request.getRequirements())
                 .benefits(request.getBenefits())
@@ -139,6 +148,7 @@ public class JobServiceImpl implements JobService {
     @Transactional
     public JobDetailResponseDTO publishJob(Long jobId, Long companyId, Long userId) {
         JobEntity job = getTransitionableJob(jobId, companyId);
+        ensureActiveWorkspace(companyId, userId);
         if (!"INACTIVE".equals(job.getStatus())) {
             throw new CustomException(409, "Chỉ có thể publish Job đang ở trạng thái INACTIVE");
         }
@@ -155,6 +165,7 @@ public class JobServiceImpl implements JobService {
     @Transactional
     public JobDetailResponseDTO closeJob(Long jobId, Long companyId, Long userId) {
         JobEntity job = getTransitionableJob(jobId, companyId);
+        ensureActiveWorkspace(companyId, userId);
         if (!"ACTIVE".equals(job.getStatus())) {
             throw new CustomException(409, "Chỉ có thể đóng Job đang ở trạng thái ACTIVE");
         }
@@ -169,6 +180,7 @@ public class JobServiceImpl implements JobService {
     @Transactional
     public JobDetailResponseDTO reopenJob(Long jobId, Long companyId, Long userId) {
         JobEntity job = getTransitionableJob(jobId, companyId);
+        ensureActiveWorkspace(companyId, userId);
         if (!"CLOSED".equals(job.getStatus())) {
             throw new CustomException(409, "Chỉ có thể mở lại Job đang ở trạng thái CLOSED");
         }
@@ -188,7 +200,7 @@ public class JobServiceImpl implements JobService {
                 .orElseThrow(() -> new CustomException(404, "Không tìm thấy Job"));
 
         if (!job.getCompany().getId().equals(companyId)) {
-            throw new CustomException(403, "Bạn không có quyền truy cập Job này");
+            throw new CustomException(404, "Không tìm thấy Job trong workspace hiện tại");
         }
 
         if (job.getIsDeleted() != null && job.getIsDeleted()) {
@@ -200,18 +212,40 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @Transactional
-    public JobDetailResponseDTO updateJob(Long jobId, UpdateJobRequestDTO request, Long companyId) {
+    public JobDetailResponseDTO updateJob(Long jobId, UpdateJobRequestDTO request, Long companyId, Long userId) {
         JobEntity job = getEditableJob(jobId, companyId);
+        ensureActiveWorkspace(companyId, userId);
+        if (request.getRoundCount() != null) {
+            long configuredRoundCount = hiringRoundRepository
+                    .countByJobIdAndCompanyIdAndIsDeletedFalse(jobId, companyId);
+            if (request.getRoundCount().longValue() != configuredRoundCount) {
+                throw new CustomException(
+                        400,
+                        "roundCount phải khớp với số vòng tuyển dụng đang cấu hình của Job"
+                );
+            }
+        }
         applyJobUpdate(job, request);
+        if (request.getRoundCount() != null) {
+            job.setRoundCount(request.getRoundCount());
+        }
         job = jobRepository.save(job);
-        
+        auditService.recordTarget(userId, companyId, "JOB", job.getId(), "UPDATE_JOB", "Cập nhật Job: " + job.getTitle());
         return mapToJobDetailDTO(job);
     }
 
     @Override
     @Transactional
-    public JobDetailResponseDTO saveJobPipeline(Long jobId, SaveJobPipelineRequestDTO request, Long companyId) {
+    public JobDetailResponseDTO saveJobPipeline(Long jobId, SaveJobPipelineRequestDTO request, Long companyId, Long userId) {
+        ensureActiveWorkspace(companyId, userId);
         JobEntity job = getEditableJob(jobId, companyId);
+        if (request.getJob().getRoundCount() != null
+                && request.getJob().getRoundCount() != request.getRounds().size()) {
+            throw new CustomException(
+                    400,
+                    "roundCount phải khớp với số vòng tuyển dụng đang gửi trong pipeline"
+            );
+        }
         List<HiringRoundEntity> existing = hiringRoundRepository
                 .findByJobIdAndCompanyIdAndIsDeletedFalseOrderByOrderIndexAsc(jobId, companyId);
         Map<Long, HiringRoundEntity> existingById = new HashMap<>();
@@ -255,14 +289,16 @@ public class JobServiceImpl implements JobService {
         hiringRoundRepository.saveAll(ordered);
         applyJobUpdate(job, request.getJob());
         job.setRoundCount(ordered.size());
-        return mapToJobDetailDTO(jobRepository.save(job));
+        JobEntity saved = jobRepository.save(job);
+        auditService.recordTarget(userId, companyId, "JOB", saved.getId(), "SAVE_JOB_PIPELINE", "Cập nhật thông tin Job và pipeline");
+        return mapToJobDetailDTO(saved);
     }
 
     private JobEntity getEditableJob(Long jobId, Long companyId) {
         JobEntity job = jobRepository.findById(jobId).orElseThrow(() -> new CustomException(404, "Không tìm thấy Job"));
-        if (!job.getCompany().getId().equals(companyId)) throw new CustomException(403, "Bạn không có quyền chỉnh sửa Job này");
-        if (Boolean.TRUE.equals(job.getIsDeleted())) throw new CustomException(400, "Job này đã bị xóa, không thể chỉnh sửa");
-        if ("CLOSED".equals(job.getStatus())) throw new CustomException(400, "Job này đã đóng, không thể chỉnh sửa");
+        if (!job.getCompany().getId().equals(companyId)) throw new CustomException(404, "Không tìm thấy Job trong workspace hiện tại");
+        if (Boolean.TRUE.equals(job.getIsDeleted())) throw new CustomException(404, "Job này đã bị xóa");
+        if ("CLOSED".equals(job.getStatus())) throw new CustomException(409, "Job này đã đóng, không thể chỉnh sửa");
         return job;
     }
 
@@ -278,6 +314,24 @@ public class JobServiceImpl implements JobService {
         return job;
     }
 
+    private void ensureActiveWorkspace(Long companyId, Long userId) {
+        if (companyId == null || userId == null) {
+            throw new CustomException(403, "Tài khoản chưa thuộc workspace tuyển dụng hợp lệ");
+        }
+
+        CompanyEntity company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new CustomException(403, "Workspace tuyển dụng không khả dụng"));
+        UserEntity user = userRepository.findByIdWithCompany(userId)
+                .orElseThrow(() -> new CustomException(401, "Phiên làm việc không hợp lệ"));
+
+        if (user.getCompany() == null || !companyId.equals(user.getCompany().getId())) {
+            throw new CustomException(403, "Bạn không có quyền thao tác trong workspace này");
+        }
+        if (company.getStatus() != CompanyStatus.ACTIVE || user.getStatus() != UserStatus.ACTIVE) {
+            throw new CustomException(403, "Workspace hoặc tài khoản chưa ở trạng thái ACTIVE");
+        }
+    }
+
     private void validatePublishable(JobEntity job) {
         if (job.getTitle() == null || job.getTitle().isBlank()) {
             throw new CustomException(400, "Job cần có tiêu đề trước khi publish");
@@ -289,6 +343,8 @@ public class JobServiceImpl implements JobService {
             throw new CustomException(400, "Job cần có địa điểm trước khi publish");
         }
         if (job.getSalaryMin() == null || job.getSalaryMax() == null
+                || job.getSalaryMin().signum() < 0
+                || job.getSalaryMax().signum() < 0
                 || job.getSalaryMax().compareTo(job.getSalaryMin()) < 0) {
             throw new CustomException(400, "Job cần có khoảng lương hợp lệ trước khi publish");
         }
@@ -300,19 +356,69 @@ public class JobServiceImpl implements JobService {
     }
 
     private void applyJobUpdate(JobEntity job, UpdateJobRequestDTO request) {
+        if (request.getTitle() == null || request.getTitle().isBlank()) {
+            throw new CustomException(400, "Tiêu đề không được để trống");
+        }
+        validateJobUpdateOptions(job, request);
+
+        JobCategoryEntity replacementCategory = null;
         if (request.getCategoryId() != null) {
-            JobCategoryEntity category = jobCategoryRepository
+            replacementCategory = jobCategoryRepository
                     .findByIdAndStatusAndIsDeletedFalse(request.getCategoryId(), JobCategoryStatus.ACTIVE)
                     .orElseThrow(() -> new CustomException(
                             400,
                             "Chỉ được chọn danh mục đang ACTIVE và chưa bị xóa."
                     ));
-            job.setCategory(category);
+            job.setCategory(replacementCategory);
         }
-        job.setTitle(request.getTitle()); job.setDescription(request.getDescription()); job.setRequirements(request.getRequirements());
-        job.setBenefits(request.getBenefits()); job.setSalaryMin(request.getSalaryMin()); job.setSalaryMax(request.getSalaryMax());
-        job.setCurrency(request.getCurrency()); job.setLocation(request.getLocation()); job.setWorkingType(request.getWorkingType());
-        job.setEmploymentType(request.getEmploymentType()); job.setExperienceLevel(request.getExperienceLevel()); job.setExperienceYearsMin(request.getExperienceYearsMin());
+        job.setTitle(request.getTitle().trim());
+        if (request.getDescription() != null) job.setDescription(request.getDescription());
+        if (request.getRequirements() != null) job.setRequirements(request.getRequirements());
+        if (request.getBenefits() != null) job.setBenefits(request.getBenefits());
+        if (request.getSalaryMin() != null) job.setSalaryMin(request.getSalaryMin());
+        if (request.getSalaryMax() != null) job.setSalaryMax(request.getSalaryMax());
+        if (request.getCurrency() != null) job.setCurrency(normalizeOrDefault(request.getCurrency(), "VND"));
+        if (request.getLocation() != null) job.setLocation(request.getLocation().trim());
+        if (request.getWorkingType() != null) job.setWorkingType(request.getWorkingType().trim().toUpperCase(Locale.ROOT));
+        if (request.getEmploymentType() != null) job.setEmploymentType(request.getEmploymentType().trim().toUpperCase(Locale.ROOT));
+        if (request.getExperienceLevel() != null) {
+            job.setExperienceLevel(normalizeOrDefault(request.getExperienceLevel(), "MID"));
+        }
+        if (request.getExperienceYearsMin() != null) job.setExperienceYearsMin(request.getExperienceYearsMin());
+    }
+
+    private void validateJobUpdateOptions(JobEntity job, UpdateJobRequestDTO request) {
+        BigDecimal salaryMin = request.getSalaryMin() != null ? request.getSalaryMin() : job.getSalaryMin();
+        BigDecimal salaryMax = request.getSalaryMax() != null ? request.getSalaryMax() : job.getSalaryMax();
+        if (salaryMin != null && salaryMax != null && salaryMax.compareTo(salaryMin) < 0) {
+            throw new CustomException(400, "Mức lương tối đa phải lớn hơn hoặc bằng mức lương tối thiểu");
+        }
+
+        String currency = request.getCurrency() != null
+                ? normalizeOrDefault(request.getCurrency(), "VND")
+                : normalizeOrDefault(job.getCurrency(), "VND");
+        validateAllowed("currency", currency, Set.of("VND", "USD"));
+
+        String workingType = request.getWorkingType() != null
+                ? request.getWorkingType().trim().toUpperCase(Locale.ROOT)
+                : job.getWorkingType();
+        if (workingType != null && !workingType.isBlank()) {
+            validateAllowed("workingType", workingType, Set.of("ONSITE", "REMOTE", "HYBRID"));
+        }
+
+        String employmentType = request.getEmploymentType() != null
+                ? request.getEmploymentType().trim().toUpperCase(Locale.ROOT)
+                : job.getEmploymentType();
+        if (employmentType != null && !employmentType.isBlank()) {
+            validateAllowed("employmentType", employmentType, Set.of("FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"));
+        }
+
+        String experienceLevel = request.getExperienceLevel() != null
+                ? request.getExperienceLevel().trim().toUpperCase(Locale.ROOT)
+                : job.getExperienceLevel();
+        if (experienceLevel != null && !experienceLevel.isBlank()) {
+            validateAllowed("experienceLevel", experienceLevel, Set.of("INTERN", "JUNIOR", "MID", "SENIOR", "LEAD"));
+        }
     }
 
     private void validateJobOptions(CreateJobRequestDTO request) {

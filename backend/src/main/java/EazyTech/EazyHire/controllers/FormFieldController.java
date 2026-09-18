@@ -30,9 +30,10 @@ public class FormFieldController {
 
     @GetMapping
     public ResponseEntity<BaseResponse> getFormFields(@PathVariable Long jobId) {
+        AuthorizedUser user = currentUser();
         return ResponseEntity.ok(BaseResponse.success(
                 "Lấy danh sách field form thành công",
-                formFieldService.getFormFields(jobId, currentUser().getCompanyId())
+                formFieldService.getFormFields(jobId, user.getCompanyId(), user.getId())
         ));
     }
 

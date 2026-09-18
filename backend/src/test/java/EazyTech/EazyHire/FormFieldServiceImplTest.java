@@ -5,11 +5,15 @@ import EazyTech.EazyHire.models.dtos.FormFieldRequestDTO;
 import EazyTech.EazyHire.models.entities.CompanyEntity;
 import EazyTech.EazyHire.models.entities.FormFieldEntity;
 import EazyTech.EazyHire.models.entities.JobEntity;
+import EazyTech.EazyHire.models.entities.UserEntity;
 import EazyTech.EazyHire.models.enums.FormFieldType;
+import EazyTech.EazyHire.models.enums.UserStatus;
 import EazyTech.EazyHire.repositories.FormFieldRepository;
 import EazyTech.EazyHire.repositories.JobRepository;
 import EazyTech.EazyHire.services.AuditService;
+import EazyTech.EazyHire.services.UserAccountService;
 import EazyTech.EazyHire.services.impl.FormFieldServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,8 +44,35 @@ class FormFieldServiceImplTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private UserAccountService accounts;
+
     @InjectMocks
     private FormFieldServiceImpl service;
+
+    @BeforeEach
+    void stubActiveWorkspace() {
+        UserEntity user = UserEntity.builder()
+                .id(7L)
+                .company(CompanyEntity.builder().id(1L).build())
+                .status(UserStatus.ACTIVE)
+                .build();
+        lenient().when(accounts.requireHr(eq(7L), eq(true))).thenReturn(user);
+    }
+
+    @Test
+    void getFieldsRequiresActiveWorkspaceAndReturnsOnlyActiveFields() {
+        JobEntity job = job(100L, "ACTIVE");
+        FormFieldEntity field = field(10L, job, 0);
+        when(jobRepository.findById(100L)).thenReturn(Optional.of(job));
+        when(formFieldRepository.findByJobIdAndCompanyIdAndIsDeletedFalseOrderByOrderIndexAscIdAsc(100L, 1L))
+                .thenReturn(List.of(field));
+
+        var result = service.getFormFields(100L, 1L, 7L);
+
+        assertEquals(List.of(10L), result.stream().map(item -> item.getId()).toList());
+        verify(accounts).requireHr(7L, true);
+    }
 
     @Test
     void createDerivesFieldNameAndStoresSelectOptions() {
@@ -116,6 +148,18 @@ class FormFieldServiceImplTest {
 
         assertEquals(409, exception.getStatusCode());
         verify(formFieldRepository, never()).save(any());
+    }
+
+    @Test
+    void crossTenantJobIsNotRevealed() {
+        JobEntity job = job(100L, "ACTIVE");
+        job.setCompany(CompanyEntity.builder().id(2L).name("Other").build());
+        when(jobRepository.findById(100L)).thenReturn(Optional.of(job));
+
+        CustomException exception = assertThrows(CustomException.class, () -> service.getFormFields(100L, 1L, 7L));
+
+        assertEquals(404, exception.getStatusCode());
+        verify(formFieldRepository, never()).findByJobIdAndCompanyIdAndIsDeletedFalseOrderByOrderIndexAscIdAsc(any(), any());
     }
 
     @Test

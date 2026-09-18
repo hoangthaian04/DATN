@@ -21,8 +21,8 @@ public interface JobService {
 
     JobDetailResponseDTO getJobById(Long jobId, Long companyId);
 
-    JobDetailResponseDTO updateJob(Long jobId, UpdateJobRequestDTO request, Long companyId);
-    JobDetailResponseDTO saveJobPipeline(Long jobId, SaveJobPipelineRequestDTO request, Long companyId);
+    JobDetailResponseDTO updateJob(Long jobId, UpdateJobRequestDTO request, Long companyId, Long userId);
+    JobDetailResponseDTO saveJobPipeline(Long jobId, SaveJobPipelineRequestDTO request, Long companyId, Long userId);
 
     void deleteJob(Long jobId, Long companyId);
 }

@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface FormFieldService {
 
-    List<FormFieldResponseDTO> getFormFields(Long jobId, Long companyId);
+    List<FormFieldResponseDTO> getFormFields(Long jobId, Long companyId, Long userId);
 
     FormFieldResponseDTO createFormField(Long jobId, Long companyId, Long actorId, FormFieldRequestDTO request);
 
