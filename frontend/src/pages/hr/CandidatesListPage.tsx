@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { jobService } from '@/services/job.service';
 import { CandidatesTable } from '@/components/candidates/CandidatesTable';
 import { FilterBar } from '@/components/candidates/FilterBar';
+import type { ApplicationStatus } from '@/types/application.types';
 
 export const CandidatesListPage: React.FC = () => {
   const [selectedJobId, setSelectedJobId] = useState<string>('');
-  const [status, setStatus] = useState<string>('');
+  const [keyword, setKeyword] = useState('');
+  const [status, setStatus] = useState<ApplicationStatus | ''>('');
   const [page, setPage] = useState(1);
 
   // Fetch danh sách Job cho Dropdown
@@ -17,12 +19,13 @@ export const CandidatesListPage: React.FC = () => {
 
   // Lấy danh sách ứng viên (tất cả hoặc theo job)
   const { data: applicationsPagination, isLoading: isLoadingApps } = useQuery({
-    queryKey: ['applications', selectedJobId, status, page],
+    queryKey: ['applications', selectedJobId, keyword, status, page],
     queryFn: () => jobService.getApplications({ 
       jobId: selectedJobId || undefined, 
       page, 
       limit: 10, 
-      status: status || undefined 
+      status: status || undefined,
+      keyword: keyword.trim() || undefined,
     })
   });
 
@@ -45,6 +48,11 @@ export const CandidatesListPage: React.FC = () => {
         selectedJobId={selectedJobId}
         onJobChange={(newJobId) => {
           setSelectedJobId(newJobId);
+          setPage(1);
+        }}
+        keyword={keyword}
+        onKeywordChange={(newKeyword) => {
+          setKeyword(newKeyword);
           setPage(1);
         }}
         status={status}

@@ -1,7 +1,7 @@
 import { api } from './api';
 import type { BaseResponse, BasePagination } from '../types/api.types';
 import type { JobSummary, JobStats, Job, CreateJobRequest, SaveJobPipelineRequest, UpdateJobRequest } from '../types/job.types';
-import type { ApplicationListDTO } from '../types/application.types';
+import type { ApplicationListDTO, ApplicationStatus } from '../types/application.types';
 
 export interface GetJobsParams {
   page?: number;
@@ -36,7 +36,13 @@ export const jobService = {
     return response.data.data;
   },
 
-  getApplications: async (params: { jobId?: string; page?: number; limit?: number; status?: string }) => {
+  getApplications: async (params: {
+    jobId?: string;
+    page?: number;
+    limit?: number;
+    status?: ApplicationStatus;
+    keyword?: string;
+  }) => {
     const response = await api.get<BaseResponse<BasePagination<ApplicationListDTO>>>('/applications', { params });
     return response.data.data;
   },

@@ -6,6 +6,7 @@ import type {
   PublicJobDetail,
   PublicJobPage,
 } from '@/types/career.types';
+import type { ApplicationStatus } from '@/types/application.types';
 
 export interface PublicJobFilters {
   keyword?: string;
@@ -32,7 +33,7 @@ export interface PublicApplicationPayload {
 
 export interface PublicApplicationConfirmation {
   id: number;
-  applicationStatus: string;
+  applicationStatus: ApplicationStatus;
   trackingToken: string;
   submittedAt: string;
 }

@@ -24,13 +24,14 @@ public class ApplicationController {
     public ResponseEntity<BaseResponse> getApplications(
             @RequestParam(required = false) Long jobId,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword,
             @Valid PaginationRequest paginationRequest
     ) {
         AuthorizedUser user = SecurityUtils.getCurrentUser()
                 .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
         
         Page<ApplicationListResponseDTO> applicationsPage = applicationService.getApplicationsForJob(
-                user.getCompanyId(), jobId, status, paginationRequest
+                user.getCompanyId(), jobId, status, keyword, paginationRequest
         );
 
         return ResponseEntity.ok(new BaseResponse(applicationsPage));

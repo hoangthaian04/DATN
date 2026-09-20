@@ -1,4 +1,4 @@
-export type ApplicationStatus = 'NEW' | 'IN_PROGRESS' | 'PASSED' | 'REJECTED';
+export type ApplicationStatus = 'ACTIVE' | 'REJECTED' | 'HIRED';
 export type EvaluationResult = 'PASS' | 'FAIL';
 
 export interface Candidate {
@@ -75,5 +75,5 @@ export interface ApplicationListDTO {
   jobTitle: string;
   phone: string;
   email: string;
-  applicationStatus: string;
+  applicationStatus: ApplicationStatus;
 }

@@ -5,5 +5,11 @@ import EazyTech.EazyHire.models.dtos.ApplicationListResponseDTO;
 import org.springframework.data.domain.Page;
 
 public interface ApplicationService {
-    Page<ApplicationListResponseDTO> getApplicationsForJob(Long companyId, Long jobId, String status, PaginationRequest paginationRequest);
+    Page<ApplicationListResponseDTO> getApplicationsForJob(
+            Long companyId,
+            Long jobId,
+            String status,
+            String keyword,
+            PaginationRequest paginationRequest
+    );
 }

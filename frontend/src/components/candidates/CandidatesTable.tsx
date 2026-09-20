@@ -9,33 +9,21 @@ interface Props {
 }
 
 export const CandidatesTable: React.FC<Props> = ({ pagination, isLoading, onPageChange }) => {
-  // Hàm mock priority theo mockup
-  const getPriorityBadge = (index: number) => {
-    if (index % 3 === 0) {
-      return (
-        <span className="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold bg-green-50 text-green-600 border border-green-200">
-          Ưu tiên cao
-        </span>
-      );
-    }
-    if (index % 3 === 1) {
-      return (
-        <span className="inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-50 text-yellow-600 border border-yellow-200">
-          Ưu tiên trung bình
-        </span>
-      );
-    }
-    return null;
-  };
+  const getStatusBadge = (status: ApplicationListDTO['applicationStatus']) => {
+    const labels = {
+      ACTIVE: 'Đang xử lý',
+      REJECTED: 'Từ chối',
+      HIRED: 'Đã tuyển',
+    } satisfies Record<ApplicationListDTO['applicationStatus'], string>;
+    const styles = {
+      ACTIVE: 'bg-blue-50 text-blue-600',
+      REJECTED: 'bg-rose-50 text-rose-600',
+      HIRED: 'bg-emerald-50 text-emerald-600',
+    } satisfies Record<ApplicationListDTO['applicationStatus'], string>;
 
-  // Hàm mock progress badge (Đạt X / Y vòng)
-  const getProgressBadge = (status: string, index: number) => {
-    let text = `Đạt ${index % 4} / 4 vòng`;
-    if (status === 'PASSED') text = `Đạt 4 / 4 vòng`;
-    
     return (
-      <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-600">
-        {text}
+      <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold ${styles[status]}`}>
+        {labels[status]}
       </span>
     );
   };
@@ -84,7 +72,7 @@ export const CandidatesTable: React.FC<Props> = ({ pagination, isLoading, onPage
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
-            {apps.map((app, index) => (
+            {apps.map((app) => (
               <tr 
                 key={app.applicationId} 
                 className="hover:bg-slate-50/80 transition-colors group"
@@ -96,14 +84,10 @@ export const CandidatesTable: React.FC<Props> = ({ pagination, isLoading, onPage
                   <div className="font-bold text-slate-800 text-sm">
                     {app.fullName}
                   </div>
-                  {getPriorityBadge(index)}
                 </td>
                 <td className="px-6 py-4 align-top">
                   <div className="font-bold text-slate-700 text-sm">
                     {app.jobTitle}
-                  </div>
-                  <div className="text-slate-400 text-xs mt-1 font-medium">
-                    {index % 2 === 0 ? 'TP. HCM' : 'Hà Nội'}
                   </div>
                 </td>
                 <td className="px-6 py-4 align-top text-slate-800 font-bold text-sm">
@@ -113,7 +97,7 @@ export const CandidatesTable: React.FC<Props> = ({ pagination, isLoading, onPage
                   {app.email}
                 </td>
                 <td className="px-6 py-4 align-top text-center">
-                  {getProgressBadge(app.applicationStatus, index)}
+                  {getStatusBadge(app.applicationStatus)}
                 </td>
                 <td className="px-6 py-4 align-top text-center">
                   <div className="flex items-center justify-center gap-2">

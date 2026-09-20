@@ -31,12 +31,22 @@ public interface ApplicationRepository extends JpaRepository<ApplicationEntity, 
            "JOIN a.candidate c " +
            "JOIN a.job j " +
            "WHERE (:jobId IS NULL OR j.id = :jobId) AND a.company.id = :companyId " +
-           "AND (:status IS NULL OR a.status = :status)")
+           "AND (:status IS NULL OR :status = '' OR a.status = :status) " +
+           "AND (:keyword IS NULL OR :keyword = '' " +
+           "OR LOWER(c.fullName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(c.email) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(COALESCE(c.phone, '')) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(j.title) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<ApplicationListResponseDTO> findApplicationsForListView(
             @Param("jobId") Long jobId, 
             @Param("companyId") Long companyId, 
-            @Param("status") String status, 
+            @Param("status") String status,
+            @Param("keyword") String keyword,
             Pageable pageable);
+
+    @Query("SELECT COUNT(a) FROM ApplicationEntity a " +
+           "WHERE a.job.id = :jobId AND a.company.id = :companyId")
+    long countByJobIdAndCompanyId(@Param("jobId") Long jobId, @Param("companyId") Long companyId);
 
     Optional<ApplicationEntity> findByJobIdAndCandidateIdAndStatus(
             Long jobId,

@@ -1,5 +1,6 @@
 import type { BasePagination } from './api.types';
 import type { FormFieldType } from './form-field.types';
+import type { ApplicationStatus } from './application.types';
 
 export interface PublicCategoryOption {
   id: number;
@@ -88,7 +89,7 @@ export interface PublicApplicationStatus {
   candidateName: string;
   jobTitle: string;
   companyName: string;
-  applicationStatus: string;
+  applicationStatus: ApplicationStatus;
   currentStage: string;
   lastUpdatedAt?: string;
   expiresAt?: string;
