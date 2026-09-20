@@ -251,6 +251,7 @@ class JobServiceImplTest {
     void getJobReturnsCategoryDetailsForTheCurrentCompany() {
         JobEntity job = job(10L, 20L, category(1L, JobCategoryStatus.ACTIVE));
         when(jobRepository.findById(10L)).thenReturn(Optional.of(job));
+        when(applicationRepository.countByJobIdAndCompanyId(10L, 20L)).thenReturn(3L);
 
         var result = service.getJobById(10L, 20L);
 
@@ -258,6 +259,7 @@ class JobServiceImplTest {
         assertEquals(1L, result.getCategoryId());
         assertEquals("Category 1", result.getCategoryName());
         assertEquals("category-1", result.getCategorySlug());
+        assertEquals(3L, result.getApplicantCount());
     }
 
     @Test

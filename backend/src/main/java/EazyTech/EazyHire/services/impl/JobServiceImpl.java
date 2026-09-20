@@ -462,6 +462,12 @@ public class JobServiceImpl implements JobService {
     }
 
     private JobDetailResponseDTO mapToJobDetailDTO(JobEntity job) {
+        long applicantCount = job.getId() == null
+                || job.getCompany() == null
+                || job.getCompany().getId() == null
+                ? 0L
+                : applicationRepository.countByJobIdAndCompanyId(job.getId(), job.getCompany().getId());
+
         return JobDetailResponseDTO.builder()
                 .id(job.getId())
                 .categoryId(job.getCategory() != null ? job.getCategory().getId() : null)
@@ -481,6 +487,7 @@ public class JobServiceImpl implements JobService {
                 .experienceLevel(job.getExperienceLevel())
                 .experienceYearsMin(job.getExperienceYearsMin())
                 .roundCount(job.getRoundCount())
+                .applicantCount(applicantCount)
                 .status(job.getStatus())
                 .publishedAt(job.getPublishedAt())
                 .closedAt(job.getClosedAt())
