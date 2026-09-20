@@ -11,6 +11,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LocalCvStorageServiceTest {
 
@@ -27,8 +28,47 @@ class LocalCvStorageServiceTest {
 
         String result = service.store(1L, 20L, file);
 
-        assertEquals(true, result.startsWith("private://candidate-cvs/1/20/"));
-        assertEquals(true, result.endsWith(".pdf"));
+        assertTrue(result.startsWith("private://candidate-cvs/1/20/"));
+        assertTrue(result.endsWith(".pdf"));
+    }
+
+    @Test
+    void acceptsPdfWhenBrowserSendsGenericMultipartMime() {
+        LocalCvStorageService service = new LocalCvStorageService(tempDir.toString());
+        MockMultipartFile file = new MockMultipartFile(
+                "cvFile", "candidate.pdf", "application/octet-stream",
+                "%PDF-1.7\nCV content".getBytes(StandardCharsets.US_ASCII)
+        );
+
+        String result = service.store(1L, 20L, file);
+
+        assertTrue(result.startsWith("private://candidate-cvs/1/20/"));
+    }
+
+    @Test
+    void acceptsPdfWhenBrowserOmitsMultipartMime() {
+        LocalCvStorageService service = new LocalCvStorageService(tempDir.toString());
+        MockMultipartFile file = new MockMultipartFile(
+                "cvFile", "candidate.pdf", null,
+                "%PDF-1.7\nCV content".getBytes(StandardCharsets.US_ASCII)
+        );
+
+        String result = service.store(1L, 20L, file);
+
+        assertTrue(result.startsWith("private://candidate-cvs/1/20/"));
+    }
+
+    @Test
+    void acceptsPdfWhenBrowserOmitsFilenameExtension() {
+        LocalCvStorageService service = new LocalCvStorageService(tempDir.toString());
+        MockMultipartFile file = new MockMultipartFile(
+                "cvFile", "candidate", "application/octet-stream",
+                "%PDF-1.7\nCV content".getBytes(StandardCharsets.US_ASCII)
+        );
+
+        String result = service.store(1L, 20L, file);
+
+        assertTrue(result.startsWith("private://candidate-cvs/1/20/"));
     }
 
     @Test
