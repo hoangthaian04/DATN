@@ -21,6 +21,7 @@ import EazyTech.EazyHire.repositories.CompanyRepository;
 import EazyTech.EazyHire.repositories.UserRepository;
 import EazyTech.EazyHire.services.impl.JobServiceImpl;
 import EazyTech.EazyHire.services.AuditService;
+import EazyTech.EazyHire.services.EmailTemplateService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -62,6 +63,9 @@ class JobServiceImplTest {
 
     @Mock
     private ApplicationRepository applicationRepository;
+
+    @Mock
+    private EmailTemplateService emailTemplateService;
 
     @InjectMocks
     private JobServiceImpl service;
