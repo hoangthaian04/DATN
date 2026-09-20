@@ -5,6 +5,7 @@ import EazyTech.EazyHire.core.exceptions.CustomException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -43,6 +44,13 @@ public class RestResponseEntityExceptionHandler {
     public ResponseEntity<BaseResponse> handleBadRequest(Exception ex){
       return ResponseEntity.badRequest().body(BaseResponse.fail("Dữ liệu không hợp lệ. Vui lòng kiểm tra các trường, định dạng và trạng thái."));
     }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<BaseResponse> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
+      return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+              .body(BaseResponse.fail("Định dạng request không được hỗ trợ. Vui lòng gửi multipart/form-data."));
+    }
+
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<BaseResponse> handleConflict(Exception ex){
       return ResponseEntity.status(409).body(BaseResponse.fail("Dữ liệu bị trùng hoặc không còn hợp lệ. Vui lòng tải lại và kiểm tra email, mã số thuế, subdomain."));
