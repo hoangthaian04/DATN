@@ -9,8 +9,6 @@ import org.springframework.stereotype.Repository;
 import EazyTech.EazyHire.models.dtos.JobListResponseDTO;
 import EazyTech.EazyHire.models.dtos.JobStatsResponseDTO;
 import EazyTech.EazyHire.models.dtos.PublicJobSummaryResponseDTO;
-import EazyTech.EazyHire.models.dtos.dashboard.TopJobDTO;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -29,19 +27,6 @@ public interface JobRepository extends JpaRepository<JobEntity, Long> {
 
     @Query("SELECT COUNT(j) FROM JobEntity j WHERE j.category.id = :categoryId AND j.isDeleted = false")
     long countByCategoryIdAndIsDeletedFalse(@Param("categoryId") Long categoryId);
-
-    Long countByCompanyIdAndStatusAndIsDeletedFalseAndCreatedAtBetween(
-            Long companyId, String status, LocalDateTime startDate, LocalDateTime endDate);
-
-    @Query(
-        "SELECT new EazyTech.EazyHire.models.dtos.dashboard.TopJobDTO(j.title, 'Department', j.location, count(a), j.status) " +
-        "FROM JobEntity j LEFT JOIN ApplicationEntity a ON j.id = a.job.id " +
-        "WHERE j.company.id = :companyId " +
-        "AND j.isDeleted = false " +
-        "GROUP BY j.id, j.title, j.location, j.status " +
-        "ORDER BY count(a) DESC LIMIT 4"
-    )
-    List<TopJobDTO> findTopJobsByCompanyId(@Param("companyId") Long companyId);
 
     @Query(
         "SELECT new EazyTech.EazyHire.models.dtos.JobListResponseDTO(" +
