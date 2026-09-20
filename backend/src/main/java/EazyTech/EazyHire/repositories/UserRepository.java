@@ -1,10 +1,6 @@
 package EazyTech.EazyHire.repositories;
 
 import EazyTech.EazyHire.models.entities.UserEntity;
-import EazyTech.EazyHire.models.enums.UserRole;
-import EazyTech.EazyHire.models.enums.UserStatus;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -27,7 +23,5 @@ public interface UserRepository extends JpaRepository<UserEntity, Long>, JpaSpec
 
     @Query("SELECT u FROM UserEntity u LEFT JOIN FETCH u.company WHERE u.email = :email")
     Optional<UserEntity> findByEmailWithCompany(@Param("email") String email);
-
-    Page<UserEntity> findByRole(UserRole role, Pageable pageable);
 
 }
