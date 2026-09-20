@@ -20,4 +20,6 @@ public interface InterviewRepository extends JpaRepository<InterviewEntity, Long
     // Fetch rejected/reschedule requested interviews for Todo list
     List<InterviewEntity> findTop5ByCompanyIdAndStatusInOrderByUpdatedAtDesc(
             Long companyId, List<String> statuses);
+
+    List<InterviewEntity> findByApplicationIdOrderByInterviewTimeDesc(Long applicationId);
 }

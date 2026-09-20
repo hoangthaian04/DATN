@@ -22,4 +22,5 @@ public class CareerSiteDTO {
     private Boolean showCompanyDescription;
     private Boolean showBenefits;
     private String footerText;
+    private Boolean isPublished;
 }

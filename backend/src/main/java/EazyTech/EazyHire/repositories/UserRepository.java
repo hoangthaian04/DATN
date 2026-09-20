@@ -2,9 +2,11 @@ package EazyTech.EazyHire.repositories;
 
 import EazyTech.EazyHire.models.entities.UserEntity;
 import EazyTech.EazyHire.models.enums.UserRole;
+import EazyTech.EazyHire.models.enums.UserStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,7 +15,7 @@ import java.util.Optional;
 import java.util.List;
 
 @Repository
-public interface UserRepository extends JpaRepository<UserEntity, Long> {
+public interface UserRepository extends JpaRepository<UserEntity, Long>, JpaSpecificationExecutor<UserEntity> {
 
     List<UserEntity> findByCompanyId(Long companyId);
     Optional<UserEntity> findByEmail(String email);
@@ -27,4 +29,5 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByEmailWithCompany(@Param("email") String email);
 
     Page<UserEntity> findByRole(UserRole role, Pageable pageable);
+
 }

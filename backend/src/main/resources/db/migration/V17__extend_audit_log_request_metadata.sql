@@ -1,0 +1,6 @@
+ALTER TABLE audit_logs
+    ADD COLUMN IF NOT EXISTS ip_address VARCHAR(100),
+    ADD COLUMN IF NOT EXISTS user_agent TEXT,
+    ADD COLUMN IF NOT EXISTS request_id VARCHAR(100);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_request_id ON audit_logs(request_id);

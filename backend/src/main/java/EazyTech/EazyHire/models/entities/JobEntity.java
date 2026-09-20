@@ -29,8 +29,9 @@ public class JobEntity {
     @JoinColumn(name = "created_by")
     private UserEntity createdBy;
 
-    @Column(name = "category_id")
-    private Long categoryId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private JobCategoryEntity category;
 
     @Column(nullable = false)
     private String title;
@@ -73,11 +74,11 @@ public class JobEntity {
 
     @Builder.Default
     @Column(name = "round_count")
-    private Integer roundCount = 1;
+    private Integer roundCount = 0;
 
     @Builder.Default
     @Column(length = 50, nullable = false)
-    private String status = "ACTIVE";
+    private String status = "INACTIVE";
 
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
@@ -99,10 +100,10 @@ public class JobEntity {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (status == null) status = "ACTIVE";
+        if (status == null) status = "INACTIVE";
         if (isDeleted == null) isDeleted = false;
         if (currency == null) currency = "VND";
-        if (roundCount == null) roundCount = 1;
+        if (roundCount == null) roundCount = 0;
     }
 
     @PreUpdate

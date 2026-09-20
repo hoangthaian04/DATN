@@ -15,7 +15,8 @@ public class JobListResponseDTO {
     private Long id;
     private String title;
     private String location;
-    private String jobType;
+    private String employmentType;
+    private Integer roundCount;
     private String status;
     private Long applicantCount;
     private LocalDateTime publishedAt;

@@ -5,9 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "applications", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"job_id", "candidate_id"})
-})
+@Table(name = "applications")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -55,6 +53,16 @@ public class ApplicationEntity {
     @Column(name = "secure_token")
     private String secureToken;
 
+    @Column(name = "token_expiry_at")
+    private LocalDateTime tokenExpiryAt;
+
+    @Builder.Default
+    @Column(name = "consent_accepted", nullable = false)
+    private Boolean consentAccepted = false;
+
+    @Column(name = "consent_accepted_at")
+    private LocalDateTime consentAcceptedAt;
+
     @Column(name = "applied_at", nullable = false)
     private LocalDateTime appliedAt;
 
@@ -72,6 +80,7 @@ public class ApplicationEntity {
         if (status == null) status = "ACTIVE";
         if (source == null) source = "CAREER_SITE";
         if (currentStep == null) currentStep = 0;
+        if (consentAccepted == null) consentAccepted = false;
     }
 
     @PreUpdate

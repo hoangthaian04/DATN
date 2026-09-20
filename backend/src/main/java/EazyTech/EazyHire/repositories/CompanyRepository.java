@@ -29,7 +29,8 @@ public interface CompanyRepository extends JpaRepository<CompanyEntity, Long> {
            "(:search IS NULL OR " +
            " LOWER(c.name) LIKE :search OR " +
            " LOWER(c.email) LIKE :search OR " +
-           " LOWER(c.phone) LIKE :search)")
+           " LOWER(c.phone) LIKE :search OR " +
+           " LOWER(c.taxCode) LIKE :search)")
     Page<CompanyEntity> searchCompanies(
             @Param("status") CompanyStatus status,
             @Param("search") String search,

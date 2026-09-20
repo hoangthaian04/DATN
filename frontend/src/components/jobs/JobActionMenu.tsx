@@ -1,19 +1,44 @@
 import React from 'react';
-import { MoreHorizontal, Edit, Trash2, Eye, PowerOff } from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Eye, PowerOff, RotateCcw, Globe } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import type { JobSummary } from '../../types/job.types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { JobStatus, JobSummary } from '../../types/job.types';
+import { jobService } from '../../services/job.service';
+import { JobStatusActionModal } from '../modals/JobStatusActionModal';
+
+type JobStatusAction = 'publish' | 'close' | 'reopen';
 
 interface ActionMenuProps {
   job: JobSummary;
-  onDelete: (id: string) => void;
+  onDelete: (id: number) => void;
 }
 
 export const JobActionMenu: React.FC<ActionMenuProps> = ({ job, onDelete }) => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(false);
   const [showConfirm, setShowConfirm] = React.useState(false);
+  const [statusAction, setStatusAction] = React.useState<JobStatusAction | null>(null);
   const menuRef = React.useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  const statusMutation = useMutation({
+    mutationFn: (action: JobStatusAction) => {
+      if (action === 'publish') return jobService.publishJob(job.id);
+      if (action === 'close') return jobService.closeJob(job.id);
+      return jobService.reopenJob(job.id);
+    },
+    onSuccess: (_, action) => {
+      setStatusAction(null);
+      setIsOpen(false);
+      toast.success(action === 'publish' ? 'Tin tuyển dụng đã được đăng công khai' : action === 'close' ? 'Đã đóng Job' : 'Đã mở lại Job');
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['jobStats'] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Không thể cập nhật trạng thái Job');
+    }
+  });
 
   // Close menu when clicking outside
   React.useEffect(() => {
@@ -59,11 +84,15 @@ export const JobActionMenu: React.FC<ActionMenuProps> = ({ job, onDelete }) => {
           >
             <Edit size={16} className="text-blue-500" /> Chỉnh sửa
           </button>
-          <button 
+          <button
             className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-            onClick={() => toast('Tính năng đang phát triển', { icon: '🚧' })}
+            onClick={() => {
+              setIsOpen(false);
+              setStatusAction(job.status === 'INACTIVE' ? 'publish' : job.status === 'ACTIVE' ? 'close' : 'reopen');
+            }}
           >
-            <PowerOff size={16} className="text-amber-500" /> Đóng Job
+            {job.status === 'INACTIVE' ? <Globe size={16} className="text-primary-500" /> : job.status === 'ACTIVE' ? <PowerOff size={16} className="text-amber-500" /> : <RotateCcw size={16} className="text-emerald-500" />}
+            {job.status === 'INACTIVE' ? 'Đăng tuyển' : job.status === 'ACTIVE' ? 'Đóng Job' : 'Mở lại Job'}
           </button>
           <div className="h-px bg-slate-100 my-1"></div>
           <button 
@@ -99,6 +128,17 @@ export const JobActionMenu: React.FC<ActionMenuProps> = ({ job, onDelete }) => {
           </div>
         </div>
       )}
+
+      <JobStatusActionModal
+        isOpen={statusAction !== null}
+        action={statusAction || 'publish'}
+        jobTitle={job.title}
+        location={job.location}
+        currentStatus={job.status as JobStatus}
+        isPending={statusMutation.isPending}
+        onClose={() => setStatusAction(null)}
+        onConfirm={() => statusAction && statusMutation.mutate(statusAction)}
+      />
     </div>
   );
 };

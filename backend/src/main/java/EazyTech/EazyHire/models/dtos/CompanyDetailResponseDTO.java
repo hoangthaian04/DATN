@@ -32,6 +32,8 @@ public class CompanyDetailResponseDTO {
     private String rejectedReason;
     private CompanyProfileDTO profile;
     private CareerSiteDTO careerSite;
+    /** HR account that submitted the company registration. */
+    private UserResponseDTO registrant;
     @Builder.Default
     private List<String> duplicateWarnings = List.of();
     private LocalDateTime createdAt;

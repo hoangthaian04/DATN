@@ -49,7 +49,7 @@ public class RestResponseEntityExceptionHandler {
     }
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     public ResponseEntity<BaseResponse> handleUpload(Exception ex){
-      return ResponseEntity.badRequest().body(BaseResponse.fail("Logo không hợp lệ hoặc vượt quá dung lượng cho phép."));
+      return ResponseEntity.badRequest().body(BaseResponse.fail("File không hợp lệ hoặc vượt quá dung lượng cho phép."));
     }
     // Xử lý lỗi không mong muốn (fallback)
     @ExceptionHandler(Exception.class)

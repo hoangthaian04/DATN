@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, useParams } from 'react-router-dom';
 import { PrivateRoute, PublicOnlyRoute } from '@/components/auth/PrivateRoute';
 
 // ─── Layouts ─────────────────────────────────────────────────────────────────
@@ -41,6 +41,12 @@ import { CareerApplyFormPage } from '@/pages/career/CareerApplyFormPage';
 import { InterviewResponsePage } from '@/pages/career/InterviewResponsePage';
 import { CandidateTrackPage } from '@/pages/career/CandidateTrackPage';
 import { CandidateStatusPage } from '@/pages/career/CandidateStatusPage';
+import { CandidateTrackRequestPage } from '@/pages/career/CandidateTrackRequestPage';
+
+const CompanyCareerRedirect: React.FC = () => {
+  const { companySlug = '' } = useParams<{ companySlug: string }>();
+  return <Navigate to={`/careers/${companySlug}`} replace />;
+};
 
 export const router = createBrowserRouter([
   // ── Redirect root ──
@@ -92,8 +98,10 @@ export const router = createBrowserRouter([
       {path:'dashboard',element:<AdminDashboardPage/>},
       {path:'companies/pending',element:<AdminDashboardPage/>},
       { path: 'companies', element: <AdminDashboardPage /> },
-      { path: 'categories', element: <AdminJobCategories /> },
-      { path: 'logs', element: <AdminAuditLogs /> },
+      { path: 'job-categories', element: <AdminJobCategories /> },
+      { path: 'categories', element: <Navigate to="/admin/job-categories" replace /> },
+      { path: 'audit-logs', element: <AdminAuditLogs /> },
+      { path: 'logs', element: <Navigate to="/admin/audit-logs" replace /> },
       { path: 'users', element: <AdminUsers /> },
     ],
   },
@@ -104,14 +112,16 @@ export const router = createBrowserRouter([
     element: <CareerLayout />,
     children: [
       { index: true, element: <CareerHomePage /> },
-      { path: 'jobs/:slug', element: <CareerJobDetailPage /> },
-      { path: 'jobs/:slug/apply', element: <CareerApplyFormPage /> },
+      { path: ':companySlug', element: <CompanyCareerSitePage /> },
+      { path: ':companySlug/jobs/:slug', element: <CareerJobDetailPage /> },
+      { path: ':companySlug/jobs/:slug/apply', element: <CareerApplyFormPage /> },
       { path: 'applications/track', element: <CandidateTrackPage /> },
       { path: 'applications/status', element: <CandidateStatusPage /> },
+      { path: ':companySlug/track-request', element: <CandidateTrackRequestPage /> },
       { path: 'interviews/respond', element: <InterviewResponsePage /> },
     ],
   },
-  { path: '/company/:companySlug', element: <CompanyCareerSitePage /> },
+  { path: '/company/:companySlug', element: <CompanyCareerRedirect /> },
 
   // ── Catch-all ──
   { path: '*', element: <Navigate to="/login" replace /> },

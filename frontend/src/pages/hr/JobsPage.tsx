@@ -40,7 +40,7 @@ export const JobsPage: React.FC = () => {
     }
   });
 
-  const handleDeleteJob = (id: string) => {
+  const handleDeleteJob = (id: number) => {
     deleteMutation.mutate(id);
   };
 

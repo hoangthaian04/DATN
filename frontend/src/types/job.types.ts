@@ -3,21 +3,23 @@ export type JobType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP';
 export type ExperienceLevel = 'INTERN' | 'JUNIOR' | 'MID' | 'SENIOR' | 'LEAD';
 
 export interface JobCategory {
-  id: string;
+  id: number;
   name: string;
   slug: string;
 }
 
 export interface Job {
-  id: string;
+  id: number;
   title: string;
   slug: string;
-  categoryId?: string;
+  categoryId?: number;
+  categoryName?: string;
+  categorySlug?: string;
   location: string;
   salaryMin?: number;
   salaryMax?: number;
-  salaryCurrency: string;
-  jobType: JobType;
+  currency: string;
+  employmentType: JobType;
   workingType?: string;
   experienceLevel: ExperienceLevel;
   experienceYearsMin?: number;
@@ -34,10 +36,11 @@ export interface Job {
 }
 
 export interface JobSummary {
-  id: string;
+  id: number;
   title: string;
   location: string;
-  jobType: JobType;
+  employmentType: JobType;
+  roundCount: number;
   status: JobStatus;
   applicantCount: number;
   publishedAt?: string;
@@ -46,13 +49,15 @@ export interface JobSummary {
 
 export interface CreateJobRequest {
   title: string;
-  categoryId?: string;
+  categoryId: number;
   location: string;
   salaryMin?: number;
   salaryMax?: number;
-  salaryCurrency?: string;
-  jobType: JobType;
-  experienceLevel: ExperienceLevel;
+  currency?: string;
+  workingType?: string;
+  employmentType: JobType;
+  experienceLevel?: ExperienceLevel;
+  experienceYearsMin?: number;
   description?: string;
   requirements?: string;
   benefits?: string;
@@ -66,6 +71,7 @@ export interface JobStats {
 }
 
 export interface UpdateJobRequest {
+  categoryId?: number;
   title: string;
   description?: string;
   requirements?: string;

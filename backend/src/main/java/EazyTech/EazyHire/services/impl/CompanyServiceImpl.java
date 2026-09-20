@@ -18,6 +18,7 @@ import EazyTech.EazyHire.services.UserAccountService;
 import EazyTech.EazyHire.services.AuditService;
 import EazyTech.EazyHire.services.EmailService;
 import EazyTech.EazyHire.models.enums.UserStatus;
+import EazyTech.EazyHire.models.enums.UserRole;
 import EazyTech.EazyHire.models.dtos.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
@@ -66,7 +67,16 @@ public class CompanyServiceImpl implements CompanyService {
         CompanyProfileEntity profile = companyProfileRepository.findByCompanyId(company.getId()).orElse(null);
         CareerSiteEntity careerSite = careerSiteRepository.findByCompanyId(company.getId()).orElse(null);
 
-        return mapToCompanyDetailDTO(company, profile, careerSite);
+        UserResponseDTO registrant = accounts.getCompanyUsers(company.getId()).stream()
+                .filter(user -> user.getRole() == UserRole.HR_ADMIN || user.getRole() == UserRole.HR)
+                .sorted(java.util.Comparator
+                        .comparing(UserEntity::getCreatedAt, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()))
+                        .thenComparing(UserEntity::getId, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
+                .findFirst()
+                .map(user -> mapToRegistrantDTO(user, company, profile))
+                .orElse(null);
+
+        return mapToCompanyDetailDTO(company, profile, careerSite, registrant);
     }
 
     @Override
@@ -113,14 +123,17 @@ public class CompanyServiceImpl implements CompanyService {
         UserEntity admin = accounts.requireAdmin(adminId);
 
         if(company.getStatus()!=CompanyStatus.PENDING) throw new CustomException(409,"Chỉ từ chối hồ sơ đang chờ duyệt.");
-        if(reason==null || reason.isBlank()) throw new CustomException(400,"Vui lòng nhập lý do từ chối và hướng dẫn sửa.");
+        String normalizedReason = reason == null ? "" : reason.trim();
+        if(normalizedReason.isBlank()) throw new CustomException(400,"Vui lòng nhập lý do từ chối và hướng dẫn sửa.");
+        if(normalizedReason.length() < 10 || normalizedReason.length() > 1000)
+            throw new CustomException(400,"Lý do từ chối phải từ 10 đến 1000 ký tự.");
         accounts.activateCompanyUsers(companyId,UserStatus.PENDING);
-        audit.record(adminId,companyId,"REJECT_COMPANY",reason);
-        emails.sendEmail(company.getEmail(),"Hồ sơ cần chỉnh sửa",reason+"\nĐăng nhập, mở trang /registration/rejected và chọn Chỉnh sửa & gửi lại.");
+        audit.record(adminId,companyId,"REJECT_COMPANY",normalizedReason);
+        emails.sendEmail(company.getEmail(),"Hồ sơ cần chỉnh sửa",normalizedReason+"\nĐăng nhập, mở trang /registration/rejected và chọn Chỉnh sửa & gửi lại.");
         company.setStatus(CompanyStatus.REJECTED);
-        company.setApprovedBy(admin);
-        company.setApprovedAt(LocalDateTime.now());
-        company.setRejectedReason(reason != null ? reason.trim() : "Hồ sơ không đáp ứng yêu cầu");
+        company.setApprovedBy(null);
+        company.setApprovedAt(null);
+        company.setRejectedReason(normalizedReason);
         company = companyRepository.save(company);
 
         return mapToCompanyResponseDTO(company);
@@ -165,7 +178,8 @@ public class CompanyServiceImpl implements CompanyService {
     public CompanyDetailResponseDTO mapToCompanyDetailDTO(
             CompanyEntity company,
             CompanyProfileEntity profile,
-            CareerSiteEntity careerSite
+            CareerSiteEntity careerSite,
+            UserResponseDTO registrant
     ) {
         CompanyProfileDTO profileDTO = profile != null ? CompanyProfileDTO.builder()
                 .id(profile.getId())
@@ -193,6 +207,7 @@ public class CompanyServiceImpl implements CompanyService {
                 .showCompanyDescription(careerSite.getShowCompanyDescription())
                 .showBenefits(careerSite.getShowBenefits())
                 .footerText(careerSite.getFooterText())
+                .isPublished(careerSite.getIsPublished())
                 .build() : null;
 
         return CompanyDetailResponseDTO.builder()
@@ -212,9 +227,40 @@ public class CompanyServiceImpl implements CompanyService {
                 .rejectedReason(company.getRejectedReason())
                 .profile(profileDTO)
                 .careerSite(siteDTO)
+                .registrant(registrant)
                 .duplicateWarnings(java.util.List.of())
                 .createdAt(company.getCreatedAt())
                 .updatedAt(company.getUpdatedAt())
+                .build();
+    }
+
+    public CompanyDetailResponseDTO mapToCompanyDetailDTO(
+            CompanyEntity company,
+            CompanyProfileEntity profile,
+            CareerSiteEntity careerSite
+    ) {
+        return mapToCompanyDetailDTO(company, profile, careerSite, null);
+    }
+
+    private UserResponseDTO mapToRegistrantDTO(
+            UserEntity user,
+            CompanyEntity company,
+            CompanyProfileEntity profile
+    ) {
+        return UserResponseDTO.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .avatarUrl(user.getAvatarUrl())
+                .role(user.getRole())
+                .status(user.getStatus())
+                .companyId(company.getId())
+                .companyName(company.getName())
+                .companySlug(company.getSlug())
+                .companyStatus(company.getStatus())
+                .onboardingCompleted(profile != null && Boolean.TRUE.equals(profile.getOnboardingCompleted()))
+                .profileCompleted(profile != null && completedSteps(company, profile) == 3)
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 

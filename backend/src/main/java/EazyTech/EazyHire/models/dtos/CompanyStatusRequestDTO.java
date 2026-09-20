@@ -7,5 +7,5 @@ import lombok.Setter;
 @Setter
 public class CompanyStatusRequestDTO {
 @NotNull private CompanyStatus status;
-@Size(max=2000) private String reason;
+@Size(max=1000) private String reason;
 }

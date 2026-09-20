@@ -2,12 +2,16 @@ package EazyTech.EazyHire;
 
 import EazyTech.EazyHire.models.dtos.ChangePasswordRequestDTO;
 import EazyTech.EazyHire.models.dtos.CompanyStatusRequestDTO;
+import EazyTech.EazyHire.models.dtos.CreateJobRequestDTO;
 import EazyTech.EazyHire.models.dtos.RegisterRequestDTO;
+import EazyTech.EazyHire.models.dtos.UpdateJobRequestDTO;
 import EazyTech.EazyHire.models.enums.CompanyStatus;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,5 +61,48 @@ class ContractValidationTests {
 
         request.setStatus(CompanyStatus.ACTIVE);
         assertThat(validator.validate(request)).isEmpty();
+    }
+
+    @Test
+    void jobRoundCountAllowsZeroButRejectsNegative() {
+        UpdateJobRequestDTO request = UpdateJobRequestDTO.builder()
+                .title("No Interview Job")
+                .roundCount(0)
+                .build();
+
+        assertThat(validator.validate(request))
+                .noneMatch(violation -> violation.getPropertyPath().toString().equals("roundCount"));
+
+        request.setRoundCount(-1);
+
+        assertThat(validator.validate(request))
+                .anyMatch(violation -> violation.getPropertyPath().toString().equals("roundCount"));
+    }
+
+    @Test
+    void createJobRequiresPositiveCategoryId() {
+        CreateJobRequestDTO request = CreateJobRequestDTO.builder()
+                .title("Senior Engineer")
+                .categoryId(0L)
+                .location("Hà Nội")
+                .salaryMin(BigDecimal.valueOf(1000))
+                .salaryMax(BigDecimal.valueOf(2000))
+                .workingType("HYBRID")
+                .employmentType("FULL_TIME")
+                .build();
+
+        assertThat(validator.validate(request))
+                .anyMatch(violation -> violation.getPropertyPath().toString().equals("categoryId"));
+    }
+
+    @Test
+    void updateJobRequiresPositiveCategoryIdWhenProvided() {
+        UpdateJobRequestDTO request = UpdateJobRequestDTO.builder()
+                .title("Updated Job")
+                .categoryId(0L)
+                .build();
+
+        assertThat(validator.validate(request))
+                .anyMatch(violation -> violation.getPropertyPath().toString().equals("categoryId"));
     }
 }

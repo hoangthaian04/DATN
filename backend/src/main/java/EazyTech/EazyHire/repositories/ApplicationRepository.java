@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import EazyTech.EazyHire.models.dtos.ApplicationListResponseDTO;
@@ -51,4 +53,28 @@ public interface ApplicationRepository extends JpaRepository<ApplicationEntity, 
             @Param("companyId") Long companyId, 
             @Param("status") String status, 
             Pageable pageable);
+
+    Optional<ApplicationEntity> findByJobIdAndCandidateIdAndStatus(
+            Long jobId,
+            Long candidateId,
+            String status
+    );
+
+    Optional<ApplicationEntity> findBySecureToken(String secureToken);
+
+    @Query("""
+            SELECT a FROM ApplicationEntity a
+            JOIN a.company company
+            JOIN a.candidate candidate
+            WHERE LOWER(company.slug) = LOWER(:companySlug)
+              AND LOWER(candidate.email) = LOWER(:email)
+              AND a.status = :status
+              AND (candidate.isDeleted IS NULL OR candidate.isDeleted = false)
+            ORDER BY a.appliedAt DESC
+            """)
+    List<ApplicationEntity> findByCompanySlugAndCandidateEmailAndStatus(
+            @Param("companySlug") String companySlug,
+            @Param("email") String email,
+            @Param("status") String status
+    );
 }

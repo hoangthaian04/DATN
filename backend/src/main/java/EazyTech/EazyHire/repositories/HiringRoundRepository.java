@@ -10,4 +10,9 @@ public interface HiringRoundRepository extends JpaRepository<HiringRoundEntity, 
     Optional<HiringRoundEntity> findByIdAndJobIdAndCompanyIdAndIsDeletedFalse(Long id, Long jobId, Long companyId);
     long countByJobIdAndCompanyIdAndIsDeletedFalse(Long jobId, Long companyId);
     boolean existsByPassEmailTemplateIdOrFailEmailTemplateId(Long passEmailTemplateId, Long failEmailTemplateId);
+
+    Optional<HiringRoundEntity> findFirstByJobIdAndCompanyIdAndIsDeletedFalseOrderByOrderIndexAscIdAsc(
+            Long jobId,
+            Long companyId
+    );
 }
