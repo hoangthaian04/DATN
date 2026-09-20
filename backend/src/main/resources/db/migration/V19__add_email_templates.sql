@@ -1,3 +1,5 @@
+-- Email templates depend on hiring_rounds.pass_email_template_id and
+-- hiring_rounds.fail_email_template_id, so this migration must run after V10.
 CREATE TABLE email_templates (
     id BIGSERIAL PRIMARY KEY,
     company_id BIGINT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
