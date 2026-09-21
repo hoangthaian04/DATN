@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -85,6 +86,12 @@ public class JobEntity {
 
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
+
+    @Column(name = "start_date")
+    private LocalDate startDate;
+
+    @Column(name = "end_date")
+    private LocalDate endDate;
 
     @Builder.Default
     @Column(name = "is_deleted")

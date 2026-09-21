@@ -31,6 +31,8 @@ export interface Job {
   applicantCount?: number;
   publishedAt?: string;
   closedAt?: string;
+  startDate?: string;
+  endDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,6 +46,8 @@ export interface JobSummary {
   status: JobStatus;
   applicantCount: number;
   publishedAt?: string;
+  startDate?: string;
+  endDate?: string;
   createdAt: string;
 }
 
@@ -61,6 +65,8 @@ export interface CreateJobRequest {
   description?: string;
   requirements?: string;
   benefits?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface JobStats {
@@ -85,6 +91,8 @@ export interface UpdateJobRequest {
   experienceLevel?: string;
   experienceYearsMin?: number;
   roundCount?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface SaveJobPipelineRequest {

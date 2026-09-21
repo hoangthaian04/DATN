@@ -30,7 +30,7 @@ public interface JobRepository extends JpaRepository<JobEntity, Long> {
 
     @Query(
         "SELECT new EazyTech.EazyHire.models.dtos.JobListResponseDTO(" +
-        "j.id, j.title, j.location, j.employmentType, j.roundCount, j.status, count(a), j.publishedAt, j.createdAt) " +
+        "j.id, j.title, j.location, j.employmentType, j.roundCount, j.status, count(a), j.publishedAt, j.startDate, j.endDate, j.createdAt) " +
         "FROM JobEntity j LEFT JOIN ApplicationEntity a ON j.id = a.job.id " +
         "WHERE j.company.id = :companyId " +
         "AND (:keyword = '' OR LOWER(j.title) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
@@ -49,7 +49,7 @@ public interface JobRepository extends JpaRepository<JobEntity, Long> {
     @Query("""
         SELECT new EazyTech.EazyHire.models.dtos.PublicJobSummaryResponseDTO(
             j.id, j.title, j.slug, j.location, j.workingType, j.employmentType,
-            j.salaryMin, j.salaryMax, j.currency, category.name, category.slug, j.publishedAt
+            j.salaryMin, j.salaryMax, j.currency, category.name, category.slug, j.publishedAt, j.startDate, j.endDate
         )
         FROM JobEntity j
         JOIN j.company company

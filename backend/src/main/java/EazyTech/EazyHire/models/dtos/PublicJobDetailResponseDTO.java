@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -32,6 +33,8 @@ public class PublicJobDetailResponseDTO {
     private String categoryName;
     private String categorySlug;
     private LocalDateTime publishedAt;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private PublicCompanySummaryResponseDTO company;
     private PublicApplicationFormResponseDTO applicationForm;
 }

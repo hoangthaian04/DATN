@@ -202,6 +202,8 @@ public class PublicCareerSiteServiceImpl implements PublicCareerSiteService {
                 .categoryName(job.getCategory() != null ? job.getCategory().getName() : null)
                 .categorySlug(job.getCategory() != null ? job.getCategory().getSlug() : null)
                 .publishedAt(job.getPublishedAt())
+                .startDate(job.getStartDate())
+                .endDate(job.getEndDate())
                 .company(company)
                 .applicationForm(PublicApplicationFormResponseDTO.builder().fields(formFields).build())
                 .build();

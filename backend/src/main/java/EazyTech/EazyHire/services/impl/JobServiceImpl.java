@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -121,6 +122,7 @@ public class JobServiceImpl implements JobService {
                         "Chỉ được chọn danh mục đang ACTIVE và chưa bị xóa."
                 ));
         validateJobOptions(request);
+        validateApplicationWindow(request.getStartDate(), request.getEndDate());
 
         JobEntity job = JobEntity.builder()
                 .company(company)
@@ -142,6 +144,8 @@ public class JobServiceImpl implements JobService {
                 .roundCount(0)
                 .status("INACTIVE")
                 .isDeleted(false)
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
                 .build();
 
         return mapToJobDetailDTO(jobRepository.save(job));
@@ -390,6 +394,18 @@ public class JobServiceImpl implements JobService {
             job.setExperienceLevel(normalizeOrDefault(request.getExperienceLevel(), "MID"));
         }
         if (request.getExperienceYearsMin() != null) job.setExperienceYearsMin(request.getExperienceYearsMin());
+
+        LocalDate startDate = request.getStartDate() != null ? request.getStartDate() : job.getStartDate();
+        LocalDate endDate = request.getEndDate() != null ? request.getEndDate() : job.getEndDate();
+        validateApplicationWindow(startDate, endDate);
+        if (request.getStartDate() != null) job.setStartDate(request.getStartDate());
+        if (request.getEndDate() != null) job.setEndDate(request.getEndDate());
+    }
+
+    private void validateApplicationWindow(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new CustomException(400, "Ngày kết thúc nhận hồ sơ phải lớn hơn hoặc bằng ngày bắt đầu");
+        }
     }
 
     private void validateJobUpdateOptions(JobEntity job, UpdateJobRequestDTO request) {
@@ -491,6 +507,8 @@ public class JobServiceImpl implements JobService {
                 .status(job.getStatus())
                 .publishedAt(job.getPublishedAt())
                 .closedAt(job.getClosedAt())
+                .startDate(job.getStartDate())
+                .endDate(job.getEndDate())
                 .createdAt(job.getCreatedAt())
                 .updatedAt(job.getUpdatedAt())
                 .build();

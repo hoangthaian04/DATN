@@ -30,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.List;
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -95,6 +96,47 @@ class JobServiceImplTest {
         assertEquals("INACTIVE", result.getStatus());
         assertEquals(1L, result.getCategoryId());
         verify(jobRepository).save(any(JobEntity.class));
+    }
+
+    @Test
+    void createJobStoresOptionalApplicationWindow() {
+        CompanyEntity company = CompanyEntity.builder().id(20L).status(CompanyStatus.ACTIVE).build();
+        UserEntity creator = UserEntity.builder().id(30L).company(company).email("hr@example.com")
+                .fullName("HR").status(UserStatus.ACTIVE).build();
+        when(companyRepository.findById(20L)).thenReturn(Optional.of(company));
+        when(userRepository.findByIdWithCompany(30L)).thenReturn(Optional.of(creator));
+        when(jobCategoryRepository.findByIdAndStatusAndIsDeletedFalse(1L, JobCategoryStatus.ACTIVE))
+                .thenReturn(Optional.of(category(1L, JobCategoryStatus.ACTIVE)));
+        when(jobRepository.existsByCompanyIdAndSlug(20L, "senior-engineer")).thenReturn(false);
+        when(jobRepository.save(any(JobEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CreateJobRequestDTO request = createRequest();
+        request.setStartDate(LocalDate.of(2026, 10, 1));
+        request.setEndDate(LocalDate.of(2026, 10, 31));
+
+        var result = service.createJob(request, 20L, 30L);
+
+        assertEquals(LocalDate.of(2026, 10, 1), result.getStartDate());
+        assertEquals(LocalDate.of(2026, 10, 31), result.getEndDate());
+    }
+
+    @Test
+    void updateRejectsApplicationWindowWithEndBeforeStart() {
+        JobEntity job = job(10L, 20L, category(1L, JobCategoryStatus.ACTIVE));
+        stubActiveWorkspace(20L, 30L);
+        when(jobRepository.findById(10L)).thenReturn(Optional.of(job));
+
+        CustomException exception = assertThrows(
+                CustomException.class,
+                () -> service.updateJob(10L, UpdateJobRequestDTO.builder()
+                        .title("Updated title")
+                        .startDate(LocalDate.of(2026, 10, 31))
+                        .endDate(LocalDate.of(2026, 10, 1))
+                        .build(), 20L, 30L)
+        );
+
+        assertEquals(400, exception.getStatusCode());
+        verify(jobRepository, never()).save(any(JobEntity.class));
     }
 
     @Test

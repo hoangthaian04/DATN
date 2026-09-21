@@ -234,6 +234,15 @@ export const JobDetailPage: React.FC = () => {
               </span>
             </div>
           </div>
+          {(job.startDate || job.endDate) && (
+            <div className="premium-card bg-white p-5 text-left">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Cửa sổ nhận hồ sơ</span>
+              <p className="mt-2 text-sm font-extrabold text-slate-800">
+                {job.startDate || 'Không giới hạn ngày bắt đầu'} → {job.endDate || 'Không giới hạn ngày kết thúc'}
+              </p>
+              <p className="mt-1 text-xs font-medium text-slate-500">Không tự thay đổi trạng thái Job; trạng thái vẫn do HR publish/đóng.</p>
+            </div>
+          )}
 
           {/* Job Description */}
           {(job.description || job.requirements || job.benefits) ? (

@@ -11,6 +11,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
 @NoArgsConstructor
@@ -59,4 +61,10 @@ public class UpdateJobRequestDTO {
     /** Zero is valid for jobs that do not require an interview process. */
     @Min(value = 0, message = "Số vòng phỏng vấn không được âm")
     private Integer roundCount;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate startDate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate endDate;
 }

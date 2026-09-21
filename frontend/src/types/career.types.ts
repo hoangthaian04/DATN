@@ -38,6 +38,8 @@ export interface PublicJobSummary {
   categoryName?: string;
   categorySlug?: string;
   publishedAt?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface PublicCompanySummary {
