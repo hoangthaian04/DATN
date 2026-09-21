@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPostLoginPath } from '@/components/auth/PrivateRoute';
 import {
@@ -561,12 +561,11 @@ export const LoginPage: React.FC = () => {
 
       {/* Footer */}
       <footer className="w-full bg-[#f4f7fb] py-5 px-8 md:px-16 flex flex-col md:flex-row items-center justify-between text-[12px] text-[#2c3e50] font-bold border-t border-slate-200 shrink-0">
-        <div>© 2024 EasyHire. All rights reserved.</div>
+        <div>© {new Date().getFullYear()} EasyHire Platform</div>
         <div className="flex items-center gap-8 mt-4 md:mt-0">
-          <a href="#" className="hover:text-[#0052cc] transition-colors">Privacy Policy</a>
-          <a href="#" className="hover:text-[#0052cc] transition-colors">Terms of Service</a>
-          <a href="#" className="hover:text-[#0052cc] transition-colors">Help Center</a>
-          <a href="#" className="hover:text-[#0052cc] transition-colors">Contact Support</a>
+          <Link to="/careers" className="hover:text-[#0052cc] transition-colors">Trang tuyển dụng</Link>
+          <Link to="/login?tab=register" className="hover:text-[#0052cc] transition-colors">Đăng ký doanh nghiệp</Link>
+          <a href="mailto:support@easyhire.local" className="hover:text-[#0052cc] transition-colors">Liên hệ hỗ trợ</a>
         </div>
       </footer>
     </div>

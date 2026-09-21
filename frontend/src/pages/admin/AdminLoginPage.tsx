@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Activity,
@@ -200,11 +200,11 @@ export const AdminLoginPage: React.FC = () => {
 
       {/* Footer */}
       <footer className="w-full bg-[#f4f7fb] py-5 px-8 md:px-16 flex flex-col md:flex-row items-center justify-between text-[12px] text-[#2c3e50] font-bold border-t border-slate-200 shrink-0">
-        <div>© 2024 EasyHire Core Systems. Restricted Access.</div>
+        <div>© {new Date().getFullYear()} EasyHire Core Systems</div>
         <div className="flex items-center gap-8 mt-4 md:mt-0">
-          <a href="#" className="hover:text-[#0052cc] transition-colors">Security Policy</a>
-          <a href="#" className="hover:text-[#0052cc] transition-colors">Audit Logs</a>
-          <a href="#" className="hover:text-[#0052cc] transition-colors">System Status</a>
+          <Link to="/login" className="hover:text-[#0052cc] transition-colors">Cổng HR</Link>
+          <Link to="/admin/login" className="hover:text-[#0052cc] transition-colors">Đăng nhập Admin</Link>
+          <a href="mailto:support@easyhire.local" className="hover:text-[#0052cc] transition-colors">Liên hệ hỗ trợ</a>
         </div>
       </footer>
     </div>

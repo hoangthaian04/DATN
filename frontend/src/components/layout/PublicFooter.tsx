@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export const PublicFooter: React.FC = () => {
   return (
@@ -10,15 +11,15 @@ export const PublicFooter: React.FC = () => {
             © {new Date().getFullYear()} EasyHire Platform
           </p>
           <p className="text-[10px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">
-            Hệ thống quản trị và tự động hóa quy trình tuyển dụng
+            Nền tảng tuyển dụng EasyHire
           </p>
         </div>
 
         {/* Right Side Links */}
         <div className="flex items-center gap-6 text-[11px] font-bold uppercase tracking-wider">
-          <a href="#" className="hover:text-white transition-colors">Điều khoản dịch vụ</a>
-          <a href="#" className="hover:text-white transition-colors">Chính sách bảo mật</a>
-          <a href="#" className="hover:text-white transition-colors">Trung tâm hỗ trợ</a>
+          <Link to="/careers" className="hover:text-white transition-colors">Trang tuyển dụng</Link>
+          <Link to="/login" className="hover:text-white transition-colors">Đăng nhập HR</Link>
+          <a href="mailto:support@easyhire.local" className="hover:text-white transition-colors">Liên hệ hỗ trợ</a>
         </div>
       </div>
     </footer>
