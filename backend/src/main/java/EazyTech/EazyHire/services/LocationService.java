@@ -1,8 +1,11 @@
 package EazyTech.EazyHire.services;
 
+import EazyTech.EazyHire.models.dtos.LocationOptionDTO;
+
 import java.util.List;
-import java.util.Map;
 
 public interface LocationService {
-    List<Map<String, String>> getProvinces();
+    List<LocationOptionDTO> getProvinces();
+
+    List<LocationOptionDTO> getWards(String provinceCode);
 }

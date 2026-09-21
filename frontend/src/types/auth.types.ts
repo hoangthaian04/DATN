@@ -77,6 +77,7 @@ export interface CareerSiteSettings {
   showCompanyDescription?: boolean;
   showBenefits?: boolean;
   footerText?: string;
+  isPublished?: boolean;
 }
 
 export interface CompanySummary {
@@ -103,6 +104,33 @@ export interface CompanyDetail extends CompanySummary {
   careerSite?: CareerSiteSettings;
   registrant?: User;
   duplicateWarnings?: string[];
+}
+
+export interface AdminCompanyUpdateRequest {
+  name?: string;
+  taxCode?: string;
+  subdomain?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  address?: string;
+  industry?: string;
+  companySize?: string;
+  businessType?: string;
+  contactEmail?: string;
+  description?: string;
+  benefits?: string;
+  socialLinks?: string;
+  bannerUrl?: string;
+  primaryColor?: string;
+  siteTitle?: string;
+  tagline?: string;
+  heroImageUrl?: string;
+  accentColor?: string;
+  fontFamily?: string;
+  showCompanyDescription?: boolean;
+  showBenefits?: boolean;
+  footerText?: string;
 }
 
 export interface CompanyFilterParams {

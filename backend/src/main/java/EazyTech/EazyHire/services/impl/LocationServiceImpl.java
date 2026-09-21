@@ -1,5 +1,7 @@
 package EazyTech.EazyHire.services.impl;
 
+import EazyTech.EazyHire.core.exceptions.CustomException;
+import EazyTech.EazyHire.models.dtos.LocationOptionDTO;
 import EazyTech.EazyHire.services.LocationService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,7 +23,8 @@ import java.util.Map;
 public class LocationServiceImpl implements LocationService {
 
     private final ObjectMapper objectMapper;
-    private List<Map<String, String>> provinces = new ArrayList<>();
+    private final List<LocationOptionDTO> provinces = new ArrayList<>();
+    private final Map<String, List<LocationOptionDTO>> wardsByProvince = new HashMap<>();
 
     @PostConstruct
     public void init() {
@@ -31,12 +34,24 @@ public class LocationServiceImpl implements LocationService {
                 List<Map<String, Object>> data = objectMapper.readValue(inputStream, new TypeReference<List<Map<String, Object>>>() {});
                 
                 for (Map<String, Object> item : data) {
-                    Map<String, String> province = new HashMap<>();
-                    province.put("code", (String) item.get("Code"));
-                    province.put("name", (String) item.get("FullName"));
-                    provinces.add(province);
+                    String provinceCode = (String) item.get("Code");
+                    provinces.add(new LocationOptionDTO(provinceCode, (String) item.get("FullName")));
+
+                    List<LocationOptionDTO> wards = new ArrayList<>();
+                    List<Map<String, Object>> rawWards = objectMapper.convertValue(
+                            item.getOrDefault("Wards", List.of()),
+                            new TypeReference<List<Map<String, Object>>>() {}
+                    );
+                    for (Map<String, Object> ward : rawWards) {
+                        wards.add(new LocationOptionDTO(
+                                (String) ward.get("Code"),
+                                (String) ward.get("FullName")
+                        ));
+                    }
+                    wardsByProvince.put(provinceCode, wards);
                 }
-                log.info("Loaded {} provinces", provinces.size());
+                log.info("Loaded {} provinces and {} wards", provinces.size(),
+                        wardsByProvince.values().stream().mapToInt(List::size).sum());
             }
         } catch (Exception e) {
             log.error("Failed to load provinces from JSON", e);
@@ -44,7 +59,15 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
-    public List<Map<String, String>> getProvinces() {
+    public List<LocationOptionDTO> getProvinces() {
         return provinces;
+    }
+
+    @Override
+    public List<LocationOptionDTO> getWards(String provinceCode) {
+        if (provinceCode == null || !wardsByProvince.containsKey(provinceCode.trim())) {
+            throw new CustomException(404, "Không tìm thấy tỉnh/thành phố");
+        }
+        return wardsByProvince.get(provinceCode.trim());
     }
 }

@@ -1,6 +1,7 @@
 package EazyTech.EazyHire;
 
 import EazyTech.EazyHire.core.exceptions.CustomException;
+import EazyTech.EazyHire.models.dtos.AdminCompanyUpdateRequestDTO;
 import EazyTech.EazyHire.models.dtos.CompanyDetailResponseDTO;
 import EazyTech.EazyHire.models.entities.CareerSiteEntity;
 import EazyTech.EazyHire.models.entities.CompanyEntity;
@@ -148,6 +149,47 @@ class CompanyServiceImplTest {
         assertEquals(7L, result.getRegistrant().getId());
         assertEquals("hr@example.com", result.getRegistrant().getEmail());
         assertEquals(UserRole.HR_ADMIN, result.getRegistrant().getRole());
+    }
+
+    @Test
+    void adminUpdatePersistsCompanyProfileAndCareerSiteFieldsAndAuditsChange() {
+        CompanyEntity company = company(CompanyStatus.ACTIVE);
+        CompanyProfileEntity profile = CompanyProfileEntity.builder().id(10L).company(company).build();
+        CareerSiteEntity careerSite = CareerSiteEntity.builder().id(20L).company(company).build();
+
+        when(companyRepository.findById(1L)).thenReturn(Optional.of(company));
+        when(companyRepository.findByIdWithDetails(1L)).thenReturn(Optional.of(company));
+        when(accounts.requireAdmin(99L)).thenReturn(admin());
+        when(companyProfileRepository.findByCompanyId(1L)).thenReturn(Optional.of(profile));
+        when(careerSiteRepository.findByCompanyId(1L)).thenReturn(Optional.of(careerSite));
+        when(companyRepository.save(any(CompanyEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(companyProfileRepository.save(any(CompanyProfileEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(careerSiteRepository.save(any(CareerSiteEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(accounts.getCompanyUsers(1L)).thenReturn(List.of());
+
+        AdminCompanyUpdateRequestDTO request = AdminCompanyUpdateRequestDTO.builder()
+                .name("TechA Updated")
+                .taxCode("0123456789")
+                .subdomain("techa-updated")
+                .bannerUrl("https://cdn.example/banner.png")
+                .primaryColor("#2563eb")
+                .siteTitle("TechA Careers")
+                .showBenefits(false)
+                .footerText("TechA tuyển dụng")
+                .build();
+
+        CompanyDetailResponseDTO result = service.updateCompanyByAdmin(1L, 99L, request);
+
+        assertEquals("TechA Updated", company.getName());
+        assertEquals("0123456789", company.getTaxCode());
+        assertEquals("techa-updated", company.getSubdomain());
+        assertEquals("https://cdn.example/banner.png", profile.getBannerUrl());
+        assertEquals("#2563eb", profile.getPrimaryColor());
+        assertEquals("TechA Careers", careerSite.getSiteTitle());
+        assertEquals(false, careerSite.getShowBenefits());
+        assertEquals("TechA tuyển dụng", careerSite.getFooterText());
+        assertEquals("TechA Updated", result.getName());
+        verify(audit).record(99L, 1L, "UPDATE_COMPANY", "Admin cập nhật thông tin doanh nghiệp");
     }
 
     private CompanyEntity company(CompanyStatus status) {

@@ -4,6 +4,7 @@ import type {
   CompanyDetail,
   CompanyFilterParams,
   CompanySummary,
+  AdminCompanyUpdateRequest,
 } from '@/types/auth.types';
 import type {
   AuditLog,
@@ -52,6 +53,11 @@ export const AdminService = {
   /** Khóa doanh nghiệp (chuyển sang BLOCKED) */
   blockCompany: async (id: number): Promise<CompanySummary> => {
     const res = await api.patch<BaseResponse<CompanySummary>>(`/admin/companies/${id}/status`, {status:'BLOCKED'});
+    return res.data.data;
+  },
+
+  updateCompany: async (id: number, data: AdminCompanyUpdateRequest): Promise<CompanyDetail> => {
+    const res = await api.patch<BaseResponse<CompanyDetail>>(`/admin/companies/${id}`, data);
     return res.data.data;
   },
 

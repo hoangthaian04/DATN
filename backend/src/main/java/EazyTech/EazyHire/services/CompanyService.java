@@ -15,6 +15,8 @@ public interface CompanyService {
 
     CompanyDetailResponseDTO getCompanyDetail(Long id);
 
+    CompanyDetailResponseDTO updateCompanyByAdmin(Long companyId, Long adminId, AdminCompanyUpdateRequestDTO request);
+
     CompanyResponseDTO approveCompany(Long companyId, Long adminId);
 
     CompanyResponseDTO rejectCompany(Long companyId, Long adminId, String reason);

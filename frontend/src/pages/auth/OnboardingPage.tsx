@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AuthService } from '@/services/auth.service';
 import { PublicHeader } from '@/components/layout/PublicHeader';
 import { PublicFooter } from '@/components/layout/PublicFooter';
+import { LocationSelector } from '@/components/location/LocationSelector';
 import {
   AlertCircle,
   ArrowLeft,
@@ -33,6 +34,10 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
   const [services, setServices] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
+  const [provinceCode, setProvinceCode] = useState('');
+  const [provinceName, setProvinceName] = useState('');
+  const [wardCode, setWardCode] = useState('');
+  const [wardName, setWardName] = useState('');
   const [website, setWebsite] = useState('');
   const [taxCode, setTaxCode] = useState('');
   const slug = user?.companySlug || '';
@@ -101,7 +106,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
         website: website
           ? (/^https?:\/\//i.test(website) ? website : `https://${website}`)
           : undefined,
-        address: address || undefined,
+        address: [address.trim(), wardName, provinceName].filter(Boolean).join(', ') || undefined,
         description: services || undefined,
         contactEmail: user?.email,
         onboardingCompleted: true,
@@ -333,6 +338,22 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                         className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#2563eb] text-sm font-semibold text-slate-800"
                       />
                     </div>
+                    <p className="text-[11px] text-slate-400">Địa chỉ chi tiết được lưu cùng xã/phường và tỉnh/thành phố đã chọn.</p>
+                    <LocationSelector
+                      provinceCode={provinceCode}
+                      wardCode={wardCode}
+                      onProvinceChange={(code, name) => {
+                        setProvinceCode(code);
+                        setProvinceName(name);
+                        setWardCode('');
+                        setWardName('');
+                      }}
+                      onWardChange={(code, name) => {
+                        setWardCode(code);
+                        setWardName(name);
+                      }}
+                      disabled={loading}
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -408,7 +429,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                       </div>
                       <div>
                         <span className="font-bold text-slate-500 block">ĐỊA CHỈ:</span>
-                        <span className="font-semibold">{address || 'Chưa cập nhật'}</span>
+                        <span className="font-semibold">{[address.trim(), wardName, provinceName].filter(Boolean).join(', ') || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
                         <span className="font-bold text-slate-500 block">HOTLINE / WEBSITE:</span>

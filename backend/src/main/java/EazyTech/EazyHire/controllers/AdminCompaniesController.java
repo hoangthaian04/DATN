@@ -6,6 +6,7 @@ import EazyTech.EazyHire.core.BasePagination;
 import EazyTech.EazyHire.core.exceptions.CustomException;
 import EazyTech.EazyHire.core.utils.SecurityUtils;
 import EazyTech.EazyHire.models.dtos.CompanyFilterRequestDTO;
+import EazyTech.EazyHire.models.dtos.AdminCompanyUpdateRequestDTO;
 import EazyTech.EazyHire.models.dtos.RejectCompanyRequestDTO;
 import EazyTech.EazyHire.services.CompanyService;
 import jakarta.validation.Valid;
@@ -42,6 +43,19 @@ public class AdminCompaniesController {
         return BaseResponse.success(
                 "Lấy chi tiết doanh nghiệp thành công",
                 companyService.getCompanyDetail(id)
+        );
+    }
+
+    @PatchMapping("/{id}")
+    public BaseResponse updateCompany(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminCompanyUpdateRequestDTO request
+    ) {
+        AuthorizedUser admin = SecurityUtils.getCurrentUser()
+                .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
+        return BaseResponse.success(
+                "Cập nhật thông tin doanh nghiệp thành công",
+                companyService.updateCompanyByAdmin(id, admin.getId(), request)
         );
     }
 

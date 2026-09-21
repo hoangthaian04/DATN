@@ -3,14 +3,17 @@ import React, { useEffect, useState } from 'react';
 import {Confirm} from '@/components/auth/FormFields';
 import {errorMessage} from '@/services/api';
 import { AdminService } from '@/services/admin.service';
-import type { CompanyDetail, CompanyStatus, CompanySummary } from '@/types/auth.types';
+import type { AdminCompanyUpdateRequest, CompanyDetail, CompanyStatus, CompanySummary } from '@/types/auth.types';
 import {
   Ban,
   Building2,
   Check,
   ChevronDown,
   Eye,
+  Loader2,
+  Pencil,
   RefreshCw,
+  Save,
   Search,
   X,
 } from 'lucide-react';
@@ -32,6 +35,9 @@ export const AdminDashboardPage: React.FC = () => {
   const [rejectingCompanyId, setRejectingCompanyId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+  const [isEditingCompany, setIsEditingCompany] = useState(false);
+  const [companyDraft, setCompanyDraft] = useState<AdminCompanyUpdateRequest | null>(null);
+  const [companyUpdateLoading, setCompanyUpdateLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const showToast = (type: 'success' | 'error', text: string) => {
@@ -73,11 +79,37 @@ export const AdminDashboardPage: React.FC = () => {
       setActionLoadingId(id);
       const detail = await AdminService.getCompanyDetail(id);
       setSelectedCompany(detail);
+      setCompanyDraft(toAdminCompanyDraft(detail));
+      setIsEditingCompany(false);
       setDetailTab('company');
     } catch (e) {
       showToast('error', errorMessage(e));
     } finally {
       setActionLoadingId(null);
+    }
+  };
+
+  const handleCompanyDraftChange = <K extends keyof AdminCompanyUpdateRequest>(
+    key: K,
+    value: AdminCompanyUpdateRequest[K],
+  ) => {
+    setCompanyDraft(current => current ? { ...current, [key]: value } : current);
+  };
+
+  const handleCompanyUpdate = async () => {
+    if (!selectedCompany || !companyDraft) return;
+    try {
+      setCompanyUpdateLoading(true);
+      const updated = await AdminService.updateCompany(selectedCompany.id, companyDraft);
+      setSelectedCompany(updated);
+      setCompanyDraft(toAdminCompanyDraft(updated));
+      setIsEditingCompany(false);
+      showToast('success', 'Đã cập nhật thông tin doanh nghiệp.');
+      await fetchCompanies();
+    } catch (e) {
+      showToast('error', errorMessage(e));
+    } finally {
+      setCompanyUpdateLoading(false);
     }
   };
 
@@ -333,20 +365,42 @@ export const AdminDashboardPage: React.FC = () => {
             {/* Drawer Header */}
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center font-bold text-lg text-[#0052cc]">
-                  {selectedCompany.name.charAt(0)}
-                </div>
+                {selectedCompany.careerSite?.logoUrl || selectedCompany.profile?.logoUrl ? (
+                  <img
+                    src={selectedCompany.careerSite?.logoUrl || selectedCompany.profile?.logoUrl}
+                    alt={`Logo ${selectedCompany.name}`}
+                    className="h-12 w-12 rounded-xl border border-blue-100 bg-white object-cover"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-lg font-bold text-[#0052cc]">
+                    {selectedCompany.name.charAt(0)}
+                  </div>
+                )}
                 <div>
                   <h3 className="font-bold text-slate-900 text-lg">{selectedCompany.name}</h3>
-                  <p className="text-xs text-slate-500 font-mono">{selectedCompany.slug}.EasyHire.vn</p>
+                  <p className="text-xs text-slate-500 font-mono">{selectedCompany.subdomain || selectedCompany.slug}.EasyHire.vn</p>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedCompany(null)}
-                className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {detailTab === 'company' && !isEditingCompany && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCompanyDraft(toAdminCompanyDraft(selectedCompany));
+                      setIsEditingCompany(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 px-3 py-2 text-xs font-bold text-[#0052cc] hover:bg-blue-50"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />Chỉnh sửa
+                  </button>
+                )}
+                <button
+                  onClick={() => { setSelectedCompany(null); setIsEditingCompany(false); setCompanyDraft(null); }}
+                  className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Detail Tabs */}
@@ -377,6 +431,17 @@ export const AdminDashboardPage: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {detailTab === 'company' && (
                 <div className="space-y-4 text-xs">
+                  {isEditingCompany && companyDraft ? (
+                    <AdminCompanyEditForm draft={companyDraft} onChange={handleCompanyDraftChange} />
+                  ) : <>
+                  <section className="grid grid-cols-2 gap-3">
+                    <ReadOnly label="EMAIL DOANH NGHIỆP" value={selectedCompany.email} />
+                    <ReadOnly label="SUBDOMAIN" value={selectedCompany.subdomain} />
+                    <ReadOnly label="NGƯỜI DUYỆT" value={selectedCompany.approvedByName} />
+                    <ReadOnly label="THỜI ĐIỂM DUYỆT" value={formatAdminDate(selectedCompany.approvedAt)} />
+                    <ReadOnly label="TẠO LÚC" value={formatAdminDate(selectedCompany.createdAt)} />
+                    <ReadOnly label="CẬP NHẬT LÚC" value={formatAdminDate(selectedCompany.updatedAt)} />
+                  </section>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 bg-slate-50 rounded-xl">
                       <span className="font-bold text-slate-500 block mb-1">MÃ SỐ THUẾ</span>
@@ -415,12 +480,125 @@ export const AdminDashboardPage: React.FC = () => {
                     </div>
                   )}
 
+                  <section className="space-y-3">
+                    <h4 className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">Hồ sơ doanh nghiệp</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <span className="mb-1 block font-bold text-slate-500">EMAIL LIÊN HỆ</span>
+                        <span className="font-semibold text-slate-800">{selectedCompany.profile?.contactEmail || selectedCompany.email || 'Chưa cập nhật'}</span>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <span className="mb-1 block font-bold text-slate-500">LĨNH VỰC</span>
+                        <span className="font-semibold text-slate-800">{selectedCompany.profile?.industry || 'Chưa cập nhật'}</span>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <span className="mb-1 block font-bold text-slate-500">QUY MÔ</span>
+                        <span className="font-semibold text-slate-800">{selectedCompany.profile?.companySize || 'Chưa cập nhật'}</span>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <span className="mb-1 block font-bold text-slate-500">LOẠI HÌNH</span>
+                        <span className="font-semibold text-slate-800">{selectedCompany.profile?.businessType || 'Chưa cập nhật'}</span>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <span className="mb-1 block font-bold text-slate-500">MÀU CHÍNH HỒ SƠ</span>
+                        <span className="font-semibold text-slate-800">{selectedCompany.profile?.primaryColor || 'Mặc định'}</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <span className="mb-1 block font-bold text-slate-500">ONBOARDING</span>
+                        <span className="font-semibold text-slate-800">{selectedCompany.profile?.onboardingCompleted ? 'Đã hoàn tất' : 'Chưa hoàn tất'}</span>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <span className="mb-1 block font-bold text-slate-500">ĐỘ HOÀN THIỆN</span>
+                        <span className="font-semibold text-slate-800">{selectedCompany.profile ? `${selectedCompany.profile.completedSteps}/3 bước` : 'Chưa có hồ sơ'}</span>
+                      </div>
+                    </div>
+                    {selectedCompany.profile?.benefits && (
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <span className="mb-1 block font-bold text-slate-500">PHÚC LỢI</span>
+                        <p className="whitespace-pre-wrap leading-relaxed text-slate-700">{selectedCompany.profile.benefits}</p>
+                      </div>
+                    )}
+                    {selectedCompany.profile?.socialLinks && (
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <span className="mb-1 block font-bold text-slate-500">MẠNG XÃ HỘI</span>
+                        <p className="whitespace-pre-wrap leading-relaxed text-slate-700">{selectedCompany.profile.socialLinks}</p>
+                      </div>
+                    )}
+                    {selectedCompany.profile?.bannerUrl && (
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <span className="mb-1 block font-bold text-slate-500">BANNER HỒ SƠ</span>
+                        <a href={selectedCompany.profile.bannerUrl} target="_blank" rel="noreferrer" className="break-all font-semibold text-blue-700 underline">{selectedCompany.profile.bannerUrl}</a>
+                      </div>
+                    )}
+                  </section>
+
+                  {selectedCompany.careerSite && (
+                    <section className="space-y-3">
+                      <h4 className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">Cấu hình Career Site</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <span className="mb-1 block font-bold text-slate-500">TIÊU ĐỀ SITE</span>
+                          <span className="font-semibold text-slate-800">{selectedCompany.careerSite.siteTitle || 'Chưa cập nhật'}</span>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <span className="mb-1 block font-bold text-slate-500">TRẠNG THÁI PUBLIC</span>
+                          <span className="font-semibold text-slate-800">{selectedCompany.careerSite.isPublished ? 'Đã publish' : 'Chưa publish'}</span>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <span className="mb-1 block font-bold text-slate-500">MÀU NHẤN</span>
+                          <span className="font-semibold text-slate-800">{selectedCompany.careerSite.accentColor || 'Mặc định'}</span>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <span className="mb-1 block font-bold text-slate-500">FONT</span>
+                          <span className="font-semibold text-slate-800">{selectedCompany.careerSite.fontFamily || 'Mặc định'}</span>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <span className="mb-1 block font-bold text-slate-500">HIỂN THỊ MÔ TẢ</span>
+                          <span className="font-semibold text-slate-800">{selectedCompany.careerSite.showCompanyDescription ? 'Bật' : 'Tắt'}</span>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <span className="mb-1 block font-bold text-slate-500">HIỂN THỊ PHÚC LỢI</span>
+                          <span className="font-semibold text-slate-800">{selectedCompany.careerSite.showBenefits ? 'Bật' : 'Tắt'}</span>
+                        </div>
+                      </div>
+                      {selectedCompany.careerSite.heroImageUrl && (
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <span className="mb-1 block font-bold text-slate-500">ẢNH HERO</span>
+                          <a href={selectedCompany.careerSite.heroImageUrl} target="_blank" rel="noreferrer" className="break-all font-semibold text-blue-700 underline">{selectedCompany.careerSite.heroImageUrl}</a>
+                        </div>
+                      )}
+                      {selectedCompany.careerSite.tagline && (
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <span className="mb-1 block font-bold text-slate-500">TAGLINE</span>
+                          <p className="leading-relaxed text-slate-700">{selectedCompany.careerSite.tagline}</p>
+                        </div>
+                      )}
+                      {selectedCompany.careerSite.footerText && (
+                        <div className="rounded-xl bg-slate-50 p-3">
+                          <span className="mb-1 block font-bold text-slate-500">FOOTER</span>
+                          <p className="whitespace-pre-wrap leading-relaxed text-slate-700">{selectedCompany.careerSite.footerText}</p>
+                        </div>
+                      )}
+                    </section>
+                  )}
+
                   {selectedCompany.rejectedReason && (
                     <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700">
                       <span className="font-bold block mb-1">LÝ DO TỪ CHỐI DUYỆT:</span>
                       <p>{selectedCompany.rejectedReason}</p>
                     </div>
                   )}
+                  {selectedCompany.duplicateWarnings && selectedCompany.duplicateWarnings.length > 0 && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-800">
+                      <span className="mb-1 block font-bold">CẢNH BÁO TRÙNG LẶP</span>
+                      <ul className="list-disc space-y-1 pl-4">
+                        {selectedCompany.duplicateWarnings.map(warning => <li key={warning}>{warning}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  </>}
                 </div>
               )}
 
@@ -457,7 +635,27 @@ export const AdminDashboardPage: React.FC = () => {
 
             {/* Drawer Footer Actions */}
             <div className="p-6 border-t border-slate-100 flex items-center justify-end gap-3">
-              {selectedCompany.status === 'PENDING' && (
+              {isEditingCompany ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => { setCompanyDraft(toAdminCompanyDraft(selectedCompany)); setIsEditingCompany(false); }}
+                    disabled={companyUpdateLoading}
+                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-60"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleCompanyUpdate()}
+                    disabled={companyUpdateLoading || !companyDraft?.name?.trim() || !companyDraft?.taxCode?.trim()}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#0052cc] px-5 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {companyUpdateLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    Lưu thay đổi
+                  </button>
+                </>
+              ) : selectedCompany.status === 'PENDING' && (
                 <>
                   <button
                     onClick={() => setRejectingCompanyId(selectedCompany.id)}
@@ -474,7 +672,7 @@ export const AdminDashboardPage: React.FC = () => {
                 </>
               )}
 
-              {selectedCompany.status === 'ACTIVE' && (
+              {!isEditingCompany && selectedCompany.status === 'ACTIVE' && (
                 <button
                   onClick={() => setBlockingId(selectedCompany.id)}
                   className="px-4 py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 shadow-md shadow-red-600/20 cursor-pointer"
@@ -535,3 +733,151 @@ export const AdminDashboardPage: React.FC = () => {
     </div>
   );
 };
+
+const toAdminCompanyDraft = (company: CompanyDetail): AdminCompanyUpdateRequest => ({
+  name: company.name || '',
+  taxCode: company.taxCode || '',
+  subdomain: company.subdomain || '',
+  phone: company.phone || '',
+  email: company.email || '',
+  website: company.website || '',
+  address: company.address || '',
+  industry: company.profile?.industry || '',
+  companySize: company.profile?.companySize || '',
+  businessType: company.profile?.businessType || '',
+  contactEmail: company.profile?.contactEmail || '',
+  description: company.profile?.description || '',
+  benefits: company.profile?.benefits || '',
+  socialLinks: company.profile?.socialLinks || '',
+  bannerUrl: company.profile?.bannerUrl || '',
+  primaryColor: company.profile?.primaryColor || '',
+  siteTitle: company.careerSite?.siteTitle || '',
+  tagline: company.careerSite?.tagline || '',
+  heroImageUrl: company.careerSite?.heroImageUrl || '',
+  accentColor: company.careerSite?.accentColor || '',
+  fontFamily: company.careerSite?.fontFamily || '',
+  showCompanyDescription: Boolean(company.careerSite?.showCompanyDescription),
+  showBenefits: Boolean(company.careerSite?.showBenefits),
+  footerText: company.careerSite?.footerText || '',
+});
+
+const formatAdminDate = (value?: string) => value
+  ? new Date(value).toLocaleString('vi-VN')
+  : 'Chưa cập nhật';
+
+const ReadOnly = ({ label, value }: { label: string; value?: string }) => (
+  <div className="rounded-xl bg-slate-50 p-3">
+    <span className="mb-1 block font-bold text-slate-500">{label}</span>
+    <span className="font-semibold text-slate-800">{value || 'Chưa cập nhật'}</span>
+  </div>
+);
+
+type AdminCompanyDraftChange = (
+  key: keyof AdminCompanyUpdateRequest,
+  value: string | boolean,
+) => void;
+
+const AdminCompanyEditForm = ({
+  draft,
+  onChange,
+}: {
+  draft: AdminCompanyUpdateRequest;
+  onChange: AdminCompanyDraftChange;
+}) => {
+  const field = (key: keyof AdminCompanyUpdateRequest, value: string | boolean) => onChange(key, value);
+  return (
+    <div className="space-y-5">
+      <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs leading-relaxed text-blue-800">
+        Admin được cập nhật thông tin hồ sơ và nội dung hiển thị. Trạng thái, slug, người đăng ký và lịch sử duyệt vẫn chỉ đọc.
+      </div>
+      <EditSection title="Thông tin doanh nghiệp">
+        <EditInput label="Tên doanh nghiệp" required value={draft.name} onChange={value => field('name', value)} />
+        <EditInput label="Mã số thuế" required value={draft.taxCode} onChange={value => field('taxCode', value)} />
+        <EditInput label="Subdomain" value={draft.subdomain} onChange={value => field('subdomain', value)} />
+        <EditInput label="Email doanh nghiệp" type="email" value={draft.email} onChange={value => field('email', value)} />
+        <EditInput label="Hotline" value={draft.phone} onChange={value => field('phone', value)} />
+        <EditInput label="Website" value={draft.website} onChange={value => field('website', value)} />
+        <EditTextArea className="sm:col-span-2" label="Địa chỉ trụ sở" value={draft.address} onChange={value => field('address', value)} />
+      </EditSection>
+      <EditSection title="Hồ sơ doanh nghiệp">
+        <EditInput label="Ngành nghề" value={draft.industry} onChange={value => field('industry', value)} />
+        <EditInput label="Quy mô" value={draft.companySize} onChange={value => field('companySize', value)} />
+        <EditInput label="Loại hình" value={draft.businessType} onChange={value => field('businessType', value)} />
+        <EditInput label="Email liên hệ tuyển dụng" type="email" value={draft.contactEmail} onChange={value => field('contactEmail', value)} />
+        <EditTextArea className="sm:col-span-2" label="Mô tả" value={draft.description} onChange={value => field('description', value)} />
+        <EditTextArea className="sm:col-span-2" label="Phúc lợi" value={draft.benefits} onChange={value => field('benefits', value)} />
+        <EditTextArea className="sm:col-span-2" label="Mạng xã hội" value={draft.socialLinks} onChange={value => field('socialLinks', value)} />
+        <EditInput label="Banner URL" value={draft.bannerUrl} onChange={value => field('bannerUrl', value)} />
+        <EditInput label="Màu chính hồ sơ" value={draft.primaryColor} onChange={value => field('primaryColor', value)} />
+      </EditSection>
+      <EditSection title="Cấu hình Career Site">
+        <EditInput label="Tiêu đề site" value={draft.siteTitle} onChange={value => field('siteTitle', value)} />
+        <EditInput label="Màu nhấn" value={draft.accentColor} onChange={value => field('accentColor', value)} />
+        <EditInput label="Font" value={draft.fontFamily} onChange={value => field('fontFamily', value)} />
+        <EditInput label="Ảnh hero" value={draft.heroImageUrl} onChange={value => field('heroImageUrl', value)} />
+        <EditTextArea className="sm:col-span-2" label="Tagline" value={draft.tagline} onChange={value => field('tagline', value)} />
+        <EditTextArea className="sm:col-span-2" label="Footer tùy chỉnh" value={draft.footerText} onChange={value => field('footerText', value)} />
+        <EditToggle label="Hiển thị mô tả công ty" checked={Boolean(draft.showCompanyDescription)} onChange={value => field('showCompanyDescription', value)} />
+        <EditToggle label="Hiển thị phúc lợi" checked={Boolean(draft.showBenefits)} onChange={value => field('showBenefits', value)} />
+      </EditSection>
+    </div>
+  );
+};
+
+const EditSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <section className="space-y-3">
+    <h4 className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">{title}</h4>
+    <div className="grid gap-3 sm:grid-cols-2">{children}</div>
+  </section>
+);
+
+const EditInput = ({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  required = false,
+}: {
+  label: string;
+  value?: string;
+  onChange: (value: string) => void;
+  type?: string;
+  required?: boolean;
+}) => (
+  <label className="block space-y-1.5">
+    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}{required && ' *'}</span>
+    <input required={required} type={type} value={value || ''} onChange={event => onChange(event.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-[#0052cc] focus:bg-white" />
+  </label>
+);
+
+const EditTextArea = ({
+  label,
+  value,
+  onChange,
+  className = '',
+}: {
+  label: string;
+  value?: string;
+  onChange: (value: string) => void;
+  className?: string;
+}) => (
+  <label className={`block space-y-1.5 ${className}`}>
+    <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}</span>
+    <textarea rows={3} value={value || ''} onChange={event => onChange(event.target.value)} className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed text-slate-700 outline-none focus:border-[#0052cc] focus:bg-white" />
+  </label>
+);
+
+const EditToggle = ({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}) => (
+  <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+    <input type="checkbox" checked={checked} onChange={event => onChange(event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+    {label}
+  </label>
+);

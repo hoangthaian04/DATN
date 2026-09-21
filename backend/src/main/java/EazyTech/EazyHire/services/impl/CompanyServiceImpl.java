@@ -81,6 +81,83 @@ public class CompanyServiceImpl implements CompanyService {
 
     @Override
     @Transactional
+    public CompanyDetailResponseDTO updateCompanyByAdmin(
+            Long companyId,
+            Long adminId,
+            AdminCompanyUpdateRequestDTO request
+    ) {
+        accounts.requireAdmin(adminId);
+        CompanyEntity company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new CustomException(404, "Không tìm thấy thông tin doanh nghiệp"));
+
+        String name = normalizeNullable(request.getName());
+        if (request.getName() != null && name == null) {
+            throw new CustomException(400, "Tên doanh nghiệp không được để trống");
+        }
+        if (name != null) company.setName(name);
+
+        String taxCode = normalizeNullable(request.getTaxCode());
+        if (request.getTaxCode() != null && taxCode == null) {
+            throw new CustomException(400, "Mã số thuế không được để trống");
+        }
+        if (taxCode != null) {
+            validateUnique(taxCode, company.getSubdomain(), companyId);
+            company.setTaxCode(taxCode);
+        }
+
+        if (request.getSubdomain() != null) {
+            String subdomain = normalizeNullable(request.getSubdomain());
+            validateUnique(company.getTaxCode(), subdomain, companyId);
+            company.setSubdomain(subdomain);
+        }
+        if (request.getPhone() != null) company.setPhone(normalizeNullable(request.getPhone()));
+        if (request.getEmail() != null) company.setEmail(normalizeEmail(request.getEmail()));
+        if (request.getWebsite() != null) company.setWebsite(normalizeNullable(request.getWebsite()));
+        if (request.getAddress() != null) company.setAddress(normalizeNullable(request.getAddress()));
+
+        CompanyProfileEntity profile = companyProfileRepository.findByCompanyId(companyId)
+                .orElseGet(() -> CompanyProfileEntity.builder().company(company).build());
+        if (request.getIndustry() != null) profile.setIndustry(normalizeNullable(request.getIndustry()));
+        if (request.getCompanySize() != null) profile.setCompanySize(normalizeNullable(request.getCompanySize()));
+        if (request.getBusinessType() != null) profile.setBusinessType(normalizeNullable(request.getBusinessType()));
+        if (request.getContactEmail() != null) profile.setContactEmail(normalizeEmail(request.getContactEmail()));
+        if (request.getDescription() != null) profile.setDescription(request.getDescription());
+        if (request.getBenefits() != null) profile.setBenefits(request.getBenefits());
+        if (request.getSocialLinks() != null) profile.setSocialLinks(request.getSocialLinks());
+        if (request.getBannerUrl() != null) profile.setBannerUrl(normalizeNullable(request.getBannerUrl()));
+        if (request.getPrimaryColor() != null) profile.setPrimaryColor(normalizeNullable(request.getPrimaryColor()));
+
+        CareerSiteEntity careerSite = careerSiteRepository.findByCompanyId(companyId)
+                .orElseGet(() -> CareerSiteEntity.builder().company(company).build());
+        if (request.getSiteTitle() != null) careerSite.setSiteTitle(normalizeNullable(request.getSiteTitle()));
+        if (request.getTagline() != null) careerSite.setTagline(request.getTagline());
+        if (request.getHeroImageUrl() != null) careerSite.setHeroImageUrl(normalizeNullable(request.getHeroImageUrl()));
+        if (request.getAccentColor() != null) careerSite.setAccentColor(normalizeNullable(request.getAccentColor()));
+        if (request.getFontFamily() != null) careerSite.setFontFamily(normalizeNullable(request.getFontFamily()));
+        if (request.getShowCompanyDescription() != null) careerSite.setShowCompanyDescription(request.getShowCompanyDescription());
+        if (request.getShowBenefits() != null) careerSite.setShowBenefits(request.getShowBenefits());
+        if (request.getFooterText() != null) careerSite.setFooterText(request.getFooterText());
+
+        companyRepository.save(company);
+        companyProfileRepository.save(profile);
+        careerSiteRepository.save(careerSite);
+        audit.record(adminId, companyId, "UPDATE_COMPANY", "Admin cập nhật thông tin doanh nghiệp");
+        return getCompanyDetail(companyId);
+    }
+
+    private String normalizeNullable(String value) {
+        if (value == null) return null;
+        String normalized = value.trim();
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private String normalizeEmail(String value) {
+        String normalized = normalizeNullable(value);
+        return normalized == null ? null : normalized.toLowerCase(java.util.Locale.ROOT);
+    }
+
+    @Override
+    @Transactional
     public CompanyResponseDTO approveCompany(Long companyId, Long adminId) {
         CompanyEntity company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new CustomException(404, "Không tìm thấy doanh nghiệp"));
@@ -309,8 +386,10 @@ public class CompanyServiceImpl implements CompanyService {
       return getCompanyDetail(company.getId());
     }
     public void validateUnique(String taxCode,String subdomain,Long id){
-      if(companyRepository.existsByTaxCodeAndIdNot(taxCode,id))throw new CustomException(409,"Mã số thuế này đã được đăng ký. Vui lòng liên hệ hỗ trợ nếu có nhầm lẫn.");
-      if(subdomain!=null && companyRepository.existsBySubdomainAndIdNot(subdomain,id))throw new CustomException(409,"Subdomain này đã được sử dụng. Vui lòng chọn một subdomain khác.");
+      if(taxCode!=null && !taxCode.isBlank() && companyRepository.existsByTaxCodeAndIdNot(taxCode,id))
+        throw new CustomException(409,"Mã số thuế này đã được đăng ký. Vui lòng liên hệ hỗ trợ nếu có nhầm lẫn.");
+      if(subdomain!=null && !subdomain.isBlank() && companyRepository.existsBySubdomainAndIdNot(subdomain,id))
+        throw new CustomException(409,"Subdomain này đã được sử dụng. Vui lòng chọn một subdomain khác.");
     }
     @Transactional public CompanyEntity createRegistration(RegisterRequestDTO request){
       validateUnique(request.getTaxCode(),request.getSubdomain(),0L);
