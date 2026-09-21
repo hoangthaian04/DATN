@@ -1,26 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  BookOpen, Building2, Check, ChevronDown, Edit3, GripVertical,
+  Building2, ChevronDown, Edit3, Eye,
   KeyRound, Link as LinkIcon, List, ListOrdered, Loader2, Mail,
-  Plus, RefreshCw, Save, Search, Trash2, X
+  Plus, Search, Trash2, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AuthService } from '@/services/auth.service';
-import { useNavigate } from 'react-router-dom';
-import { CareerSiteSettingsCard } from '@/components/settings/CareerSiteSettingsCard';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { OnboardingPage } from '@/pages/auth/OnboardingPage';
 import { emailTemplateService } from '@/services/email-template.service';
 import type { EmailTemplateApi } from '@/types/email-template.types';
 
-type Tab = 'company' | 'general' | 'emails' | 'security';
+type Tab = 'company' | 'emails' | 'security';
 type EmailTag = 'PASS' | 'FAIL' | 'INTERVIEW_INVITE' | 'OFFER' | 'APPLICATION_RECEIVED';
 type EmailTemplate = { id: string; title: string; subject: string; tag: EmailTag; content: string; metadataLocked?: boolean; scope?: 'SYSTEM' | 'CUSTOM' };
-type WhyCard = { id: string; text: string };
 type NewTemplateForm = { subject: string; tag: EmailTag | ''; title: string };
 type NewTemplateErrors = Partial<Record<keyof NewTemplateForm, string>>;
 
@@ -60,6 +57,12 @@ const fromApiTemplate = (template: EmailTemplateApi): EmailTemplate => ({
 
 const emptyNewTemplate: NewTemplateForm = { subject: '', tag: '', title: '' };
 const supportedTemplateVariables = new Set(['candidateName', 'jobTitle', 'companyName', 'interviewDate']);
+const previewVariableValues: Record<string, string> = {
+  candidateName: 'Nguyễn Minh Anh',
+  jobTitle: 'Frontend Engineer',
+  companyName: 'EasyHire Demo Company',
+  interviewDate: '09:00, 15/10/2026'
+};
 const emailTagOptions: { value: EmailTag; label: string }[] = [
   { value: 'APPLICATION_RECEIVED', label: 'Đã nhận hồ sơ' },
   { value: 'PASS', label: 'Pass (Đạt vòng)' },
@@ -82,6 +85,26 @@ const tagName = (tag: EmailTag) => ({
   OFFER: 'Offer (Đề nghị nhận việc)',
   APPLICATION_RECEIVED: 'Đã nhận hồ sơ'
 })[tag];
+
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, character => ({
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+}[character] || character));
+
+const previewText = (value: string) => value.replace(/\{\{\s*([A-Za-z][A-Za-z0-9_]*)\s*}}/g, (_, variable: string) => previewVariableValues[variable] || `{{${variable}}}`);
+
+const buildPreviewDocument = (subject: string, body: string) => `<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { margin: 0; padding: 24px; background: #f8fafc; color: #334155; font-family: Arial, sans-serif; line-height: 1.6; }
+      main { max-width: 680px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; }
+      h1 { margin: 0 0 20px; color: #0f172a; font-size: 20px; }
+      .body { white-space: pre-wrap; overflow-wrap: anywhere; }
+    </style>
+  </head>
+  <body><main><h1>${escapeHtml(previewText(subject))}</h1><div class="body">${previewText(body).replace(/\n/g, '<br />')}</div></main></body>
+</html>`;
 
 const Field = ({ label, value, onChange, required, type = 'text', disabled = false }: { label: string; value: string; onChange: (value: string) => void; required?: boolean; type?: string; disabled?: boolean }) => (
   <label className="block space-y-2 text-[13px] font-semibold text-slate-600">
@@ -116,9 +139,9 @@ const VariablePanel = () => (
       
       <div className="space-y-3">
         {[
-          ['{{candidateName}}', 'Tên đầy đủ của ứng viên'], 
-          ['{{jobTitle}}', 'Tên vị trí đang tuyển'], 
-          ['{{companyName}}', 'Tên công ty (TechA.JSC)'], 
+          ['{{candidateName}}', 'Tên đầy đủ của ứng viên'],
+          ['{{jobTitle}}', 'Tên vị trí đang tuyển'],
+          ['{{companyName}}', 'Tên công ty của doanh nghiệp'],
           ['{{interviewDate}}', 'Ngày giờ phỏng vấn dự kiến']
         ].map(([variable, description]) => (
           <button 
@@ -136,20 +159,16 @@ const VariablePanel = () => (
         ))}
       </div>
       
-      <button onClick={() => toast('Danh sách đầy đủ sẽ được cập nhật sau')} className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white py-2 text-[11px] font-bold text-slate-700 shadow-sm hover:bg-slate-50">
-        <BookOpen className="h-3.5 w-3.5" />
-        Xem danh sách 20+ biến
-      </button>
     </div>
   </aside>
 );
 
 export const SettingsPage = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<Tab>('company'); 
-  const [saving, setSaving] = useState(false); 
-  const [saved, setSaved] = useState(false); 
-  const [logo, setLogo] = useState<string>();
+  const routeTab: Tab = location.pathname.endsWith('/email-templates') ? 'emails' : 'company';
+  const [activeTab, setActiveTab] = useState<Tab>(routeTab);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   
   const [templates, setTemplates] = useState(initialTemplates); 
   const [selectedId, setSelectedId] = useState(initialTemplates[0].id); 
@@ -166,28 +185,6 @@ export const SettingsPage = () => {
     queryKey: ['email-templates'], queryFn: () => emailTemplateService.list(), enabled: activeTab === 'emails'
   });
   
-  const [company, setCompany] = useState({ 
-    name: 'TechA.JSC', 
-    size: '120+', 
-    founded: '2019', 
-    tax: '0312345678', 
-    industry: 'Công nghệ thông tin', 
-    slogan: 'Đổi mới để dẫn đầu', 
-    introduction: 'Chúng tôi xây dựng tương lai bằng công nghệ và sự sáng tạo không ngừng nghỉ.', 
-    phone: '+84 910 100 260', 
-    website: 'www.techa.vn', 
-    city: 'Hồ Chí Minh', 
-    ward: 'Phường Thủ Đức', 
-    address: 'Tầng 12, Tòa Lotus, 68 Nguyễn Huệ, Q.1, TP. HCM', 
-    services: 'AI Product Development, Data Platform, Cloud Engineering' 
-  });
-  
-  const [reasons, setReasons] = useState<WhyCard[]>([
-    { id: '1', text: 'Làm việc với các công nghệ AI mới nhất, từ LLM đến Vector Embedding trong môi trường thực tế.' }, 
-    { id: '2', text: 'Môi trường cạnh tranh - equity - review 2 lần/năm - 13th month - bảo hiểm sức khỏe cao cấp.' }, 
-    { id: '3', text: 'Budget học hỏi hàng năm, mentorship từ senior engineers, cơ hội làm việc với khách hàng quốc tế.' }
-  ]);
-  
   const form = useForm<z.infer<typeof passwordSchema>>({ 
     resolver: zodResolver(passwordSchema), 
     defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' } 
@@ -195,6 +192,11 @@ export const SettingsPage = () => {
   
   const selected = templates.find(item => item.id === selectedId) ?? templates[0]; 
   const shown = templates.filter(item => item.title.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
+
+  useEffect(() => {
+    setActiveTab(routeTab);
+    setIsPreviewOpen(false);
+  }, [routeTab]);
 
   useEffect(() => {
     if (!emailTemplatePage) return;
@@ -214,18 +216,7 @@ export const SettingsPage = () => {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isCreateTemplateOpen]);
   
-  const setCompanyValue = (key: keyof typeof company, value: string) => setCompany(current => ({ ...current, [key]: value }));
   const updateTemplate = (changes: Partial<EmailTemplate>) => setTemplates(current => current.map(item => item.id === selected.id ? { ...item, ...changes } : item));
-  
-  const saveCompany = () => { 
-    setSaving(true); 
-    window.setTimeout(() => { 
-      setSaving(false); 
-      setSaved(true); 
-      toast.success('Đã lưu thông tin công ty'); 
-      window.setTimeout(() => setSaved(false), 1800); 
-    }, 500); 
-  };
   
   const openCreateTemplateModal = () => {
     setNewTemplate(emptyNewTemplate);
@@ -331,14 +322,6 @@ export const SettingsPage = () => {
     updateTemplate({ content: editingOriginalContent });
     setIsEditingTemplate(false);
   };
-  
-  const changeLogo = (event: ChangeEvent<HTMLInputElement>) => { 
-    const file = event.target.files?.[0]; 
-    if (!file) return; 
-    if (!file.type.startsWith('image/') || file.size > 2 * 1024 * 1024) return toast.error('Chỉ chấp nhận ảnh PNG/JPG tối đa 2MB'); 
-    setLogo(URL.createObjectURL(file)); 
-  };
-  
   const changePassword = async (data: z.infer<typeof passwordSchema>) => { 
     try { 
       await AuthService.changePassword(data); 
@@ -369,13 +352,17 @@ export const SettingsPage = () => {
         </header>
 
         <nav className="flex items-center gap-8 overflow-x-auto border-b border-slate-200">
-          {tabs.map(tab => { 
-            const Icon = tab.icon; 
-            const on = activeTab === tab.id; 
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            const on = activeTab === tab.id;
             return (
               <button 
                 key={tab.id} 
-                onClick={() => setActiveTab(tab.id)} 
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (tab.id === 'company') navigate('/dashboard/settings');
+                  if (tab.id === 'emails') navigate('/dashboard/settings/email-templates');
+                }}
                 className={`-mb-[1px] flex shrink-0 cursor-pointer items-center gap-2.5 border-b-2 px-1 py-3 text-sm font-semibold transition-all duration-200 ${on ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'}`}
               >
                 <Icon className={`h-4 w-4 ${on ? 'text-[#2563eb]' : 'text-slate-400'}`} />
@@ -386,110 +373,6 @@ export const SettingsPage = () => {
         </nav>
 
         {activeTab === 'company' && <OnboardingPage settings />}
-
-        {activeTab === 'general' && (
-          <div className="flex flex-col gap-4 pt-2">
-            <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm shadow-slate-100/50 sm:p-6">
-              <h2 className="text-xl font-bold text-slate-800">Thông tin công ty</h2>
-              <p className="mb-5 mt-1 text-sm text-slate-500">Cập nhật thông tin doanh nghiệp sẽ hiển thị trên Career Site.</p>
-              
-              <div className="mb-5 flex items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-[#e6f0f9] text-xl font-extrabold text-primary-500">
-                  {logo ? (
-                    <img src={logo} alt="Logo công ty" className="h-full w-full object-cover" />
-                  ) : (
-                    company.name[0]
-                  )}
-                </div>
-                <div>
-                  <label className="cursor-pointer rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">
-                    Upload logo
-                    <input className="sr-only" type="file" accept="image/png,image/jpeg" onChange={changeLogo} />
-                  </label>
-                  <p className="mt-2 text-[10px] font-medium uppercase text-slate-400">PNG, JPG tối đa 2MB</p>
-                </div>
-              </div>
-
-              <div className="max-w-4xl space-y-4">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Field label="Tên công ty" value={company.name} required onChange={value => setCompanyValue('name', value)} />
-                  <SelectField label="Quy mô nhân sự" value={company.size} options={['120+', '50-100', '1-50']} onChange={value => setCompanyValue('size', value)} />
-                  <Field label="Năm thành lập" value={company.founded} onChange={value => setCompanyValue('founded', value)} />
-                </div>
-                
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Mã số thuế" value={company.tax} onChange={value => setCompanyValue('tax', value)} />
-                  <Field label="Lĩnh vực hoạt động" value={company.industry} onChange={value => setCompanyValue('industry', value)} />
-                </div>
-                
-                <Field label="Slogan (câu công ty)" value={company.slogan} onChange={value => setCompanyValue('slogan', value)} />
-                
-                <label className="block space-y-2 text-[13px] font-semibold text-slate-600">
-                  Giới thiệu công ty (tối đa 200 ký tự)
-                  <textarea rows={3} maxLength={200} value={company.introduction} onChange={event => setCompanyValue('introduction', event.target.value)} className={`${fieldClass} resize-none`} />
-                </label>
-                
-                <div className="grid gap-4 border-b border-slate-100 pb-5 md:grid-cols-2">
-                  <Field label="Số điện thoại" type="tel" value={company.phone} onChange={value => setCompanyValue('phone', value)} />
-                  <Field label="Website (nếu có)" type="url" value={company.website} onChange={value => setCompanyValue('website', value)} />
-                </div>
-                
-                <div className="border-b border-slate-100 py-2 pb-5">
-                  <h3 className="mb-4 text-[15px] font-bold text-slate-800">Địa điểm công ty</h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <SelectField label="Tỉnh / Thành phố" value={company.city} options={['Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng']} onChange={value => setCompanyValue('city', value)} />
-                    <SelectField label="Xã / Phường" value={company.ward} options={['Phường Thủ Đức', 'Phường Bến Nghé']} onChange={value => setCompanyValue('ward', value)} />
-                  </div>
-                  <div className="mt-6">
-                    <Field label="Địa chỉ cụ thể" value={company.address} onChange={value => setCompanyValue('address', value)} />
-                  </div>
-                  <div className="mt-6">
-                    <Field label="Dịch vụ / Sản phẩm chính" value={company.services} onChange={value => setCompanyValue('services', value)} />
-                  </div>
-                </div>
-                
-                <div className="pt-2">
-                  <h3 className="mb-1 text-[15px] font-bold text-slate-800">Lý do chọn công ty</h3>
-                  <p className="mb-4 text-[12px] text-slate-500">Các lý do nổi bật về văn hóa, cơ hội phát triển hiển thị trên Career Site.</p>
-                  
-                  <div className="space-y-3">
-                    {reasons.map((reason, index) => (
-                      <div key={reason.id} className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 hover:border-slate-300">
-                        <GripVertical className="h-4 w-4 shrink-0 text-slate-300" />
-                        <input 
-                          value={reason.text} 
-                          onChange={event => setReasons(items => items.map((item, itemIndex) => itemIndex === index ? { ...item, text: event.target.value } : item))} 
-                          className="min-w-0 flex-1 bg-transparent text-[13px] text-slate-700 outline-none" 
-                        />
-                        <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                          <button className="rounded-lg p-1.5 text-slate-400 hover:bg-blue-50 hover:text-blue-500">
-                            <Edit3 className="h-3.5 w-3.5" />
-                          </button>
-                          <button onClick={() => setReasons(items => items.filter(item => item.id !== reason.id))} className="rounded-lg p-1.5 text-red-400 hover:bg-red-50 hover:text-red-500">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    <button onClick={() => setReasons(items => [...items, { id: `${Date.now()}`, text: 'Lý do mới' }])} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-[13px] font-semibold text-slate-500 hover:border-slate-300 hover:bg-slate-50">
-                      <Plus className="h-4 w-4" />Thêm lý do mới
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end pt-6">
-                  <button disabled={saving} onClick={saveCompany} className="flex items-center gap-2 rounded-lg bg-[#2563eb] hover:bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 disabled:opacity-60 transition-colors cursor-pointer">
-                    {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                    {saved ? 'Đã lưu' : 'Lưu thông tin'}
-                  </button>
-                </div>
-              </div>
-            </section>
-            
-            <CareerSiteSettingsCard />
-          </div>
-        )}
 
         {activeTab === 'emails' && (
           <section className="grid items-start gap-6 lg:grid-cols-12">
@@ -536,6 +419,14 @@ export const SettingsPage = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={!selected.content.trim() || isSavingTemplate}
+                    onClick={() => setIsPreviewOpen(true)}
+                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Eye className="h-3.5 w-3.5" />Xem trước
+                  </button>
                   <button disabled={isEditingTemplate || isSavingTemplate} onClick={startEditingTemplate} className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-100 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60">
                     <Edit3 className="h-3.5 w-3.5" />Chỉnh sửa
                   </button>
@@ -630,6 +521,49 @@ export const SettingsPage = () => {
               </button>
             </form>
           </section>
+        )}
+
+        {isPreviewOpen && selected && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+            onMouseDown={event => {
+              if (event.target === event.currentTarget) setIsPreviewOpen(false);
+            }}
+          >
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="email-preview-title"
+              className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            >
+              <header className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Email Template Preview</p>
+                  <h2 id="email-preview-title" className="mt-1 text-lg font-bold text-slate-800">{previewText(selected.subject)}</h2>
+                  <p className="mt-1 text-xs text-slate-500">Các biến mẫu được thay bằng dữ liệu minh họa, không gửi email thật.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(false)}
+                  aria-label="Đóng xem trước email"
+                  className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </header>
+              <div className="min-h-0 flex-1 overflow-auto bg-slate-50 p-4 sm:p-6">
+                <iframe
+                  title="Nội dung xem trước email"
+                  sandbox=""
+                  srcDoc={buildPreviewDocument(selected.subject, selected.content)}
+                  className="h-[min(65vh,620px)] w-full rounded-xl border border-slate-200 bg-white"
+                />
+              </div>
+              <footer className="flex justify-end border-t border-slate-100 px-6 py-4">
+                <button type="button" onClick={() => setIsPreviewOpen(false)} className="rounded-lg bg-[#2563eb] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700">Đóng</button>
+              </footer>
+            </section>
+          </div>
         )}
 
         {isCreateTemplateOpen && (

@@ -10,6 +10,7 @@ import EazyTech.EazyHire.repositories.ApplicationRepository;
 import EazyTech.EazyHire.repositories.HiringRoundRepository;
 import EazyTech.EazyHire.repositories.InterviewRepository;
 import EazyTech.EazyHire.services.EmailService;
+import EazyTech.EazyHire.services.EmailLogService;
 import EazyTech.EazyHire.services.PublicMagicLinkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,7 @@ public class PublicMagicLinkServiceImpl implements PublicMagicLinkService {
     private final HiringRoundRepository hiringRoundRepository;
     private final InterviewRepository interviewRepository;
     private final EmailService emailService;
+    private final EmailLogService emailLogService;
 
     @Value("${app.public-base-url:http://localhost:5173}")
     private String publicBaseUrl;
@@ -163,10 +165,11 @@ public class PublicMagicLinkServiceImpl implements PublicMagicLinkService {
                 + "Đây là liên kết mới để theo dõi hồ sơ ứng tuyển của bạn.\n"
                 + links + "\n\n"
                 + "Liên kết có hiệu lực đến " + expiry + ".";
-        emailService.sendEmail(
-                first.getCandidate().getEmail(),
-                "Liên kết theo dõi hồ sơ mới - EasyHire",
-                content
+        String subject = "Liên kết theo dõi hồ sơ mới - EasyHire";
+        boolean sent = emailService.sendEmail(first.getCandidate().getEmail(), subject, content);
+        emailLogService.record(
+                first.getCompany().getId(), first.getId(), first.getCandidate().getEmail(),
+                "MAGIC_LINK_RECOVERY", subject, content, sent
         );
     }
 

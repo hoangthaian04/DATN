@@ -21,6 +21,7 @@ import EazyTech.EazyHire.repositories.HiringRoundRepository;
 import EazyTech.EazyHire.repositories.JobRepository;
 import EazyTech.EazyHire.repositories.UserRepository;
 import EazyTech.EazyHire.services.CvStorageService;
+import EazyTech.EazyHire.services.EmailLogService;
 import EazyTech.EazyHire.services.EmailService;
 import EazyTech.EazyHire.services.impl.PublicApplicationServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,6 +60,7 @@ class PublicApplicationServiceImplTest {
     @Mock private HiringRoundRepository hiringRoundRepository;
     @Mock private UserRepository userRepository;
     @Mock private CvStorageService cvStorageService;
+    @Mock private EmailLogService emailLogService;
     @Mock private EmailService emailService;
     @Mock private MultipartFile cvFile;
     @Spy private ObjectMapper objectMapper = new ObjectMapper();

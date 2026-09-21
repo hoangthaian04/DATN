@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, FileText, Settings, Rocket, LogOut, Key, X, Eye, EyeOff } from 'lucide-react';
+import { LayoutDashboard, Briefcase, FileText, Mail, Settings, Rocket, LogOut, Key, X, Eye, EyeOff } from 'lucide-react';
 import { AuthService } from '@/services/auth.service';
 
 export const Sidebar: React.FC = () => {
@@ -30,6 +30,7 @@ export const Sidebar: React.FC = () => {
         { id: 'list', href: '/dashboard/applications/list', label: 'Danh sách' },
       ],
     },
+    { id: 'email-logs', href: '/dashboard/email-logs', label: 'Email Logs', icon: Mail },
     { id: 'settings', href: '/dashboard/settings', label: 'Cài đặt', icon: Settings },
   ];
 

@@ -25,6 +25,7 @@ import { CandidatesListPage } from '@/pages/hr/CandidatesListPage';
 import { SettingsPage } from '@/pages/hr/SettingsPage';
 import { CareerSiteSettingsPage } from '@/pages/hr/CareerSiteSettingsPage';
 import { NotificationsPage } from '@/pages/hr/NotificationsPage';
+import { EmailLogsPage } from '@/pages/hr/EmailLogsPage';
 
 // ─── Admin Pages ──────────────────────────────────────────────────────────────
 import { AdminLoginPage } from '@/pages/admin/AdminLoginPage';
@@ -78,7 +79,10 @@ export const router = createBrowserRouter([
       { path: 'applications/kanban', element: <KanbanPage /> },
       { path: 'applications/list', element: <CandidatesListPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'settings/general', element: <SettingsPage /> },
+      { path: 'settings/email-templates', element: <SettingsPage /> },
       { path: 'settings/company', element: <Navigate to="/dashboard/settings" replace /> },
+      { path: 'email-logs', element: <EmailLogsPage /> },
       { path: 'career-site', element: <CareerSiteSettingsPage /> },
       { path: 'notifications', element: <NotificationsPage /> },
     ],

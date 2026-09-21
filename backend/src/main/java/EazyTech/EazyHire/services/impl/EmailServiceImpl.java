@@ -19,7 +19,7 @@ public class EmailServiceImpl implements EmailService {
     private String fromEmail;
 
     @Override
-    public void sendEmail(String to, String subject, String content) {
+    public boolean sendEmail(String to, String subject, String content) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
@@ -28,8 +28,10 @@ public class EmailServiceImpl implements EmailService {
             message.setText(content);
             mailSender.send(message);
             log.info("Email sent to {}", to);
+            return true;
         } catch (Exception e) {
             log.error("Failed to send email to {}", to, e);
+            return false;
         }
     }
 }

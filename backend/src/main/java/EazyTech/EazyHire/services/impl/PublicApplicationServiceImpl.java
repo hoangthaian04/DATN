@@ -25,6 +25,7 @@ import EazyTech.EazyHire.repositories.HiringRoundRepository;
 import EazyTech.EazyHire.repositories.JobRepository;
 import EazyTech.EazyHire.repositories.UserRepository;
 import EazyTech.EazyHire.services.CvStorageService;
+import EazyTech.EazyHire.services.EmailLogService;
 import EazyTech.EazyHire.services.EmailService;
 import EazyTech.EazyHire.services.PublicApplicationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -67,6 +68,7 @@ public class PublicApplicationServiceImpl implements PublicApplicationService {
     private final UserRepository userRepository;
     private final CvStorageService cvStorageService;
     private final EmailService emailService;
+    private final EmailLogService emailLogService;
     private final ObjectMapper objectMapper;
 
     @Value("${app.public-base-url:http://localhost:5173}")
@@ -287,10 +289,11 @@ public class PublicApplicationServiceImpl implements PublicApplicationService {
                 + "Bạn có thể theo dõi hồ sơ tại: " + trackingUrl + "\n\n"
                 + "Mất hoặc hết hạn liên kết? Bạn có thể yêu cầu gửi lại tại: " + recoveryUrl + "\n\n"
                 + "Mã theo dõi: " + application.getSecureToken();
-        emailService.sendEmail(
-                application.getCandidate().getEmail(),
-                "Đã nhận hồ sơ ứng tuyển - " + application.getJob().getTitle(),
-                content
+        String subject = "Đã nhận hồ sơ ứng tuyển - " + application.getJob().getTitle();
+        boolean sent = emailService.sendEmail(application.getCandidate().getEmail(), subject, content);
+        emailLogService.record(
+                application.getCompany().getId(), application.getId(), application.getCandidate().getEmail(),
+                "APPLICATION_RECEIVED", subject, content, sent
         );
     }
 

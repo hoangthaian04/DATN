@@ -10,6 +10,7 @@ import EazyTech.EazyHire.repositories.ApplicationRepository;
 import EazyTech.EazyHire.repositories.HiringRoundRepository;
 import EazyTech.EazyHire.repositories.InterviewRepository;
 import EazyTech.EazyHire.services.EmailService;
+import EazyTech.EazyHire.services.EmailLogService;
 import EazyTech.EazyHire.services.impl.PublicMagicLinkServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,7 @@ class PublicMagicLinkServiceImplTest {
     @Mock private HiringRoundRepository hiringRoundRepository;
     @Mock private InterviewRepository interviewRepository;
     @Mock private EmailService emailService;
+    @Mock private EmailLogService emailLogService;
 
     @InjectMocks private PublicMagicLinkServiceImpl service;
 
