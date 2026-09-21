@@ -6,8 +6,13 @@ export const api=axios.create({baseURL,withCredentials:true});
 let csrf: Promise<string> | undefined;
 let refreshing: Promise<void> | undefined;
 export function clearCsrf(){csrf=undefined;}
+function syncCsrfCookie(token:string){
+ if(typeof document==='undefined')return;
+ const current=document.cookie.split('; ').find(item=>item.startsWith('XSRF-TOKEN='))?.slice('XSRF-TOKEN='.length);
+ if(current!==token)document.cookie=`XSRF-TOKEN=${encodeURIComponent(token)}; Path=/; SameSite=Lax`;
+}
 async function csrfToken(){
- csrf ??= transport.get<BaseResponse<{token:string}>>('/auth/csrf').then(r=>r.data.data.token).catch(e=>{csrf=undefined;throw e;});
+ csrf ??= transport.get<BaseResponse<{token:string}>>('/auth/csrf',{headers:{'Cache-Control':'no-cache'}}).then(r=>{const token=r.data.data.token;syncCsrfCookie(token);return token;}).catch(e=>{csrf=undefined;throw e;});
  return csrf;
 }
 api.interceptors.request.use(async config=>{

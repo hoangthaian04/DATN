@@ -23,7 +23,7 @@ public class JwtTokenProvider {
 
     public JwtTokenProvider(
             @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}") String secret,
-            @Value("${jwt.access-token-expiration-ms:86400000}") long accessTokenExpirationMs,
+            @Value("${jwt.access-token-expiration-ms:900000}") long accessTokenExpirationMs,
             @Value("${jwt.refresh-token-expiration-ms:604800000}") long refreshTokenExpirationMs
     ) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));

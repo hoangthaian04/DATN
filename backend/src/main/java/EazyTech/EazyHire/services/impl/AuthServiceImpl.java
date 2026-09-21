@@ -183,7 +183,11 @@ public class AuthServiceImpl implements AuthService {
         redisClient.set("OTP_FORGOT_PW_" + user.getEmail(), passwordService.encode(otp), 600);
 
         String emailContent = "Mã OTP để khôi phục mật khẩu của bạn là: " + otp + "\nMã này sẽ hết hạn trong 10 phút.";
-        emailService.sendEmail(user.getEmail(), "Khôi phục mật khẩu - EazyHire", emailContent);
+        if (!emailService.sendEmail(user.getEmail(), "Khôi phục mật khẩu - EazyHire", emailContent)) {
+            redisClient.delete("OTP_FORGOT_PW_" + user.getEmail());
+            redisClient.delete("OTP_COOLDOWN_" + user.getEmail());
+            throw new CustomException(503, "Không thể gửi email OTP. Vui lòng kiểm tra cấu hình SMTP hoặc thử lại sau.");
+        }
     }
 
     @Override
