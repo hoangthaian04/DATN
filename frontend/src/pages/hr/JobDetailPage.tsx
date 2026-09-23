@@ -2,17 +2,17 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { 
-  Edit3, 
-  MapPin, 
-  Briefcase, 
-  Calendar, 
+import {
+  Edit3,
+  MapPin,
+  Briefcase,
+  Calendar,
   DollarSign,
   Loader2,
   ChevronRight
 } from 'lucide-react';
 import { EditJobModal } from '../../components/modals/EditJobModal';
-// import { PublishJobModal } from '../../components/modals/PublishJobModal'; // Uncomment if we implement it
+import { JobKanbanBoard } from '../../components/jobs/JobKanbanBoard';
 
 import { jobService } from '../../services/job.service';
 import type { SaveJobPipelineRequest } from '../../types/job.types';
@@ -23,11 +23,11 @@ const renderMarkdown = (text: string) => {
   const lines = text.split('\n');
   return lines.map((line, idx) => {
     if (!line.trim()) return <div key={idx} className="h-1"></div>;
-    
+
     if (line.startsWith('### ')) {
       return <h3 key={idx} className="text-base font-bold text-slate-800 mt-3 mb-2">{line.replace('### ', '')}</h3>;
     }
-    
+
     if (line.startsWith('- ')) {
       return (
         <div key={idx} className="flex items-start gap-2 ml-2 mb-1.5 text-sm">
@@ -36,7 +36,7 @@ const renderMarkdown = (text: string) => {
         </div>
       );
     }
-    
+
     return (
       <div key={idx} className="text-sm text-slate-600 mb-1.5" dangerouslySetInnerHTML={{ __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
     );
@@ -53,6 +53,9 @@ export const JobDetailPage: React.FC = () => {
     return new URLSearchParams(location.search).get('edit') === 'true';
   });
   const [showRoundsModal, setShowRoundsModal] = useState(false);
+  const [statusAction, setStatusAction] = useState<JobStatusAction | null>(null);
+  const [showPublishSuccess, setShowPublishSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState<'info' | 'pipeline'>('info');
 
   // Lấy chi tiết Job
   const { data: job, isLoading, isError, error } = useQuery({
@@ -115,7 +118,7 @@ export const JobDetailPage: React.FC = () => {
 
   return (
     <div className="flex-1 p-8 bg-[#F8FAFC] min-h-[calc(100vh-4rem)] space-y-6 relative overflow-hidden">
-      
+
       {/* Header section with Breadcrumbs */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 select-none">
         <div className="space-y-1 text-left">
@@ -152,170 +155,195 @@ export const JobDetailPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Details layout: Left Column (2/3) + Right Column (1/3) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        
-        {/* Left Column: Quick Info Bar + Description (2/3) */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Quick Info Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 premium-card bg-white p-6 select-none">
-            {/* Salary */}
-            <div className="space-y-1 text-left">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Mức lương</span>
-              <span className="text-sm font-extrabold text-slate-800 flex items-center gap-1">
-                <DollarSign className="h-4 w-4 text-primary-500" />
-                {job.salaryMin ? job.salaryMin.toLocaleString() : 0} - {job.salaryMax ? job.salaryMax.toLocaleString() : 0} {job.salaryCurrency || 'VND'}
-              </span>
+      {/* Tabs */}
+      <div className="flex border-b border-slate-200 mt-2 mb-6">
+        <button
+          onClick={() => setActiveTab('info')}
+          className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'info'
+            ? 'border-primary-500 text-primary-600'
+            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+        >
+          Chi tiết tin tuyển dụng
+        </button>
+        <button
+          onClick={() => setActiveTab('pipeline')}
+          className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'pipeline'
+            ? 'border-primary-500 text-primary-600'
+            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+        >
+          Pipeline Ứng viên
+        </button>
+      </div>
+
+      {activeTab === 'info' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+          {/* Left Column: Quick Info Bar + Description (2/3) */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Quick Info Bar */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 premium-card bg-white p-6 select-none">
+              {/* Salary */}
+              <div className="space-y-1 text-left">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Mức lương</span>
+                <span className="text-sm font-extrabold text-slate-800 flex items-center gap-1">
+                  <DollarSign className="h-4 w-4 text-primary-500" />
+                  {job.salaryMin ? job.salaryMin.toLocaleString() : 0} - {job.salaryMax ? job.salaryMax.toLocaleString() : 0} {job.salaryCurrency || 'VND'}
+                </span>
+              </div>
+
+              {/* Location */}
+              <div className="space-y-1 text-left">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Địa điểm</span>
+                <span className="text-sm font-extrabold text-slate-800 flex items-center gap-1">
+                  <MapPin className="h-4 w-4 text-primary-500" />
+                  {job.location || 'Chưa cập nhật'}
+                </span>
+              </div>
+
+              {/* Work mode */}
+              <div className="space-y-1 text-left">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Hình thức</span>
+                <span className="text-sm font-extrabold text-slate-800 flex items-center gap-1">
+                  <Briefcase className="h-4 w-4 text-primary-500" />
+                  {job.workingType === 'ONSITE' ? 'Tại văn phòng' : job.workingType === 'HYBRID' ? 'Linh hoạt' : job.workingType === 'REMOTE' ? 'Từ xa' : job.jobType}
+                </span>
+              </div>
+
+              {/* Experience */}
+              <div className="space-y-1 text-left">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Kinh nghiệm</span>
+                <span className="text-sm font-extrabold text-slate-800 flex items-center gap-1">
+                  <Calendar className="h-4 w-4 text-primary-500" />
+                  {job.experienceYearsMin ? `${job.experienceYearsMin} năm` : 'Không yêu cầu'}
+                </span>
+              </div>
             </div>
 
-            {/* Location */}
-            <div className="space-y-1 text-left">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Địa điểm</span>
-              <span className="text-sm font-extrabold text-slate-800 flex items-center gap-1">
-                <MapPin className="h-4 w-4 text-primary-500" />
-                {job.location || 'Chưa cập nhật'}
-              </span>
-            </div>
+            {/* Job Description */}
+            {(job.description || job.requirements || job.benefits) ? (
+              <div className="premium-card bg-white p-8 space-y-8 text-left">
+                {job.description && (
+                  <div className="space-y-4">
+                    <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 select-none">
+                      Mô tả công việc
+                    </h3>
+                    <div className="text-sm font-semibold text-slate-600 leading-relaxed select-text">
+                      {renderMarkdown(job.description)}
+                    </div>
+                  </div>
+                )}
 
-            {/* Work mode */}
-            <div className="space-y-1 text-left">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Hình thức</span>
-              <span className="text-sm font-extrabold text-slate-800 flex items-center gap-1">
-                <Briefcase className="h-4 w-4 text-primary-500" />
-                {job.workingType === 'ONSITE' ? 'Tại văn phòng' : job.workingType === 'HYBRID' ? 'Linh hoạt' : job.workingType === 'REMOTE' ? 'Từ xa' : job.jobType}
-              </span>
-            </div>
+                {job.requirements && (
+                  <div className="space-y-4">
+                    <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 select-none">
+                      Yêu cầu ứng viên
+                    </h3>
+                    <div className="text-sm font-semibold text-slate-600 leading-relaxed select-text">
+                      {renderMarkdown(job.requirements)}
+                    </div>
+                  </div>
+                )}
 
-            {/* Experience */}
-            <div className="space-y-1 text-left">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Kinh nghiệm</span>
-              <span className="text-sm font-extrabold text-slate-800 flex items-center gap-1">
-                <Calendar className="h-4 w-4 text-primary-500" />
-                {job.experienceYearsMin ? `${job.experienceYearsMin} năm` : 'Không yêu cầu'}
-              </span>
-            </div>
+                {job.benefits && (
+                  <div className="space-y-4">
+                    <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 select-none">
+                      Quyền lợi
+                    </h3>
+                    <div className="text-sm font-semibold text-slate-600 leading-relaxed select-text">
+                      {renderMarkdown(job.benefits)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="premium-card bg-white p-8 text-center text-sm font-medium text-slate-500">
+                Chưa có nội dung mô tả chi tiết.
+              </div>
+            )}
           </div>
 
-          {/* Job Description */}
-          {(job.description || job.requirements || job.benefits) ? (
-            <div className="premium-card bg-white p-8 space-y-8 text-left">
-              {job.description && (
-                <div className="space-y-4">
-                  <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 select-none">
-                    Mô tả công việc
-                  </h3>
-                  <div className="text-sm font-semibold text-slate-600 leading-relaxed select-text">
-                    {renderMarkdown(job.description)}
-                  </div>
-                </div>
-              )}
+          {/* Right Column: Widgets (1/3) */}
+          <div className="lg:col-span-1 space-y-6">
 
-              {job.requirements && (
-                <div className="space-y-4">
-                  <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 select-none">
-                    Yêu cầu ứng viên
+            {/* Widget 1: Publish Now */}
+            {(job.status === 'INACTIVE' || job.status === 'ACTIVE') && (
+              <div className={`premium-card p-6 space-y-4 text-left ${job.status === 'INACTIVE' ? 'bg-primary-500/5 border border-primary-500/10' : 'bg-red-500/5 border border-red-500/10'}`}>
+                <div className="space-y-1.5 select-none">
+                  <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">
+                    {job.status === 'INACTIVE' ? 'Đăng tuyển ngay' : 'Ngừng tuyển ngay'}
                   </h3>
-                  <div className="text-sm font-semibold text-slate-600 leading-relaxed select-text">
-                    {renderMarkdown(job.requirements)}
-                  </div>
+                  <p className="text-xs font-semibold text-slate-500 leading-relaxed">
+                    {job.status === 'INACTIVE'
+                      ? <span dangerouslySetInnerHTML={{ __html: 'Tin tuyển dụng hiện ở trạng thái <strong>Bản nháp</strong>. Xuất bản để thu hút hồ sơ ứng viên ngay lập tức.' }} />
+                      : <span dangerouslySetInnerHTML={{ __html: 'Tin tuyển dụng đang được <strong>Công khai</strong>. Ngừng tuyển để ẩn tin tuyển dụng khỏi trang Career Site.' }} />
+                    }
+                  </p>
                 </div>
-              )}
 
-              {job.benefits && (
-                <div className="space-y-4">
-                  <h3 className="text-base font-extrabold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-3 select-none">
-                    Quyền lợi
-                  </h3>
-                  <div className="text-sm font-semibold text-slate-600 leading-relaxed select-text">
-                    {renderMarkdown(job.benefits)}
-                  </div>
+                <button
+                  onClick={() => {
+                    if (job.status === 'INACTIVE') {
+                      // Mở publish modal (hiện chưa implement, chỉ là nút placeholder)
+                      toast('Chức năng xuất bản sẽ sớm ra mắt', { icon: '🚧' });
+                    }
+                  }}
+                  className={`w-full py-3 rounded-xl text-white text-sm font-bold transition-all shadow-md cursor-pointer select-none flex items-center justify-center gap-1.5 ${job.status === 'INACTIVE' ? 'bg-primary-500 hover:bg-primary-600 shadow-primary-500/15' : 'bg-red-500 hover:bg-red-600 shadow-red-500/15'}`}
+                >
+                  <span>{job.status === 'INACTIVE' ? 'Đăng Tuyển' : 'Ngừng tuyển'}</span>
+                </button>
+              </div>
+            )}
+
+            {/* Widget 2: Interview Rounds */}
+            <div className="premium-card bg-white p-6 space-y-4 text-left">
+              <div className="flex justify-between items-start select-none">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Vòng phỏng vấn</h3>
+                  <p className="text-xs font-semibold text-slate-500 leading-relaxed">{rounds.length ? `${rounds.length} vòng đã cấu hình.` : 'Chưa có vòng tuyển dụng nào.'}</p>
                 </div>
-              )}
-            </div>
-          ) : (
-            <div className="premium-card bg-white p-8 text-center text-sm font-medium text-slate-500">
-              Chưa có nội dung mô tả chi tiết.
-            </div>
-          )}
-        </div>
-
-        {/* Right Column: Widgets (1/3) */}
-        <div className="lg:col-span-1 space-y-6">
-          
-          {/* Widget 1: Publish Now */}
-          {(job.status === 'INACTIVE' || job.status === 'ACTIVE') && (
-            <div className={`premium-card p-6 space-y-4 text-left ${job.status === 'INACTIVE' ? 'bg-primary-500/5 border border-primary-500/10' : 'bg-red-500/5 border border-red-500/10'}`}>
-              <div className="space-y-1.5 select-none">
-                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">
-                  {job.status === 'INACTIVE' ? 'Đăng tuyển ngay' : 'Ngừng tuyển ngay'}
-                </h3>
-                <p className="text-xs font-semibold text-slate-500 leading-relaxed">
-                  {job.status === 'INACTIVE' 
-                    ? <span dangerouslySetInnerHTML={{ __html: 'Tin tuyển dụng hiện ở trạng thái <strong>Bản nháp</strong>. Xuất bản để thu hút hồ sơ ứng viên ngay lập tức.' }} />
-                    : <span dangerouslySetInnerHTML={{ __html: 'Tin tuyển dụng đang được <strong>Công khai</strong>. Ngừng tuyển để ẩn tin tuyển dụng khỏi trang Career Site.' }} />
-                  }
-                </p>
               </div>
 
               <button
-                onClick={() => {
-                  if (job.status === 'INACTIVE') {
-                    // Mở publish modal (hiện chưa implement, chỉ là nút placeholder)
-                    toast('Chức năng xuất bản sẽ sớm ra mắt', { icon: '🚧' });
-                  }
-                }}
-                className={`w-full py-3 rounded-xl text-white text-sm font-bold transition-all shadow-md cursor-pointer select-none flex items-center justify-center gap-1.5 ${job.status === 'INACTIVE' ? 'bg-primary-500 hover:bg-primary-600 shadow-primary-500/15' : 'bg-red-500 hover:bg-red-600 shadow-red-500/15'}`}
+                onClick={() => setShowRoundsModal(true)}
+                className="w-full py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-bold transition-all cursor-pointer select-none flex items-center justify-center gap-1.5"
               >
-                <span>{job.status === 'INACTIVE' ? 'Đăng Tuyển' : 'Ngừng tuyển'}</span>
+                <span>Xem danh sách vòng</span>
               </button>
             </div>
-          )}
 
-          {/* Widget 2: Interview Rounds */}
-          <div className="premium-card bg-white p-6 space-y-4 text-left">
-            <div className="flex justify-between items-start select-none">
-              <div className="space-y-1">
-                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Vòng phỏng vấn</h3>
-                <p className="text-xs font-semibold text-slate-500 leading-relaxed">{rounds.length ? `${rounds.length} vòng đã cấu hình.` : 'Chưa có vòng tuyển dụng nào.'}</p>
+            {/* Widget 3: Applicants */}
+            <div className="premium-card bg-white p-6 space-y-4 text-left">
+              <div className="flex justify-between items-start select-none">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Ứng viên nộp hồ sơ</h3>
+                  <p className="text-xs font-semibold text-slate-500 leading-relaxed">
+                    <span dangerouslySetInnerHTML={{ __html: `Có <strong>${job.applicantCount || 0} ứng viên</strong> nộp hồ sơ ứng tuyển vị trí này.` }} />
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <button
-              onClick={() => setShowRoundsModal(true)}
-              className="w-full py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-bold transition-all cursor-pointer select-none flex items-center justify-center gap-1.5"
-            >
-              <span>Xem danh sách vòng</span>
-            </button>
+              <button
+                onClick={() => setActiveTab('pipeline')}
+                className="w-full py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-bold transition-all cursor-pointer select-none flex items-center justify-center gap-1.5"
+              >
+                <span>Xem danh sách</span>
+              </button>
+            </div>
           </div>
 
-          {/* Widget 3: Applicants */}
-          <div className="premium-card bg-white p-6 space-y-4 text-left">
-            <div className="flex justify-between items-start select-none">
-              <div className="space-y-1">
-                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Ứng viên nộp hồ sơ</h3>
-                <p className="text-xs font-semibold text-slate-500 leading-relaxed">
-                  <span dangerouslySetInnerHTML={{ __html: `Có <strong>${job.applicantCount || 0} ứng viên</strong> nộp hồ sơ ứng tuyển vị trí này.` }} />
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => navigate('/dashboard/applications/kanban')}
-              className="w-full py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-bold transition-all cursor-pointer select-none flex items-center justify-center gap-1.5"
-            >
-              <span>Xem danh sách</span>
-            </button>
-          </div>
         </div>
-
-      </div>
+      ) : (
+        <JobKanbanBoard />
+      )}
 
       {/* Edit Job Modal */}
-      <EditJobModal 
+      <EditJobModal
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        jobData={job}
+        jobData={job as any}
         onSave={handleSaveJob}
         isPending={updateMutation.isPending}
       />
