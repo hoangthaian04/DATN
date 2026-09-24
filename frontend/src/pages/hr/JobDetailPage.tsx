@@ -8,8 +8,7 @@ import {
   Briefcase,
   Calendar,
   DollarSign,
-  Loader2,
-  ChevronRight
+  Loader2
 } from 'lucide-react';
 import { EditJobModal } from '../../components/modals/EditJobModal';
 import { JobKanbanBoard } from '../../components/jobs/JobKanbanBoard';
@@ -53,8 +52,6 @@ export const JobDetailPage: React.FC = () => {
     return new URLSearchParams(location.search).get('edit') === 'true';
   });
   const [showRoundsModal, setShowRoundsModal] = useState(false);
-  const [statusAction, setStatusAction] = useState<JobStatusAction | null>(null);
-  const [showPublishSuccess, setShowPublishSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState<'info' | 'pipeline'>('info');
 
   // Lấy chi tiết Job

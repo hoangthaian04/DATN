@@ -22,13 +22,9 @@ export const Sidebar: React.FC = () => {
     { id: 'jobs', href: '/dashboard/jobs', label: 'Tin tuyển dụng', icon: Briefcase },
     {
       id: 'applications',
-      href: '/dashboard/applications/kanban',
+      href: '/dashboard/applications/list',
       label: 'Ứng viên',
       icon: FileText,
-      subItems: [
-        { id: 'kanban', href: '/dashboard/applications/kanban', label: 'Kanban Pipeline' },
-        { id: 'list', href: '/dashboard/applications/list', label: 'Danh sách' },
-      ],
     },
     { id: 'settings', href: '/dashboard/settings', label: 'Cài đặt', icon: Settings },
   ];

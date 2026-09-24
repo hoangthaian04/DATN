@@ -20,7 +20,6 @@ import { JobsPage } from '@/pages/hr/JobsPage';
 import { JobCreateWizardPage } from '@/pages/hr/JobCreateWizardPage';
 import { JobDetailPage } from '@/pages/hr/JobDetailPage';
 import { RoundsConfigPage } from '@/pages/hr/RoundsConfigPage';
-import { KanbanPage } from '@/pages/hr/KanbanPage';
 import { CandidatesListPage } from '@/pages/hr/CandidatesListPage';
 import { SettingsPage } from '@/pages/hr/SettingsPage';
 import { CareerSiteSettingsPage } from '@/pages/hr/CareerSiteSettingsPage';
@@ -69,7 +68,6 @@ export const router = createBrowserRouter([
       { path: 'jobs/create', element: <JobCreateWizardPage /> },
       { path: 'jobs/:id', element: <JobDetailPage /> },
       { path: 'jobs/:id/rounds', element: <RoundsConfigPage /> },
-      { path: 'applications/kanban', element: <KanbanPage /> },
       { path: 'applications/list', element: <CandidatesListPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'settings/company', element: <Navigate to="/dashboard/settings" replace /> },

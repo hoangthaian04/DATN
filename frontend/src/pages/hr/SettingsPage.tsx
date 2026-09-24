@@ -36,22 +36,7 @@ const passwordSchema = z.object({
   path: ['newPassword']
 });
 
-const defaultEmail = 'Xin chào {{candidateName}},\n\nCảm ơn bạn đã quan tâm và ứng tuyển vào vị trí {{jobTitle}} tại {{companyName}}.\n\nChúng tôi đã nhận được hồ sơ của bạn và đội ngũ tuyển dụng sẽ xem xét kỹ lưỡng.\n\nChúng tôi sẽ liên hệ lại trong thời gian sớm nhất.\n\nTrân trọng,\n{{companyName}} Recruitment Team';
-
-const makeTemplate = (id: string, title: string, subject: string, tag: EmailTag): EmailTemplate => ({
-  id, title, subject, tag,
-  content: id === 't2' ? 'Xin chào {{candidateName}},\n\nChúc mừng bạn đã vượt qua vòng sơ loại CV.\n\nHR sẽ gọi điện cho bạn sớm nhé.' : defaultEmail
-});
-
-const initialTemplates = [
-  makeTemplate('t1', 'Xác nhận nộp đơn thành công', 'Xác nhận ứng tuyển vị trí {{jobTitle}}', 'APPLICATION_RECEIVED'),
-  makeTemplate('t2', 'Qua vòng CV Screening', '{{candidateName}} — Chúc mừng qua vòng CV Screening', 'PASS'),
-  makeTemplate('t3', 'Mời phỏng vấn kỹ thuật', 'Lời mời phỏng vấn — {{jobTitle}} tại {{companyName}}', 'INTERVIEW_INVITE'),
-  makeTemplate('t4', 'Không đạt vòng Online Test', 'Kết quả vòng Test — {{candidateName}}', 'FAIL'),
-  makeTemplate('t5', 'Offer Letter', 'Thư mời nhận việc chính thức — {{candidateName}}', 'OFFER'),
-  makeTemplate('t6', 'Cảm ơn ứng viên', 'Cảm ơn {{candidateName}} đã ứng tuyển', 'FAIL'),
-  makeTemplate('t7', 'Qua vòng Online Test', 'Chúc mừng {{candidateName}} qua vòng Test', 'PASS')
-];
+const initialTemplates: EmailTemplate[] = [];
 
 const fromApiTemplate = (template: EmailTemplateApi): EmailTemplate => ({
   id: String(template.id), title: template.templateName, subject: template.subject, tag: template.type,
@@ -151,8 +136,8 @@ export const SettingsPage = () => {
   const [saved, setSaved] = useState(false); 
   const [logo, setLogo] = useState<string>();
   
-  const [templates, setTemplates] = useState(initialTemplates); 
-  const [selectedId, setSelectedId] = useState(initialTemplates[0].id); 
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]); 
+  const [selectedId, setSelectedId] = useState<string>(''); 
   const [search, setSearch] = useState('');
   const [isCreateTemplateOpen, setIsCreateTemplateOpen] = useState(false);
   const [newTemplate, setNewTemplate] = useState<NewTemplateForm>(emptyNewTemplate);
@@ -530,6 +515,12 @@ export const SettingsPage = () => {
             </aside>
             
             <div className="flex flex-col gap-6 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm shadow-slate-100/50 sm:p-6 lg:col-span-8 xl:col-span-9">
+              {!selected ? (
+                <div className="flex h-full items-center justify-center py-20 text-slate-500">
+                  <p>Chưa có mẫu email nào. Hãy tạo mẫu email mới để bắt đầu.</p>
+                </div>
+              ) : (
+                <>
               <div className="flex flex-col gap-4 border-b border-slate-100 pb-4 sm:flex-row sm:justify-between">
                 <div className="min-w-0 flex-1 max-w-xl">
                   <input value={selected.title} onChange={event => updateTemplate({ title: event.target.value })} disabled={selected.metadataLocked} className="w-full border-none bg-transparent text-lg font-extrabold text-slate-800 outline-none focus:outline-none disabled:cursor-not-allowed disabled:text-slate-800" placeholder="Nhập tên mẫu email..." />
@@ -599,6 +590,8 @@ export const SettingsPage = () => {
                 
                 <VariablePanel />
               </div>
+              </>
+              )}
             </div>
           </section>
         )}

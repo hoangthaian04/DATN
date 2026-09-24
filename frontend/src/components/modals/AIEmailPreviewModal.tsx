@@ -17,14 +17,14 @@ export const AIEmailPreviewModal: React.FC<AIEmailPreviewModalProps> = ({
   onSend,
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [content, setContent] = useState(`Chào ${candidateName},\n\nCảm ơn bạn đã quan tâm và ứng tuyển vào vị trí Fullstack Developer tại EasyTech. Dù hiện tại kỹ năng của bạn chưa hoàn toàn phù hợp với yêu cầu khắt khe về Backend của vị trí này, nhưng chúng tôi cực kỳ ấn tượng với kinh nghiệm Frontend của bạn (đặc biệt là ReactJS và TypeScript).\n\nHệ thống AI của chúng tôi nhận thấy hồ sơ của bạn khớp đến 92% với vị trí Frontend Developer mà chúng tôi đang mở tuyển. Môi trường tại team Frontend rất năng động và có nhiều cơ hội để bạn phát huy tối đa thế mạnh của mình.\n\nBạn có muốn chuyển hồ sơ sang ứng tuyển vị trí này không? Vui lòng xác nhận bằng cách bấm vào nút bên dưới.\n\nTrân trọng,\nPhòng Tuyển dụng EasyTech`);
+  const [content, setContent] = useState('');
 
   if (!isOpen) return null;
 
   const handleRegenerate = () => {
     setIsGenerating(true);
     setTimeout(() => {
-      setContent(`Xin chào ${candidateName},\n\nEasyTech rất trân trọng thời gian bạn dành để ứng tuyển vị trí Fullstack Developer. Tuy kinh nghiệm Backend của bạn chưa thật sự khớp với kỳ vọng của chúng tôi ở thời điểm này, nhưng nền tảng Frontend của bạn lại vô cùng nổi bật!\n\nChúng tôi đang tìm kiếm một Frontend Developer và nhận thấy bạn chính là ứng viên sáng giá (Match 92%).\n\nNếu bạn vẫn đang tìm kiếm cơ hội mới và hứng thú với vị trí Frontend, hãy cho chúng tôi biết bằng cách click xác nhận nhé.\n\nThân mến,\nĐội ngũ Nhân sự EasyTech`);
+      setContent(`Xin chào ${candidateName},\n\nNội dung email sẽ được AI sinh tự động dựa trên thông tin ứng viên và yêu cầu công việc tại đây...`);
       setIsGenerating(false);
     }, 1500);
   };
@@ -70,7 +70,7 @@ export const AIEmailPreviewModal: React.FC<AIEmailPreviewModalProps> = ({
               <span className="text-sm font-bold text-slate-500 w-12">Tiêu đề:</span>
               <input
                 type="text"
-                defaultValue={`[EasyTech] Cơ hội vị trí Frontend Developer dành cho ${candidateName}`}
+                defaultValue={`Thư mời ứng tuyển dành cho ${candidateName}`}
                 className="flex-1 text-sm font-bold text-slate-800 focus:outline-none"
               />
             </div>

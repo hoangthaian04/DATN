@@ -27,7 +27,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
 
     @Override @Transactional
     public Page<EmailTemplateDTO> getTemplates(Long companyId, String keyword, EmailTemplateType type, boolean activeOnly, int page, int size) {
-        ensureSeeded(companyId);
+        // Removed hardcoded template seeding
         if (page < 1 || size < 1 || size > 100) throw new CustomException(400, "Page phải từ 1 và size từ 1 đến 100.");
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by("createdAt").descending());
         Page<EmailTemplateEntity> result;
@@ -84,13 +84,5 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     private String variablesJson(String subject, String body) { Set<String> names = new LinkedHashSet<>(); Matcher m = VARIABLE.matcher(subject + "\n" + body); while (m.find()) { if (!ALLOWED_VARIABLES.contains(m.group(1))) throw new CustomException(400, "Biến " + m.group(1) + " không được hỗ trợ."); names.add(m.group(1)); } try { return objectMapper.writeValueAsString(names); } catch (Exception e) { throw new CustomException(500, "Không thể xử lý biến email.", e); } }
     private List<String> variables(String json) { try { return objectMapper.readValue(json, new TypeReference<List<String>>() {}); } catch (Exception e) { return List.of(); } }
     private EmailTemplateDTO toDto(EmailTemplateEntity e) { return EmailTemplateDTO.builder().id(e.getId()).templateName(e.getTemplateName()).type(e.getType()).subject(e.getSubject()).bodyHtml(e.getBodyHtml()).variables(variables(e.getVariables())).templateScope(e.getTemplateScope()).isActive(e.getIsActive()).createdAt(e.getCreatedAt()).updatedAt(e.getUpdatedAt()).build(); }
-    private void ensureSeeded(Long companyId) {
-        CompanyEntity company = company(companyId);
-        seed(company, EmailTemplateType.APPLICATION_RECEIVED, "Xác nhận nhận hồ sơ", "Xác nhận ứng tuyển vị trí {{jobTitle}}", "Xin chào {{candidateName}}, chúng tôi đã nhận được hồ sơ của bạn tại {{companyName}}.");
-        seed(company, EmailTemplateType.PASS, "Thông báo đạt vòng", "Kết quả tuyển dụng tại {{companyName}}", "Xin chào {{candidateName}}, chúc mừng bạn đã vượt qua vòng tuyển dụng cho vị trí {{jobTitle}}.");
-        seed(company, EmailTemplateType.FAIL, "Thông báo không đạt", "Kết quả tuyển dụng tại {{companyName}}", "Xin chào {{candidateName}}, cảm ơn bạn đã ứng tuyển vị trí {{jobTitle}}.");
-        seed(company, EmailTemplateType.INTERVIEW_INVITE, "Mời phỏng vấn", "Thư mời phỏng vấn vị trí {{jobTitle}}", "Xin chào {{candidateName}}, mời bạn tham gia phỏng vấn vào {{interviewDate}}.");
-        seed(company, EmailTemplateType.OFFER, "Thư mời nhận việc", "Offer từ {{companyName}}", "Xin chào {{candidateName}}, chúng tôi trân trọng gửi thư mời nhận việc.");
-    }
-    private void seed(CompanyEntity company, EmailTemplateType type, String name, String subject, String body) { if (!templates.existsByCompanyIdAndIsDeletedFalseAndTypeAndTemplateScope(company.getId(), type, TemplateScope.SYSTEM)) templates.save(EmailTemplateEntity.builder().company(company).templateName(name).type(type).subject(subject).bodyHtml(body).variables(variablesJson(subject, body)).templateScope(TemplateScope.SYSTEM).build()); }
+    // ensureSeeded and seed methods have been removed to avoid hardcoded templates
 }
