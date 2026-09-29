@@ -16,6 +16,7 @@ public class CompanyProfileDTO {
     private String industry;
     private String companySize;
     private String businessType;
+    private String foundedYear;
     private String contactEmail;
     private boolean onboardingCompleted;
     private boolean profileCompleted;
@@ -25,6 +26,7 @@ public class CompanyProfileDTO {
     private String bannerUrl;
     private String primaryColor;
     private String description;
+    private String slogan;
     private String benefits;
     private String socialLinks;
 }

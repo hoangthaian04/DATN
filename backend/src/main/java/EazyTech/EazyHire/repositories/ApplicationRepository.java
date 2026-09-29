@@ -40,7 +40,7 @@ public interface ApplicationRepository extends JpaRepository<ApplicationEntity, 
     List<ApplicationEntity> findTop5ByCompanyIdAndStatusOrderByCreatedAtDesc(Long companyId, String status);
 
     @Query("SELECT new EazyTech.EazyHire.models.dtos.ApplicationListResponseDTO(" +
-           "a.id, c.id, c.fullName, j.title, c.phone, c.email, a.status) " +
+           "a.id, c.id, c.fullName, j.title, c.phone, c.email, a.status, a.currentRoundId, a.appliedAt) " +
            "FROM ApplicationEntity a " +
            "JOIN a.candidate c " +
            "JOIN a.job j " +

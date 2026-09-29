@@ -1,157 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Search,
   RefreshCw,
   ChevronDown,
   List,
   LayoutGrid,
+  Sparkles
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
+import { jobService } from '../../services/job.service';
 import { CandidateDrawer, type CandidateData } from '../../components/CandidateDrawer';
 import { InterviewSchedulerModal } from '../../components/modals/InterviewSchedulerModal';
 import { AISuggestionsModal } from '../../components/modals/AISuggestionsModal';
 import { RejectionReasonModal } from '../../components/modals/RejectionReasonModal';
 import { AIShadowMatchingModal } from '../../components/modals/AIShadowMatchingModal';
 import { AIEmailPreviewModal } from '../../components/modals/AIEmailPreviewModal';
-import { Sparkles } from 'lucide-react';
-
-const MOCK_CANDIDATES: CandidateData[] = [
-  {
-    id: 'c1',
-    name: 'Lê Hoàng Phúc',
-    email: 'phuc.le@gmail.com',
-    phone: '0901 234 567',
-    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=120&h=120',
-    jobTitle: 'Senior AI Engineer',
-    matchScore: 87,
-    status: 'NEW',
-    currentRound: 0,
-    totalRounds: 3,
-    submittedAt: '2026-08-01',
-    roundHistory: [
-      { roundIndex: 0, roundName: 'CV Screening', result: 'PENDING' },
-    ],
-  },
-  {
-    id: 'c2',
-    name: 'Phạm Thu Hà',
-    email: 'ha.pham@outlook.com',
-    phone: '0912 345 678',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120&h=120',
-    jobTitle: 'Senior AI Engineer',
-    matchScore: 92,
-    status: 'NEW',
-    currentRound: 0,
-    totalRounds: 3,
-    submittedAt: '2026-08-02',
-    roundHistory: [
-      { roundIndex: 0, roundName: 'CV Screening', result: 'PENDING' },
-    ],
-  },
-  {
-    id: 'c3',
-    name: 'Hồ Quốc Việt',
-    email: 'viet.ho@company.vn',
-    phone: '0933 456 789',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120&h=120',
-    jobTitle: 'Product Designer',
-    matchScore: 73,
-    status: 'NEW',
-    currentRound: 0,
-    totalRounds: 3,
-    submittedAt: '2026-08-02',
-    roundHistory: [
-      { roundIndex: 0, roundName: 'CV Screening', result: 'PENDING' },
-    ],
-  },
-  {
-    id: 'c4',
-    name: 'Vũ Đức Bảo',
-    email: 'bao.vu@techcorp.vn',
-    phone: '0908 567 890',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120&h=120',
-    jobTitle: 'Product Designer',
-    matchScore: 78,
-    status: 'IN_PROGRESS',
-    currentRound: 1,
-    totalRounds: 4,
-    submittedAt: '2026-07-30',
-    roundHistory: [
-      { roundIndex: 0, roundName: 'CV Screening', result: 'PASSED', date: '2026-07-31' },
-      { roundIndex: 1, roundName: 'Online Test', result: 'PENDING' },
-    ],
-  },
-  {
-    id: 'c5',
-    name: 'Đặng Khánh Linh',
-    email: 'linh.dang@dev.io',
-    phone: '0945 678 901',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=120&h=120',
-    jobTitle: 'Backend Developer (Java)',
-    matchScore: 84,
-    status: 'IN_PROGRESS',
-    currentRound: 2,
-    totalRounds: 3,
-    submittedAt: '2026-07-28',
-    roundHistory: [
-      { roundIndex: 0, roundName: 'CV Screening', result: 'PASSED', date: '2026-07-29' },
-      { roundIndex: 1, roundName: 'Coding Test', result: 'PASSED', date: '2026-07-31' },
-      { roundIndex: 2, roundName: 'Phỏng vấn kỹ thuật', result: 'PENDING' },
-    ],
-  },
-  {
-    id: 'c6',
-    name: 'Trịnh Như Quỳnh',
-    email: 'quynh.trinh@hire.vn',
-    phone: '0971 234 567',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=120&h=120',
-    jobTitle: 'Backend Developer (Java)',
-    matchScore: 80,
-    status: 'IN_PROGRESS',
-    currentRound: 1,
-    totalRounds: 3,
-    submittedAt: '2026-07-28',
-    roundHistory: [
-      { roundIndex: 0, roundName: 'CV Screening', result: 'PASSED', date: '2026-07-29' },
-      { roundIndex: 1, roundName: 'Coding Test', result: 'PENDING' },
-    ],
-  },
-  {
-    id: 'c7',
-    name: 'Nguyễn Anh Khoa',
-    email: 'khoa.nguyen@talent.io',
-    phone: '0988 111 222',
-    avatar: 'https://images.unsplash.com/photo-1463453091185-61582044d556?auto=format&fit=crop&q=80&w=120&h=120',
-    jobTitle: 'Senior AI Engineer',
-    matchScore: 91,
-    status: 'PASSED',
-    currentRound: 3,
-    totalRounds: 3,
-    submittedAt: '2026-07-20',
-    roundHistory: [
-      { roundIndex: 0, roundName: 'CV Screening', result: 'PASSED', date: '2026-07-21' },
-      { roundIndex: 1, roundName: 'Online Test', result: 'PASSED', date: '2026-07-24' },
-      { roundIndex: 2, roundName: 'Phỏng vấn & Offer', result: 'PASSED', date: '2026-07-28' },
-    ],
-  },
-  {
-    id: 'c8',
-    name: 'Bùi Minh Tâm',
-    email: 'tam.bui@work.vn',
-    phone: '0966 333 444',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=120&h=120',
-    jobTitle: 'Product Designer',
-    matchScore: 58,
-    status: 'REJECTED',
-    currentRound: 1,
-    totalRounds: 3,
-    submittedAt: '2026-07-25',
-    roundHistory: [
-      { roundIndex: 0, roundName: 'CV Screening', result: 'PASSED', date: '2026-07-26' },
-      { roundIndex: 1, roundName: 'Design Challenge', result: 'FAILED', date: '2026-07-30' },
-    ],
-  },
-];
 
 const COLUMN_CONFIG = [
   {
@@ -188,8 +53,49 @@ export const KanbanPage: React.FC = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [filterJob, setFilterJob] = useState('all');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [candidates, setCandidates] = useState<CandidateData[]>(MOCK_CANDIDATES);
+
+  // Fetch danh sách Job cho Dropdown
+  const { data: jobsPagination } = useQuery({
+    queryKey: ['jobs-for-kanban-dropdown'],
+    queryFn: () => jobService.getJobs({ limit: 100 })
+  });
+
+  const jobsList = jobsPagination?.data || [];
+
+  // Fetch danh sách ứng viên từ BE
+  const { data: applicationsPagination, refetch: refetchApps, isLoading: isLoadingApps, isFetching } = useQuery({
+    queryKey: ['applications-kanban', filterJob],
+    queryFn: () => jobService.getApplications({ 
+      jobId: filterJob === 'all' ? undefined : filterJob, 
+      limit: 100 
+    })
+  });
+
+  const candidates: CandidateData[] = useMemo(() => {
+    if (!applicationsPagination?.data) return [];
+    return applicationsPagination.data.map((app) => ({
+      id: app.applicationId.toString(),
+      name: app.fullName || 'Ứng viên chưa đặt tên',
+      email: app.email || '',
+      phone: app.phone || '',
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(app.fullName || 'Candidate')}&background=random`,
+      jobTitle: app.jobTitle || 'N/A',
+      matchScore: 85,
+      status: (app.applicationStatus === 'REJECTED'
+        ? 'REJECTED'
+        : app.applicationStatus === 'HIRED' || app.applicationStatus === 'PASSED'
+        ? 'PASSED'
+        : app.applicationStatus === 'NEW'
+        ? 'NEW'
+        : 'IN_PROGRESS') as CandidateData['status'],
+      currentRound: 1,
+      totalRounds: 3,
+      submittedAt: app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('vi-VN') : '',
+      roundHistory: [
+        { roundIndex: 0, roundName: 'Hồ sơ', result: 'PENDING' }
+      ]
+    }));
+  }, [applicationsPagination]);
 
   // Drawer states
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateData | null>(null);
@@ -206,8 +112,7 @@ export const KanbanPage: React.FC = () => {
   const [candidateToReject, setCandidateToReject] = useState<CandidateData | null>(null);
 
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 1000);
+    refetchApps();
   };
 
   const openDrawer = (candidate: CandidateData) => {
@@ -220,10 +125,14 @@ export const KanbanPage: React.FC = () => {
     setTimeout(() => setSelectedCandidate(null), 300);
   };
 
-  const handlePass = (id: string) => {
-    setCandidates((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: 'PASSED' } : c))
-    );
+  const handlePass = async (id: string) => {
+    try {
+      await jobService.updateApplicationRound(id, { status: 'PASSED' });
+      toast.success('Đã cập nhật trạng thái Đạt cho ứng viên!');
+      refetchApps();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Có lỗi xảy ra khi cập nhật');
+    }
     closeDrawer();
   };
 
@@ -235,36 +144,40 @@ export const KanbanPage: React.FC = () => {
     }
   };
 
-  const handleConfirmReject = (_reason: string) => {
+  const handleConfirmReject = async (_reason: string) => {
     if (candidateToReject) {
-      setCandidates((prev) =>
-        prev.map((c) => (c.id === candidateToReject.id ? { ...c, status: 'REJECTED' } : c))
-      );
+      try {
+        await jobService.updateApplicationRound(candidateToReject.id, { status: 'REJECTED' });
+        toast.success('Đã chuyển ứng viên sang trạng thái Không đạt');
+        refetchApps();
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message || 'Có lỗi xảy ra khi từ chối ứng viên');
+      }
       setRejectModalOpen(false);
       closeDrawer();
-      // Wait a moment then open shadow matching
       setTimeout(() => {
         setShadowMatchModalOpen(true);
       }, 500);
     }
   };
 
-  const handleFail = (id: string) => {
-    setCandidates((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: 'REJECTED' } : c))
-    );
+  const handleFail = async (id: string) => {
+    try {
+      await jobService.updateApplicationRound(id, { status: 'REJECTED' });
+      toast.success('Đã cập nhật trạng thái Không đạt');
+      refetchApps();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Có lỗi xảy ra khi cập nhật');
+    }
     closeDrawer();
   };
-
-  const uniqueJobs = Array.from(new Set(candidates.map((c) => c.jobTitle)));
 
   const filtered = candidates.filter((c) => {
     const matchSearch =
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.email.toLowerCase().includes(search.toLowerCase()) ||
       c.jobTitle.toLowerCase().includes(search.toLowerCase());
-    const matchJob = filterJob === 'all' || c.jobTitle === filterJob;
-    return matchSearch && matchJob;
+    return matchSearch;
   });
 
   const getCandidatesByStatus = (status: CandidateData['status']) =>
@@ -306,26 +219,17 @@ export const KanbanPage: React.FC = () => {
         {/* Email & Phone */}
         <div className="space-y-1">
           <p className="text-[10px] font-semibold text-slate-400 truncate">{c.email}</p>
-          <p className="text-[10px] font-semibold text-slate-400">{c.phone}</p>
+          <p className="text-[10px] font-semibold text-slate-400">{c.phone || 'Chưa cập nhật SĐT'}</p>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-slate-50">
-          {/* Round progress */}
           <div className="flex items-center gap-1.5">
-            {Array.from({ length: c.totalRounds }).map((_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 w-4 rounded-full transition-colors ${
-                  i < c.currentRound ? 'bg-primary-500' : 'bg-slate-200'
-                }`}
-              />
-            ))}
-            <span className="text-[9px] font-bold text-slate-400 ml-1">
-              V{c.currentRound}/{c.totalRounds}
+            <span className="text-[9px] font-bold text-slate-400">
+              Hồ sơ #{c.id}
             </span>
           </div>
-          <span className="text-[9px] font-semibold text-slate-300">{c.submittedAt}</span>
+          <span className="text-[9px] font-semibold text-slate-400">{c.submittedAt}</span>
         </div>
       </div>
     );
@@ -389,8 +293,8 @@ export const KanbanPage: React.FC = () => {
               className="appearance-none pl-4 pr-9 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-primary-500 text-sm font-semibold text-slate-700 transition-colors cursor-pointer"
             >
               <option value="all">Tất cả vị trí</option>
-              {uniqueJobs.map((job) => (
-                <option key={job} value={job}>{job}</option>
+              {jobsList.map((job) => (
+                <option key={job.id} value={job.id}>{job.title}</option>
               ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
@@ -401,52 +305,58 @@ export const KanbanPage: React.FC = () => {
             onClick={handleRefresh}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-bold shadow-sm shadow-primary-500/20 transition-all cursor-pointer"
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             Làm mới
           </button>
         </div>
 
         {/* Kanban Board - 4 columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 items-start">
-          {COLUMN_CONFIG.map((col) => {
-            const colCandidates = getCandidatesByStatus(col.key);
-            return (
-              <div key={col.key} className="space-y-3">
-                {/* Column Header */}
-                <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${col.headerBg}`}>
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full ${col.dotColor}`} />
-                    <span className={`text-xs font-bold ${col.colorClasses.split(' ')[1]}`}>
-                      {col.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {col.key === 'REJECTED' && colCandidates.length > 0 && (
-                      <button className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-600 border border-primary-200 text-[10px] font-bold transition-colors">
-                        <Sparkles className="h-3 w-3" />
-                        Tái chế
-                      </button>
-                    )}
-                    <span className="text-xs font-extrabold text-slate-500 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
-                      {colCandidates.length}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Cards */}
-                <div className="space-y-3 min-h-[120px]">
-                  {colCandidates.length === 0 ? (
-                    <div className="flex items-center justify-center h-24 border-2 border-dashed border-slate-200 rounded-2xl">
-                      <p className="text-xs font-semibold text-slate-300">Không có ứng viên</p>
+        {isLoadingApps ? (
+          <div className="py-20 text-center text-slate-400 font-medium text-sm">
+            Đang tải danh sách ứng viên...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 items-start">
+            {COLUMN_CONFIG.map((col) => {
+              const colCandidates = getCandidatesByStatus(col.key);
+              return (
+                <div key={col.key} className="space-y-3">
+                  {/* Column Header */}
+                  <div className={`flex items-center justify-between px-4 py-3 rounded-2xl border ${col.headerBg}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2 w-2 rounded-full ${col.dotColor}`} />
+                      <span className={`text-xs font-bold ${col.colorClasses.split(' ')[1]}`}>
+                        {col.label}
+                      </span>
                     </div>
-                  ) : (
-                    colCandidates.map((c) => renderCard(c))
-                  )}
+                    <div className="flex items-center gap-2">
+                      {col.key === 'REJECTED' && colCandidates.length > 0 && (
+                        <button className="flex items-center gap-1 px-2 py-1 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-600 border border-primary-200 text-[10px] font-bold transition-colors">
+                          <Sparkles className="h-3 w-3" />
+                          Tái chế
+                        </button>
+                      )}
+                      <span className="text-xs font-extrabold text-slate-500 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
+                        {colCandidates.length}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Cards */}
+                  <div className="space-y-3 min-h-[120px]">
+                    {colCandidates.length === 0 ? (
+                      <div className="flex items-center justify-center h-24 border-2 border-dashed border-slate-200 rounded-2xl">
+                        <p className="text-xs font-semibold text-slate-300">Không có ứng viên</p>
+                      </div>
+                    ) : (
+                      colCandidates.map((c) => renderCard(c))
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* CandidateDrawer */}
@@ -512,4 +422,3 @@ export const KanbanPage: React.FC = () => {
     </>
   );
 };
-

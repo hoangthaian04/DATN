@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+import EazyTech.EazyHire.models.dtos.ApplicationDetailResponseDTO;
+
 @RestController
 @RequestMapping("/api/v1/applications")
 @RequiredArgsConstructor
@@ -34,5 +36,30 @@ public class ApplicationController {
         );
 
         return ResponseEntity.ok(new BaseResponse(applicationsPage));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BaseResponse> getApplicationDetail(@PathVariable Long id) {
+        AuthorizedUser user = SecurityUtils.getCurrentUser()
+                .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
+
+        ApplicationDetailResponseDTO detail = applicationService.getApplicationDetail(user.getCompanyId(), id);
+        return ResponseEntity.ok(BaseResponse.success("Lấy chi tiết hồ sơ ứng tuyển thành công", detail));
+    }
+
+    @PutMapping("/{id}/round")
+    public ResponseEntity<BaseResponse> updateApplicationRound(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long targetRoundId,
+            @RequestParam(required = false) String status
+    ) {
+        AuthorizedUser user = SecurityUtils.getCurrentUser()
+                .orElseThrow(() -> new CustomException(401, "Yêu cầu đăng nhập"));
+
+        ApplicationListResponseDTO updated = applicationService.updateApplicationRound(
+                user.getCompanyId(), id, targetRoundId, status
+        );
+
+        return ResponseEntity.ok(BaseResponse.success("Cập nhật vòng tuyển dụng thành công", updated));
     }
 }

@@ -1,7 +1,7 @@
 import { api } from './api';
 import type { BaseResponse, BasePagination } from '../types/api.types';
 import type { JobSummary, JobStats, Job, SaveJobPipelineRequest, UpdateJobRequest } from '../types/job.types';
-import type { ApplicationListDTO } from '../types/application.types';
+import type { ApplicationListDTO, ApplicationDetailDTO } from '../types/application.types';
 
 export interface GetJobsParams {
   page?: number;
@@ -18,6 +18,16 @@ export const jobService = {
 
   getApplications: async (params: { jobId?: string; page?: number; limit?: number; status?: string }) => {
     const response = await api.get<BaseResponse<BasePagination<ApplicationListDTO>>>('/applications', { params });
+    return response.data.data;
+  },
+
+  getApplicationDetail: async (applicationId: number | string) => {
+    const response = await api.get<BaseResponse<ApplicationDetailDTO>>(`/applications/${applicationId}`);
+    return response.data.data;
+  },
+
+  updateApplicationRound: async (applicationId: number | string, params: { targetRoundId?: number; status?: string }) => {
+    const response = await api.put<BaseResponse<ApplicationListDTO>>(`/applications/${applicationId}/round`, null, { params });
     return response.data.data;
   },
   

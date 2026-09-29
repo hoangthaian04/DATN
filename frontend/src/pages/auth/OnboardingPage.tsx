@@ -11,6 +11,7 @@ import {
   Building2,
   Check,
   CheckCircle2,
+  Edit3,
   Globe2,
   Loader2,
   MapPin,
@@ -18,6 +19,7 @@ import {
   Send,
   Sparkles,
   Upload,
+  X,
 } from 'lucide-react';
 
 export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = false }) => {
@@ -25,6 +27,7 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
   const navigate = useNavigate();
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [isEditing, setIsEditing] = useState(!settings);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -35,6 +38,11 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
   const [address, setAddress] = useState('');
   const [website, setWebsite] = useState('');
   const [taxCode, setTaxCode] = useState('');
+  const [slogan, setSlogan] = useState('');
+  const [description, setDescription] = useState('');
+  const [companySize, setCompanySize] = useState('');
+  const [foundedYear, setFoundedYear] = useState('');
+  const [businessType, setBusinessType] = useState('');
   const slug = user?.companySlug || '';
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
@@ -45,7 +53,12 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
         if (!active) return;
         setCompanyName(company.name || '');
         setTaxCode(company.taxCode || '');
-        setServices(company.profile?.description || '');
+        setSlogan(company.profile?.slogan || '');
+        setServices(company.profile?.industry || '');
+        setCompanySize(company.profile?.companySize || '');
+        setFoundedYear(company.profile?.foundedYear || '');
+        setBusinessType(company.profile?.businessType || '');
+        setDescription(company.profile?.description || '');
         setPhoneNumber(company.phone || '');
         setAddress(company.address || '');
         setWebsite(company.website || '');
@@ -102,7 +115,12 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
           ? (/^https?:\/\//i.test(website) ? website : `https://${website}`)
           : undefined,
         address: address || undefined,
-        description: services || undefined,
+        description: description || undefined,
+        slogan: slogan || undefined,
+        industry: services || undefined,
+        companySize: companySize || undefined,
+        foundedYear: foundedYear || undefined,
+        businessType: businessType || undefined,
         contactEmail: user?.email,
         onboardingCompleted: true,
       });
@@ -230,11 +248,34 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                   {currentStep === 2 && '2. Liên hệ & Cấu hình Career Site'}
                   {currentStep === 3 && '3. Xác nhận & Gửi hồ sơ'}
                 </h2>
-                <p className="text-xs text-slate-400 font-semibold mt-0.5">
-                  Các trường này sẽ được dùng cho Admin Approval và Career Site riêng.
-                </p>
+                {!settings && (
+                  <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                    Các trường này sẽ được dùng cho Admin Approval và Career Site riêng.
+                  </p>
+                )}
               </div>
-              <Building2 className="h-6 w-6 text-[#2563eb]" />
+              <div className="flex items-center gap-3">
+                {settings && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold transition-colors"
+                  >
+                    {isEditing ? (
+                      <>
+                        <X className="h-3.5 w-3.5" />
+                        Hủy
+                      </>
+                    ) : (
+                      <>
+                        <Edit3 className="h-3.5 w-3.5" />
+                        Chỉnh sửa
+                      </>
+                    )}
+                  </button>
+                )}
+                <Building2 className="h-6 w-6 text-[#2563eb]" />
+              </div>
             </div>
 
             <form onSubmit={handleComplete} className="space-y-5 text-left">
@@ -256,12 +297,12 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                           <Building2 className="h-6 w-6" />
                         </div>
                       )}
-                      <label className="px-4 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[13px] font-semibold text-slate-600 cursor-pointer transition-colors">
+                      <label className={`px-4 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-[13px] font-semibold text-slate-600 transition-colors ${!isEditing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
                         <span className="flex items-center gap-1.5">
                           <Upload className="h-4 w-4" />
                           Tải ảnh lên
                         </span>
-                        <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} />
+                        <input type="file" className="hidden" accept="image/*" onChange={handleLogoUpload} disabled={!isEditing} />
                       </label>
                     </div>
                   </div>
@@ -286,35 +327,118 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                     <input
                       value={taxCode}
                       placeholder="VD: 0101234567"
-                      className="w-full px-4 py-2.5 rounded-lg border border-slate-200 outline-none focus:border-[#2563eb] text-sm font-medium text-slate-800"
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-200 outline-none text-sm font-medium text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 cursor-not-allowed"
                       readOnly
+                      disabled
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Dịch vụ cung cấp / Mô tả hoạt động *
+                      Ngành nghề / Lĩnh vực hoạt động *
                     </label>
-                    <textarea
+                    <input
                       value={services}
                       onChange={(e) => setServices(e.target.value)}
-                      rows={3}
-                      placeholder="VD: Tuyển dụng IT, outsourcing, sản phẩm AI, phát triển nền tảng Cloud..."
-                      className="w-full px-4 py-3 rounded-lg border border-slate-200 outline-none focus:border-[#2563eb] text-sm font-medium resize-none"
+                      placeholder="VD: IT Software, Tài chính..."
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-200 outline-none focus:border-[#2563eb] text-sm font-medium text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
                       required
+                      disabled={!isEditing}
                     />
                   </div>
 
-                  <div className="flex justify-end pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(2)}
-                      className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-[#2563eb] hover:bg-blue-600 text-white text-[13px] font-semibold transition-colors cursor-pointer"
-                    >
-                      Tiếp tục
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Ngành nghề chính
+                      </label>
+                      <input
+                        value={businessType}
+                        onChange={(e) => setBusinessType(e.target.value)}
+                        placeholder="VD: Outsource, Product..."
+                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 outline-none focus:border-[#2563eb] text-sm font-medium text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                        disabled={settings}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Quy mô
+                      </label>
+                      <input
+                        value={companySize}
+                        onChange={(e) => setCompanySize(e.target.value)}
+                        placeholder="VD: 50-100"
+                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 outline-none focus:border-[#2563eb] text-sm font-medium text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Năm thành lập
+                      </label>
+                      <input
+                        value={foundedYear}
+                        onChange={(e) => setFoundedYear(e.target.value)}
+                        placeholder="VD: 2018"
+                        className="w-full px-4 py-2.5 rounded-lg border border-slate-200 outline-none focus:border-[#2563eb] text-sm font-medium text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                        disabled={settings}
+                      />
+                    </div>
                   </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Slogan / Giới thiệu ngắn gọn *
+                    </label>
+                    <input
+                      value={slogan}
+                      onChange={(e) => setSlogan(e.target.value)}
+                      placeholder="VD: Kiến tạo tương lai công nghệ..."
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-200 outline-none focus:border-[#2563eb] text-sm font-medium text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                      required
+                      disabled={!isEditing}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Giới thiệu chi tiết công ty *
+                    </label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={4}
+                      placeholder="Nhập thông tin giới thiệu chi tiết về công ty, môi trường làm việc, văn hóa..."
+                      className="w-full px-4 py-3 rounded-lg border border-slate-200 outline-none focus:border-[#2563eb] text-sm font-medium resize-none text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                      required
+                      disabled={!isEditing}
+                    />
+                  </div>
+
+                  {isEditing && (
+                    <div className="flex justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(2)}
+                        className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-[#2563eb] hover:bg-blue-600 text-white text-[13px] font-semibold transition-colors cursor-pointer"
+                      >
+                        Tiếp tục
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                  {!isEditing && (
+                    <div className="flex justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(2)}
+                        className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-[13px] font-semibold transition-colors cursor-pointer"
+                      >
+                        Bước tiếp theo
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -330,7 +454,8 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         placeholder="Quận 1, TP. Hồ Chí Minh..."
-                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#2563eb] text-sm font-semibold text-slate-800"
+                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#2563eb] text-sm font-semibold text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                        disabled={settings}
                       />
                     </div>
                   </div>
@@ -346,7 +471,8 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                           value={phoneNumber}
                           onChange={(e) => setPhoneNumber(e.target.value)}
                           placeholder="09xx xxx xxx"
-                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#2563eb] text-sm font-semibold text-slate-800"
+                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#2563eb] text-sm font-semibold text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                          disabled={!isEditing}
                         />
                       </div>
                     </div>
@@ -361,7 +487,8 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                           value={website}
                           onChange={(e) => setWebsite(e.target.value)}
                           placeholder="www.company.vn"
-                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#2563eb] text-sm font-semibold text-slate-800"
+                          className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#2563eb] text-sm font-semibold text-slate-800 disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
+                          disabled={!isEditing}
                         />
                       </div>
                     </div>
@@ -376,14 +503,25 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                       <ArrowLeft className="h-4 w-4" />
                       Quay lại
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setCurrentStep(3)}
-                      className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl bg-[#2563eb] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer"
-                    >
-                      Tiếp tục
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
+                    {isEditing ? (
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(3)}
+                        className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl bg-[#2563eb] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer"
+                      >
+                        Tiếp tục
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setCurrentStep(3)}
+                        className="inline-flex items-center gap-1.5 px-6 py-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-bold cursor-pointer"
+                      >
+                        Bước tiếp theo
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -430,20 +568,22 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                       <ArrowLeft className="h-4 w-4" />
                       Quay lại
                     </button>
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-[#2563eb] hover:bg-blue-600 text-white text-sm font-bold shadow-lg shadow-blue-500/25 cursor-pointer disabled:opacity-60"
-                    >
-                      {loading ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4" />
-                          <span>{settings ? 'Lưu thay đổi' : 'Hoàn tất thiết lập'}</span>
-                        </>
-                      )}
-                    </button>
+                    {isEditing && (
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-[#2563eb] hover:bg-blue-600 text-white text-sm font-bold shadow-lg shadow-blue-500/25 cursor-pointer disabled:opacity-60"
+                      >
+                        {loading ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4" />
+                            <span>{settings ? 'Lưu thay đổi' : 'Hoàn tất thiết lập'}</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

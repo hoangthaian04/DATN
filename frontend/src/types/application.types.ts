@@ -76,4 +76,35 @@ export interface ApplicationListDTO {
   phone: string;
   email: string;
   applicationStatus: string;
+  currentRoundId?: number | null;
+  appliedAt?: string | null;
+}
+
+export interface ApplicationDetailDTO {
+  applicationId: number;
+  candidateId: number;
+  fullName: string;
+  email: string;
+  phone: string;
+  avatarUrl?: string | null;
+  jobId: number;
+  jobTitle: string;
+  location?: string | null;
+  workingType?: string | null;
+  applicationStatus: string;
+  currentRoundId?: number | null;
+  currentRoundName?: string | null;
+  currentRoundOrder?: number;
+  totalRounds?: number;
+  cvUrl?: string | null;
+  coverLetter?: string | null;
+  source?: string | null;
+  appliedAt?: string | null;
+  roundHistory?: {
+    roundId: number;
+    roundName: string;
+    orderIndex: number;
+    isCurrent: boolean;
+    isPassed: boolean;
+  }[];
 }

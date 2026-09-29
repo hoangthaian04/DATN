@@ -333,7 +333,7 @@ export const JobDetailPage: React.FC = () => {
 
         </div>
       ) : (
-        <JobKanbanBoard />
+        <JobKanbanBoard jobId={id} />
       )}
 
       {/* Edit Job Modal */}

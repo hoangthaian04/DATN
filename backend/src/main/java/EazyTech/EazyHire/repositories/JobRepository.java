@@ -11,6 +11,7 @@ import EazyTech.EazyHire.models.dtos.JobStatsResponseDTO;
 import EazyTech.EazyHire.models.dtos.dashboard.TopJobDTO;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -18,6 +19,19 @@ import org.springframework.data.domain.Pageable;
 public interface JobRepository extends JpaRepository<JobEntity, Long> {
 
     List<JobEntity> findByCompanyIdAndIsDeletedFalse(Long companyId);
+    List<JobEntity> findByCompanyIdAndStatusAndIsDeletedFalse(Long companyId, String status);
+    
+    @Query("SELECT j FROM JobEntity j WHERE j.company.id = :companyId AND j.status = :status AND j.isDeleted = false " +
+           "AND (:search IS NULL OR :search = '' OR " +
+           "LOWER(j.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(j.location) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(j.experienceLevel) LIKE LOWER(CONCAT('%', :search, '%')))")
+    List<JobEntity> findByCompanyIdAndStatusAndSearchKeyword(
+        @Param("companyId") Long companyId, 
+        @Param("status") String status, 
+        @Param("search") String search);
+
+    Optional<JobEntity> findByCompanyIdAndSlugAndIsDeletedFalse(Long companyId, String slug);
     
     boolean existsByIdAndCompanyId(Long id, Long companyId);
     Long countByCompanyIdAndStatusAndIsDeletedFalseAndCreatedAtBetween(

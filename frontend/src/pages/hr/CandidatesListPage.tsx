@@ -3,11 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 import { jobService } from '@/services/job.service';
 import { CandidatesTable } from '@/components/candidates/CandidatesTable';
 import { FilterBar } from '@/components/candidates/FilterBar';
+import { CandidateDrawer, type CandidateData } from '@/components/CandidateDrawer';
+import type { ApplicationListDTO } from '@/types/application.types';
 
 export const CandidatesListPage: React.FC = () => {
   const [selectedJobId, setSelectedJobId] = useState<string>('');
   const [status, setStatus] = useState<string>('');
   const [page, setPage] = useState(1);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<CandidateData | null>(null);
 
   // Fetch danh sách Job cho Dropdown
   const { data: jobsPagination, isLoading: isLoadingJobs } = useQuery({
@@ -26,6 +30,24 @@ export const CandidatesListPage: React.FC = () => {
     })
   });
 
+  const handleSelectCandidate = (app: ApplicationListDTO) => {
+    const candidateData: CandidateData = {
+      id: String(app.applicationId),
+      name: app.fullName,
+      email: app.email,
+      phone: app.phone || '',
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${app.fullName}`,
+      jobTitle: app.jobTitle,
+      matchScore: 85,
+      status: app.applicationStatus,
+      currentRound: 1,
+      totalRounds: 4,
+      submittedAt: app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('vi-VN') : '',
+    };
+    setSelectedCandidate(candidateData);
+    setDrawerOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -34,9 +56,6 @@ export const CandidatesListPage: React.FC = () => {
           <p className="text-sm font-semibold text-slate-500 mt-1">
             Quản lý tất cả hồ sơ ứng tuyển
           </p>
-        </div>
-        <div className="flex gap-2">
-          {/* Nút Toggle Kanban/List sẽ thêm vào sau nếu cần thiết, hiện tại chỉ có List ở route này */}
         </div>
       </div>
 
@@ -50,7 +69,7 @@ export const CandidatesListPage: React.FC = () => {
         status={status}
         onStatusChange={(newStatus) => {
           setStatus(newStatus);
-          setPage(1); // Reset trang về 1 khi đổi bộ lọc
+          setPage(1);
         }}
         isLoadingJobs={isLoadingJobs}
       />
@@ -59,7 +78,15 @@ export const CandidatesListPage: React.FC = () => {
         pagination={applicationsPagination}
         isLoading={isLoadingApps}
         onPageChange={setPage}
+        onSelectCandidate={handleSelectCandidate}
+      />
+
+      <CandidateDrawer
+        isOpen={drawerOpen}
+        candidate={selectedCandidate}
+        onClose={() => setDrawerOpen(false)}
       />
     </div>
   );
 };
+

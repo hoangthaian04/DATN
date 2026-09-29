@@ -171,6 +171,7 @@ public class CompanyServiceImpl implements CompanyService {
                 .id(profile.getId())
                 .industry(profile.getIndustry()).companySize(profile.getCompanySize())
                 .businessType(profile.getBusinessType()).contactEmail(profile.getContactEmail())
+                .foundedYear(profile.getFoundedYear())
                 .onboardingCompleted(Boolean.TRUE.equals(profile.getOnboardingCompleted()))
                 .profileCompleted(completedSteps(company,profile)==3)
                 .completedSteps(completedSteps(company,profile))
@@ -179,6 +180,7 @@ public class CompanyServiceImpl implements CompanyService {
                 .bannerUrl(profile.getBannerUrl())
                 .primaryColor(profile.getPrimaryColor())
                 .description(profile.getDescription())
+                .slogan(profile.getSlogan())
                 .benefits(profile.getBenefits())
                 .socialLinks(profile.getSocialLinks())
                 .build() : null;
@@ -247,6 +249,8 @@ public class CompanyServiceImpl implements CompanyService {
       if(request.getWebsite()!=null)company.setWebsite(request.getWebsite());
       if(request.getIndustry()!=null)p.setIndustry(request.getIndustry());
       if(request.getCompanySize()!=null)p.setCompanySize(request.getCompanySize());
+      if(request.getSlogan()!=null)p.setSlogan(request.getSlogan());
+      if(request.getFoundedYear()!=null)p.setFoundedYear(request.getFoundedYear());
       if(request.getDescription()!=null)p.setDescription(request.getDescription());
       if(request.getBenefits()!=null)p.setBenefits(request.getBenefits());
       if(request.getBusinessType()!=null)p.setBusinessType(request.getBusinessType());

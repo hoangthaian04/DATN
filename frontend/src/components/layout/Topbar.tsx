@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bell, ExternalLink, FileText, Globe2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const NOTIFICATIONS = [
   {
@@ -23,7 +24,16 @@ const NOTIFICATIONS = [
 
 export const Topbar: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
+
+  const handleOpenPublicSite = () => {
+    if (user?.companySlug) {
+      window.open(`/company/${user.companySlug}`, '_blank');
+    } else {
+      window.open(`/company/techa`, '_blank'); // fallback
+    }
+  };
 
   return (
     <header className="h-[64px] border-b border-slate-200 bg-white flex items-center justify-between px-6 sticky top-0 z-20 shadow-sm">
@@ -38,7 +48,7 @@ export const Topbar: React.FC = () => {
           Quản trị Career Site
         </button>
         <button
-          onClick={() => window.open('/careers', '_blank')}
+          onClick={handleOpenPublicSite}
           className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
         >
           <ExternalLink className="h-3.5 w-3.5" />

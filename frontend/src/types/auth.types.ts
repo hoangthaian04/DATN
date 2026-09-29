@@ -51,17 +51,18 @@ export interface RegisterRequest {
 export interface OnboardingRequest {
  industry?: string; companySize?: string; website?: string; description?: string;
  phone?: string; address?: string; primaryColor?: string; benefits?: string;
- businessType?: string; contactEmail?: string; onboardingCompleted?: boolean;
+ businessType?: string; foundedYear?: string; contactEmail?: string; onboardingCompleted?: boolean; slogan?: string;
 }
 
 export interface CompanyProfile {
- industry?: string; companySize?: string; businessType?: string; contactEmail?: string;
+ industry?: string; companySize?: string; businessType?: string; foundedYear?: string; contactEmail?: string;
  onboardingCompleted: boolean; profileCompleted: boolean; completedSteps: number; careerSiteLogoUrl?: string;
   id: number;
   logoUrl?: string;
   bannerUrl?: string;
   primaryColor?: string;
   description?: string;
+  slogan?: string;
   benefits?: string;
   socialLinks?: string;
 }

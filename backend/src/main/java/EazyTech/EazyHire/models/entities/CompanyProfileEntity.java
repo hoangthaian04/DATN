@@ -33,6 +33,7 @@ public class CompanyProfileEntity {
     private Long id;
     private String industry;
     @Column(name = "company_size") private String companySize;
+    @Column(name = "founded_year") private String foundedYear;
     @Column(name = "business_type") private String businessType;
     @Column(name = "contact_email") private String contactEmail;
     @Column(name = "onboarding_completed", nullable = false)
@@ -54,6 +55,9 @@ public class CompanyProfileEntity {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+    
+    @Column(columnDefinition = "VARCHAR(255)")
+    private String slogan;
 
     @Column(columnDefinition = "TEXT")
     private String benefits;

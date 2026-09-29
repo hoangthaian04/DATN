@@ -98,10 +98,10 @@ export const router = createBrowserRouter([
 
   // ── Career Site (Public — không cần đăng nhập) ──
   {
-    path: '/careers',
+    path: '/company/:companySlug',
     element: <CareerLayout />,
     children: [
-      { index: true, element: <CareerHomePage /> },
+      { index: true, element: <CompanyCareerSitePage /> },
       { path: 'jobs/:slug', element: <CareerJobDetailPage /> },
       { path: 'jobs/:slug/apply', element: <CareerApplyFormPage /> },
       { path: 'applications/track', element: <CandidateTrackPage /> },
@@ -109,7 +109,6 @@ export const router = createBrowserRouter([
       { path: 'interviews/respond', element: <InterviewResponsePage /> },
     ],
   },
-  { path: '/company/:companySlug', element: <CompanyCareerSitePage /> },
 
   // ── Catch-all ──
   { path: '*', element: <Navigate to="/login" replace /> },
