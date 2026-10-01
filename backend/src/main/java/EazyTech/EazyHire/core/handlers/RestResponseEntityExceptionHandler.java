@@ -2,13 +2,19 @@ package EazyTech.EazyHire.core.handlers;
 
 import EazyTech.EazyHire.core.BaseResponse;
 import EazyTech.EazyHire.core.exceptions.CustomException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.stream.Collectors;
 
@@ -37,28 +43,32 @@ public class RestResponseEntityExceptionHandler {
                 .body(BaseResponse.fail(errorMessage));
     }
 
-    @ExceptionHandler({org.springframework.http.converter.HttpMessageNotReadableException.class,
-        org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class,
-        org.springframework.web.bind.MissingServletRequestParameterException.class,
-        org.springframework.web.multipart.support.MissingServletRequestPartException.class})
+    @ExceptionHandler({
+        HttpMessageNotReadableException.class,
+        MethodArgumentTypeMismatchException.class,
+        MissingServletRequestParameterException.class,
+        MissingServletRequestPartException.class
+    })
     public ResponseEntity<BaseResponse> handleBadRequest(Exception ex){
-      return ResponseEntity.badRequest().body(BaseResponse.fail("Dữ liệu không hợp lệ. Vui lòng kiểm tra các trường, định dạng và trạng thái."));
+        return ResponseEntity.badRequest().body(BaseResponse.fail("Dữ liệu không hợp lệ: " + ex.getMessage()));
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<BaseResponse> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
-      return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-              .body(BaseResponse.fail("Định dạng request không được hỗ trợ. Vui lòng gửi multipart/form-data."));
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(BaseResponse.fail("Định dạng request không được hỗ trợ. Vui lòng gửi multipart/form-data."));
     }
 
-    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<BaseResponse> handleConflict(Exception ex){
-      return ResponseEntity.status(409).body(BaseResponse.fail("Dữ liệu bị trùng hoặc không còn hợp lệ. Vui lòng tải lại và kiểm tra email, mã số thuế, subdomain."));
+        return ResponseEntity.status(409).body(BaseResponse.fail("Dữ liệu bị trùng hoặc không còn hợp lệ. Vui lòng tải lại và kiểm tra email, mã số thuế, subdomain."));
     }
-    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<BaseResponse> handleUpload(Exception ex){
-      return ResponseEntity.badRequest().body(BaseResponse.fail("File không hợp lệ hoặc vượt quá dung lượng cho phép."));
+        return ResponseEntity.badRequest().body(BaseResponse.fail("File không hợp lệ hoặc vượt quá dung lượng cho phép."));
     }
+
     // Xử lý lỗi không mong muốn (fallback)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResponse> handleGenericException(Exception ex) {
