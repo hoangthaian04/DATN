@@ -46,9 +46,7 @@ export const EmailLogsPage: React.FC = () => {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-400"><Mail className="h-4 w-4" /> Email Logs</div>
           <h1 className="mt-2 text-2xl font-black text-slate-800">Lịch sử email</h1>
-          <p className="mt-1 text-sm font-semibold text-slate-500">Theo dõi các email hệ thống đã gửi trong company của bạn.</p>
         </div>
         <button type="button" onClick={() => void refetch()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
           <RefreshCw className="h-4 w-4" /> Làm mới

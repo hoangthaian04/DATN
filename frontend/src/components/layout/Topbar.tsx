@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, ExternalLink, FileText, Globe2 } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const NOTIFICATIONS = [
@@ -32,16 +32,14 @@ export const Topbar: React.FC = () => {
         <span className="bg-slate-100 border border-slate-200 text-slate-600 text-xs font-semibold px-2.5 py-1 rounded-full hidden sm:block">Công ty</span>
         <button
           onClick={() => navigate('/dashboard/career-site')}
-          className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary-100 bg-primary-50 text-primary-700 text-xs font-bold hover:bg-primary-100 transition-colors cursor-pointer"
+          className="hidden md:inline-flex items-center px-3 py-1.5 rounded-lg border border-primary-100 bg-primary-50 text-primary-700 text-xs font-bold hover:bg-primary-100 transition-colors cursor-pointer"
         >
-          <Globe2 className="h-3.5 w-3.5" />
           Quản trị Career Site
         </button>
         <button
           onClick={() => window.open('/careers', '_blank')}
-          className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+          className="hidden xl:inline-flex items-center px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors cursor-pointer"
         >
-          <ExternalLink className="h-3.5 w-3.5" />
           Xem site công khai
         </button>
       </div>
@@ -64,7 +62,6 @@ export const Topbar: React.FC = () => {
               <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <p className="text-sm font-extrabold text-slate-800">Thông báo mới</p>
-                  <p className="text-[11px] font-semibold text-slate-400">Ứng viên vừa nộp hồ sơ vào Career Site</p>
                 </div>
                 <button
                   onClick={() => {
@@ -88,9 +85,6 @@ export const Topbar: React.FC = () => {
                     className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-50 transition-colors cursor-pointer"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-primary-50 border border-primary-100 flex items-center justify-center text-primary-500 shrink-0">
-                        <FileText className="h-4 w-4" />
-                      </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-extrabold text-slate-800">
                           {item.candidate} vừa ứng tuyển

@@ -134,8 +134,7 @@ const Tool = ({ label, className = '' }: { label: React.ReactNode; className?: s
 const VariablePanel = () => (
   <aside className="col-span-12 xl:col-span-4">
     <div className="h-full rounded-xl border border-slate-100 bg-slate-50 p-4">
-      <h3 className="text-[12px] font-bold text-slate-800">Biến động sử dụng</h3>
-      <p className="mb-4 mt-1 text-[10px] leading-relaxed text-slate-500">Click để sao chép biến và dán vào nội dung email.</p>
+      <h3 className="text-[12px] font-bold text-slate-800">Biến email</h3>
       
       <div className="space-y-3">
         {[
@@ -143,10 +142,11 @@ const VariablePanel = () => (
           ['{{jobTitle}}', 'Tên vị trí đang tuyển'],
           ['{{companyName}}', 'Tên công ty của doanh nghiệp'],
           ['{{interviewDate}}', 'Ngày giờ phỏng vấn dự kiến']
-        ].map(([variable, description]) => (
+        ].map(([variable]) => (
           <button 
             key={variable} 
             type="button" 
+            aria-label={`Sao chép ${variable}`}
             onClick={() => { 
               navigator.clipboard?.writeText(variable); 
               toast.success(`Đã sao chép ${variable}`); 
@@ -154,7 +154,6 @@ const VariablePanel = () => (
             className="block w-full rounded-lg border border-slate-100 bg-white p-2.5 text-left shadow-sm hover:border-primary-200"
           >
             <code className="rounded bg-primary-50 px-1 py-0.5 text-[10px] font-bold text-primary-600">{variable}</code>
-            <p className="mt-1 text-[10px] font-medium text-slate-500">{description}</p>
           </button>
         ))}
       </div>
@@ -502,7 +501,6 @@ export const SettingsPage = () => {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-slate-800">Đổi mật khẩu</h2>
-                <p className="text-sm text-slate-500">Dùng mật khẩu mạnh để bảo vệ tài khoản của bạn.</p>
               </div>
             </div>
             
@@ -538,9 +536,7 @@ export const SettingsPage = () => {
             >
               <header className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Email Template Preview</p>
-                  <h2 id="email-preview-title" className="mt-1 text-lg font-bold text-slate-800">{previewText(selected.subject)}</h2>
-                  <p className="mt-1 text-xs text-slate-500">Các biến mẫu được thay bằng dữ liệu minh họa, không gửi email thật.</p>
+                  <h2 id="email-preview-title" className="text-lg font-bold text-slate-800">{previewText(selected.subject)}</h2>
                 </div>
                 <button
                   type="button"
@@ -583,7 +579,6 @@ export const SettingsPage = () => {
               <header className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
                 <div>
                   <h2 id="create-template-title" className="text-lg font-bold text-slate-800">Tạo email template mới</h2>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">Nhập thông tin cơ bản trước khi soạn nội dung email.</p>
                 </div>
                 <button
                   type="button"
@@ -609,7 +604,6 @@ export const SettingsPage = () => {
                     placeholder="VD: Xác nhận ứng tuyển vị trí {{jobTitle}}"
                     className={`mt-2 w-full rounded-lg border bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-primary-500 ${createTemplateErrors.subject ? 'border-red-400' : 'border-slate-200'}`}
                   />
-                  <span className="mt-1 block text-[11px] font-normal text-slate-400">Tiêu đề hiển thị trong email gửi cho ứng viên.</span>
                   {createTemplateErrors.subject && <span id="new-template-subject-error" className="mt-1 block text-xs font-medium text-red-500">{createTemplateErrors.subject}</span>}
                 </label>
 
@@ -644,7 +638,6 @@ export const SettingsPage = () => {
                     placeholder="VD: Xác nhận nhận hồ sơ"
                     className={`mt-2 w-full rounded-lg border bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-primary-500 ${createTemplateErrors.title ? 'border-red-400' : 'border-slate-200'}`}
                   />
-                  <span className="mt-1 block text-[11px] font-normal text-slate-400">Tên nội bộ để nhận diện template trong danh sách.</span>
                   {createTemplateErrors.title && <span id="new-template-name-error" className="mt-1 block text-xs font-medium text-red-500">{createTemplateErrors.title}</span>}
                 </label>
               </div>

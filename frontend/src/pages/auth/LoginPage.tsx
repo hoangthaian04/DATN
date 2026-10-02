@@ -146,12 +146,6 @@ export const LoginPage: React.FC = () => {
             <h1 className="text-[28px] font-bold text-slate-900 mb-2 tracking-tight">
               {activeTab === 'login' ? 'Chào mừng HR quay lại' : 'Tạo tài khoản Doanh nghiệp'}
             </h1>
-            <p className="text-[14px] text-slate-500 mb-8">
-              {activeTab === 'login'
-                ? 'Nhập thông tin của bạn để truy cập hệ thống quản trị'
-                : 'Bắt đầu sử dụng nền tảng tuyển dụng thông minh EasyHire'}
-            </p>
-
             {/* Tabs */}
             <div className="flex items-center gap-8 border-b border-slate-200 mb-8">
               <button

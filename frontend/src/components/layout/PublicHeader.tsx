@@ -12,7 +12,6 @@ export const PublicHeader: React.FC = () => {
           </div>
           <div>
             <span className="text-base font-extrabold text-slate-800 tracking-tight block">EasyHire</span>
-            <span className="text-[10px] font-semibold text-slate-400 block -mt-1 uppercase tracking-wider">EasyHire Platform</span>
           </div>
         </Link>
 
@@ -24,11 +23,6 @@ export const PublicHeader: React.FC = () => {
           <a href="#contact" className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors uppercase tracking-wider">Liên hệ</a>
         </nav>
 
-        {/* Support Widget */}
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Trực tuyến</span>
-        </div>
       </div>
     </header>
   );

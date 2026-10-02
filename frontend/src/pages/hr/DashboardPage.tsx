@@ -80,7 +80,6 @@ export const DashboardPage: React.FC = () => {
                   style={{ width: `${Math.min(100, (completedSteps / 3) * 100)}%` }}
                 />
               </div>
-              <p className="mt-2 text-xs text-amber-800">Hãy bổ sung thông tin còn thiếu để Career Site hiển thị đầy đủ.</p>
             </div>
             <Link to="/dashboard/settings" className="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white hover:bg-amber-700">
               Hoàn thiện hồ sơ công ty
@@ -169,7 +168,6 @@ export const DashboardPage: React.FC = () => {
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="text-[15px] font-extrabold text-slate-800">Xu hướng ứng tuyển</h3>
-                <p className="text-slate-400 text-xs font-semibold mt-1">Số lượng ứng tuyển trong 6 tháng gần nhất</p>
               </div>
               <div className="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-lg flex items-center border border-emerald-100">
                 18%

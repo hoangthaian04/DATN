@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, FileText, Mail, Settings, Rocket, LogOut, Key, X, Eye, EyeOff } from 'lucide-react';
+import { LayoutDashboard, Briefcase, UsersRound, Mail, Settings, Rocket, X, Eye, EyeOff } from 'lucide-react';
 import { AuthService } from '@/services/auth.service';
 
 export const Sidebar: React.FC = () => {
@@ -24,7 +24,7 @@ export const Sidebar: React.FC = () => {
       id: 'applications',
       href: '/dashboard/applications/kanban',
       label: 'Ứng viên',
-      icon: FileText,
+      icon: UsersRound,
       subItems: [
         { id: 'kanban', href: '/dashboard/applications/kanban', label: 'Kanban Pipeline' },
         { id: 'list', href: '/dashboard/applications/list', label: 'Danh sách' },
@@ -75,7 +75,6 @@ export const Sidebar: React.FC = () => {
         </div>
         <div className="flex flex-col">
           <h1 className="text-[17px] font-bold text-slate-900 leading-tight">EazyHire</h1>
-          <span className="text-xs text-slate-500 font-medium">HR Platform</span>
         </div>
       </div>
 
@@ -92,24 +91,26 @@ export const Sidebar: React.FC = () => {
             <div key={item.href} className="mb-2">
               <Link
                 to={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors font-medium text-[15px] ${
-                  isActive && !hasSubItems
-                    ? 'bg-primary-500 text-white shadow-sm shadow-primary-500/20'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                aria-current={isActive && !hasSubItems ? 'page' : undefined}
+                className={`flex items-center gap-3 border-l-2 px-4 py-3 rounded-lg transition-colors font-medium text-[15px] ${
+                  isActive
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }`}
               >
-                <Icon className="w-[22px] h-[22px]" />
+                <Icon aria-hidden="true" className="w-[22px] h-[22px] shrink-0" />
                 <span>{item.label}</span>
               </Link>
 
               {hasSubItems && isActive && (
-                <div className="ml-[22px] mt-1 pl-4 border-l border-slate-200 flex flex-col gap-1">
+                <div className="ml-3 mt-1 border-l border-slate-200 pl-3 flex flex-col gap-1">
                   {item.subItems?.map((sub) => {
                     const isSubActive = pathname === sub.href;
                     return (
                       <Link
                         key={sub.href}
                         to={sub.href}
+                        aria-current={isSubActive ? 'page' : undefined}
                         className={`px-3 py-2 rounded-lg text-[14px] transition-colors ${
                           isSubActive
                             ? 'bg-primary-50/80 text-primary-600 font-semibold'
@@ -154,13 +155,13 @@ export const Sidebar: React.FC = () => {
                 }}
                 className="w-full px-4 py-2.5 text-left text-[13px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition-colors flex items-center gap-2"
               >
-                <Key className="w-4 h-4" /> Đổi mật khẩu
+                Đổi mật khẩu
               </button>
               <button 
                 onClick={handleLogout}
                 className="w-full px-4 py-2.5 text-left text-[13px] font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
               >
-                <LogOut className="w-4 h-4" /> Đăng xuất
+                Đăng xuất
               </button>
             </div>
           </>
@@ -172,10 +173,7 @@ export const Sidebar: React.FC = () => {
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-              <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                <Key className="w-4.5 h-4.5 text-blue-500" />
-                Đổi mật khẩu
-              </h3>
+              <h3 className="font-bold text-slate-800">Đổi mật khẩu</h3>
               <button 
                 onClick={() => setPasswordModalOpen(false)}
                 className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-lg transition-colors cursor-pointer"

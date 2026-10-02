@@ -10,9 +10,6 @@ export const PublicFooter: React.FC = () => {
           <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">
             © {new Date().getFullYear()} EasyHire Platform
           </p>
-          <p className="text-[10px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">
-            Nền tảng tuyển dụng EasyHire
-          </p>
         </div>
 
         {/* Right Side Links */}

@@ -31,7 +31,6 @@ export const CandidateTrackPage: React.FC = () => {
         <div className="w-full rounded-3xl border border-red-100 bg-white p-8 text-center shadow-sm sm:p-10">
           <AlertCircle className="mx-auto h-10 w-10 text-red-500" />
           <h1 className="mt-5 text-2xl font-extrabold text-slate-900">Liên kết tra cứu không hợp lệ</h1>
-          <p className="mt-3 text-sm leading-6 text-slate-500">Vui lòng sử dụng liên kết trong email xác nhận hồ sơ.</p>
           <Link to="/careers" className="mt-6 inline-flex rounded-xl bg-blue-600 px-5 py-3 text-sm font-extrabold text-white hover:bg-blue-700">Về Career Site</Link>
         </div>
       </section>
@@ -45,7 +44,6 @@ export const CandidateTrackPage: React.FC = () => {
           <ShieldCheck className="h-7 w-7" />
         </div>
         <h1 className="mt-6 text-center text-2xl font-extrabold tracking-tight text-slate-900">Xác thực để tra cứu hồ sơ</h1>
-        <p className="mt-3 text-center text-sm leading-6 text-slate-500">Nhập đúng email bạn đã dùng khi nộp hồ sơ. Email là lớp xác thực bổ sung cho Magic Link.</p>
         <form onSubmit={submit} className="mt-7 space-y-5">
           <label className="block space-y-2">
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Email ứng tuyển</span>

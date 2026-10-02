@@ -35,7 +35,6 @@ export const ForgotPasswordPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const isLocalMailPreview = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
   const form1 = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -59,9 +58,7 @@ export const ForgotPasswordPage: React.FC = () => {
       await AuthService.forgotPassword({ email: data.email });
       setEmail(data.email);
       setStep(2);
-      setSuccessMsg(isLocalMailPreview
-        ? 'Mã OTP đã được gửi. Với môi trường Docker local, bạn có thể mở Mailpit tại http://localhost:8025 để xem email.'
-        : 'Mã OTP đã được gửi đến email của bạn.');
+      setSuccessMsg('Mã OTP đã được gửi đến email của bạn.');
     } catch (error: any) {
       setErrorMsg(error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.');
     } finally {
@@ -112,13 +109,6 @@ export const ForgotPasswordPage: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-800">
             {step === 1 ? 'Quên mật khẩu?' : step === 2 ? 'Xác thực OTP' : 'Tạo mật khẩu mới'}
           </h2>
-          <p className="mt-2 text-sm text-slate-500">
-            {step === 1 
-              ? 'Nhập email của bạn để nhận mã khôi phục.' 
-              : step === 2 
-              ? `Mã xác thực gồm 6 chữ số đã được gửi tới ${email}` 
-              : 'Vui lòng nhập mật khẩu mới của bạn dưới đây.'}
-          </p>
         </div>
 
         {errorMsg && (

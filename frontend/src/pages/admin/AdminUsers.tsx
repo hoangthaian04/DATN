@@ -104,7 +104,7 @@ export const AdminUsers: React.FC = () => {
       {toast && <div role="status" className={`fixed right-6 top-6 z-[60] rounded-xl border p-4 text-sm font-semibold shadow-xl ${toast.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-red-200 bg-red-50 text-red-800'}`}>{toast.text}</div>}
 
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div><h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Quản lý tài khoản</h1><p className="mt-1 text-sm font-semibold text-slate-500">Theo dõi tài khoản người dùng trên toàn hệ thống ({total} tài khoản).</p></div>
+        <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">Quản lý tài khoản</h1>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

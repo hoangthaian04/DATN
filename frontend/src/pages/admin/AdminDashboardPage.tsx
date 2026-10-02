@@ -24,7 +24,6 @@ export const AdminDashboardPage: React.FC = () => {
   const [blockingId,setBlockingId]=useState<number|null>(null);
   const [approvingId,setApprovingId]=useState<number|null>(null);
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
-  const [total, setTotal] = useState(0);
   const [filterStatus, setFilterStatus] = useState<string>(location.pathname.endsWith('/pending')?'PENDING':'all');
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -56,7 +55,6 @@ export const AdminDashboardPage: React.FC = () => {
         page,
       });
       setCompanies(res.data);
-      setTotal(res.total);
       setLastPage(res.last_page);
     } catch (e) {
       showToast('error', errorMessage(e));
@@ -203,9 +201,6 @@ export const AdminDashboardPage: React.FC = () => {
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
             Quản lý Doanh nghiệp
           </h1>
-          <p className="mt-1 text-sm font-semibold text-slate-500">
-            Phê duyệt, khóa hoặc xem chi tiết thông tin doanh nghiệp đăng ký Career Site ({total} doanh nghiệp).
-          </p>
         </div>
         <button
           onClick={fetchCompanies}

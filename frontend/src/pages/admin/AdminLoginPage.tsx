@@ -7,7 +7,6 @@ import {
   KeyRound,
   Loader2,
   Server,
-  ShieldAlert,
   ShieldCheck,
 } from 'lucide-react';
 
@@ -53,14 +52,7 @@ export const AdminLoginPage: React.FC = () => {
         {/* Left Side: Form */}
         <div className="w-full lg:w-1/2 h-full flex flex-col justify-center px-8 sm:px-16 md:px-24 relative overflow-y-auto bg-white">
           <div className="max-w-[380px] w-full mx-auto my-auto py-10">
-            <div className="h-12 w-12 rounded-xl bg-[#0052cc] flex items-center justify-center text-white mb-6 shadow-lg shadow-blue-500/20">
-              <ShieldAlert className="h-6 w-6" />
-            </div>
-
-            <h1 className="text-[32px] font-bold text-slate-900 mb-2 tracking-tight">System Admin</h1>
-            <p className="text-[15px] text-slate-500 mb-8">
-              Khu vực hạn chế. Đăng nhập để truy cập hệ thống quản trị lõi của nền tảng EasyHire.
-            </p>
+            <h1 className="text-[32px] font-bold text-slate-900 mb-8 tracking-tight">Đăng nhập quản trị</h1>
 
             {params.get('reason')==='session-expired' && <p role="alert">Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.</p>}
             {errorMessage && (
