@@ -39,11 +39,57 @@ export const RoundsConfigPage = () => {
   const drop = (event: DragEvent<HTMLDivElement>, targetId: number) => { event.preventDefault(); if (isClosed || draggedId === null || draggedId === targetId || reorder.isPending) return; const next = [...rounds]; const from = next.findIndex(round => round.id === draggedId); const to = next.findIndex(round => round.id === targetId); const [moved] = next.splice(from, 1); next.splice(to, 0, moved); reorder.mutate(next.map(round => round.id)); };
   useEffect(() => { const target = rounds.find(round => round.id === Number(searchParams.get('round'))); if (target && !editing && !creating) { openEdit(target); setSearchParams({}); } }, [rounds, searchParams, editing, creating, setSearchParams]);
   const closeModal = () => { setCreating(false); setEditing(null); };
-  return <div className="min-h-[calc(100vh-4rem)] bg-[#F8FAFC] p-5 sm:p-8"><div className="mx-auto max-w-4xl space-y-6">
-    <header className="flex items-center justify-between"><div className="flex items-center gap-3"><button onClick={() => navigate(`/dashboard/jobs/${jobId}`)}><ArrowLeft /></button><div><h1 className="text-2xl font-extrabold">Cấu hình vòng tuyển dụng</h1><p className="text-sm text-slate-500">{job?.title}</p></div></div><button disabled={isClosed} onClick={() => { setForm(blankRound()); setCreating(true); }} className="inline-flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-3 text-sm font-bold text-white disabled:opacity-50"><Plus className="h-4 w-4" />{isClosed ? 'Job đã đóng' : 'Thêm vòng mới'}</button></header>
-    {isClosed && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">Job đã ở trạng thái CLOSED. Pipeline đang ở chế độ chỉ đọc.</div>}
-    <section className="premium-card bg-white"><div className="border-b px-6 py-4"><h2 className="font-extrabold">Các vòng hiện có</h2><p className="text-xs text-slate-500">{isClosed ? 'Pipeline đang ở chế độ chỉ đọc.' : 'Kéo thả để thay đổi thứ tự.'}</p></div>{isLoading ? <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div> : isError ? <div className="p-10 text-center text-red-500">Không thể tải danh sách.<button onClick={() => void refetch()} className="ml-2 underline"><RefreshCw className="inline h-4" />Thử lại</button></div> : <div>{rounds.map((round, index) => <div key={round.id} draggable={!isClosed && !reorder.isPending} onDragStart={() => setDraggedId(round.id)} onDragOver={event => event.preventDefault()} onDrop={event => drop(event, round.id)} className="flex items-center gap-3 border-b px-4 py-4"><GripVertical className={isClosed ? 'text-slate-200' : 'cursor-grab text-slate-300'} /><span>{index + 1}</span><div className="flex-1"><b>{round.name}</b>{round.isFinalRound && <span className="ml-2 text-xs text-emerald-600">VÒNG CUỐI</span>}</div><button disabled={isClosed} onClick={() => openEdit(round)}><Pencil className="h-4" /></button><button disabled={isClosed || remove.isPending} onClick={() => window.confirm(`Xóa vòng “${round.name}”?`) && remove.mutate(round.id)}><Trash2 className="h-4" /></button></div>)}</div>}</section>
-  </div>{(creating || editing) && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"><form onSubmit={submit} className="w-full max-w-xl rounded-2xl bg-white"><div className="flex justify-between border-b p-5"><h2>{creating ? 'Thêm vòng tuyển dụng' : 'Chỉnh sửa vòng tuyển dụng'}</h2><button type="button" onClick={closeModal}><X /></button></div><div className="space-y-4 p-6"><Field label="Tên vòng" value={form.name} onChange={name => setForm({ ...form, name })} required /><label className="block">Mô tả<textarea value={form.description || ''} onChange={event => setForm({ ...form, description: event.target.value })} className="mt-1 min-h-20 w-full rounded border p-2" placeholder="Mục tiêu hoặc nội dung của vòng này" /></label><Field label="Link bài kiểm tra" value={form.testLink || ''} onChange={testLink => setForm({ ...form, testLink })} /><div className="grid gap-4 sm:grid-cols-2"><EmailSelect label="Email Pass" value={form.passEmailTemplateId} templates={passTemplates} loading={loadingPass} emptyLabel="Không gửi email đạt" onChange={passEmailTemplateId => setForm({ ...form, passEmailTemplateId })} /><EmailSelect label="Email False" value={form.failEmailTemplateId} templates={failTemplates} loading={loadingFail} emptyLabel="Không gửi email không đạt" onChange={failEmailTemplateId => setForm({ ...form, failEmailTemplateId })} /></div><p className="text-xs text-slate-500">Danh sách email dùng dữ liệu thật từ US-29.</p><label><input type="checkbox" checked={Boolean(form.isFinalRound)} onChange={event => setForm({ ...form, isFinalRound: event.target.checked })} /> Đánh dấu là vòng cuối</label></div><div className="flex justify-end gap-3 border-t p-5"><button type="button" onClick={closeModal}>Hủy</button><button className="rounded-xl bg-primary-500 px-4 py-2 text-white"><Check className="inline h-4" /> Lưu thay đổi</button></div></form></div>}</div>;
+  return (
+    <div className="min-h-[calc(100vh-4rem)] bg-[#F8FAFC] p-5 sm:p-8">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => navigate(`/dashboard/jobs/${jobId}`)} aria-label="Quay lại Job"><ArrowLeft /></button>
+            <div>
+              <h1 className="text-2xl font-extrabold">Cấu hình vòng tuyển dụng</h1>
+              <p className="text-sm text-slate-500">{job?.title}</p>
+            </div>
+          </div>
+          <button disabled={isClosed} onClick={() => { setForm(blankRound()); setCreating(true); }} className="inline-flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-3 text-sm font-bold text-white disabled:opacity-50">
+            <Plus className="h-4 w-4" />{isClosed ? 'Job đã đóng' : 'Thêm vòng mới'}
+          </button>
+        </header>
+
+        <section className="premium-card bg-white">
+          <div className="border-b px-6 py-4"><h2 className="font-extrabold">Các vòng hiện có</h2></div>
+          {isLoading ? <div className="flex justify-center p-12"><Loader2 className="animate-spin" /></div> : isError ? (
+            <div className="p-10 text-center text-red-500">Không thể tải danh sách.<button onClick={() => void refetch()} className="ml-2 underline"><RefreshCw className="inline h-4" />Thử lại</button></div>
+          ) : (
+            <div>{rounds.map((round, index) => (
+              <div key={round.id} draggable={!isClosed && !reorder.isPending} onDragStart={() => setDraggedId(round.id)} onDragOver={event => event.preventDefault()} onDrop={event => drop(event, round.id)} className="flex items-center gap-3 border-b px-4 py-4">
+                <GripVertical className={isClosed ? 'text-slate-200' : 'cursor-grab text-slate-300'} /><span>{index + 1}</span>
+                <div className="flex-1"><b>{round.name}</b>{round.isFinalRound && <span className="ml-2 text-xs text-emerald-600">VÒNG CUỐI</span>}</div>
+                <button type="button" disabled={isClosed} onClick={() => openEdit(round)} aria-label={`Sửa vòng ${round.name}`}><Pencil className="h-4" /></button>
+                <button type="button" disabled={isClosed || remove.isPending} onClick={() => window.confirm(`Xóa vòng “${round.name}”?`) && remove.mutate(round.id)} aria-label={`Xóa vòng ${round.name}`}><Trash2 className="h-4" /></button>
+              </div>
+            ))}</div>
+          )}
+        </section>
+      </div>
+
+      {(creating || editing) && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+        <form onSubmit={submit} className="w-full max-w-xl rounded-2xl bg-white">
+          <div className="flex justify-between border-b p-5"><h2>{creating ? 'Thêm vòng tuyển dụng' : 'Chỉnh sửa vòng tuyển dụng'}</h2><button type="button" onClick={closeModal} aria-label="Đóng"><X /></button></div>
+          <div className="space-y-4 p-6">
+            <Field label="Tên vòng" value={form.name} onChange={name => setForm({ ...form, name })} required />
+            <label className="block">Mô tả<textarea value={form.description || ''} onChange={event => setForm({ ...form, description: event.target.value })} className="mt-1 min-h-20 w-full rounded border p-2" placeholder="Mục tiêu hoặc nội dung của vòng này" /></label>
+            <Field label="Link bài kiểm tra" value={form.testLink || ''} onChange={testLink => setForm({ ...form, testLink })} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <EmailSelect label="Email Pass" value={form.passEmailTemplateId} templates={passTemplates} loading={loadingPass} emptyLabel="Không gửi email đạt" onChange={passEmailTemplateId => setForm({ ...form, passEmailTemplateId })} />
+              <EmailSelect label="Email False" value={form.failEmailTemplateId} templates={failTemplates} loading={loadingFail} emptyLabel="Không gửi email không đạt" onChange={failEmailTemplateId => setForm({ ...form, failEmailTemplateId })} />
+            </div>
+            <label><input type="checkbox" checked={Boolean(form.isFinalRound)} onChange={event => setForm({ ...form, isFinalRound: event.target.checked })} /> Đánh dấu là vòng cuối</label>
+          </div>
+          <div className="flex justify-end gap-3 border-t p-5"><button type="button" onClick={closeModal}>Hủy</button><button className="rounded-xl bg-primary-500 px-4 py-2 text-white"><Check className="inline h-4" /> Lưu thay đổi</button></div>
+        </form>
+      </div>}
+    </div>
+  );
 };
 
 const Field = ({ label, value, onChange, required }: { label: string; value: string; onChange: (value: string) => void; required?: boolean }) => <label className="block">{label}<input required={required} value={value} onChange={event => onChange(event.target.value)} className="mt-1 w-full rounded border p-2" /></label>;

@@ -53,7 +53,6 @@ export const FormFieldsEditor: React.FC<Props> = ({ fields, onChange, disabled =
       <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
           <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-700">Form ứng tuyển</h2>
-          <p className="mt-1 text-xs text-slate-500">Thêm câu hỏi riêng cho Job. Các trường mặc định họ tên, email, số điện thoại và CV vẫn do flow apply cung cấp.</p>
         </div>
         <button
           type="button"
@@ -69,7 +68,6 @@ export const FormFieldsEditor: React.FC<Props> = ({ fields, onChange, disabled =
       {fields.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 p-8 text-center">
           <p className="text-sm font-bold text-slate-600">Đang dùng form mặc định</p>
-          <p className="mt-1 text-xs text-slate-400">Bạn có thể thêm câu hỏi tùy chỉnh cho ứng viên.</p>
         </div>
       ) : (
         <div className="space-y-4" aria-label="Danh sách câu hỏi form ứng tuyển">

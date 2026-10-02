@@ -53,17 +53,9 @@ export const JobsPage: React.FC = () => {
   return (
     <div className="flex-1 p-8 bg-[#F8FAFC] min-h-[calc(100vh-4rem)] space-y-8">
       {/* Page Header Area */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 select-none">
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
-            <span>Dashboard</span>
-            <span className="text-xs">&gt;</span>
-            <span className="text-slate-500">Tin tuyển dụng</span>
-          </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Danh sách tin tuyển dụng</h1>
-          <p className="text-sm font-medium text-slate-500">
-            Quản lý toàn bộ vị trí tuyển dụng của công ty
-          </p>
         </div>
 
         {/* Action Buttons */}

@@ -24,6 +24,7 @@ export interface Job {
   experienceLevel: ExperienceLevel;
   experienceYearsMin?: number;
   roundCount?: number;
+  requiresCv?: boolean;
   description?: string;
   requirements?: string;
   benefits?: string;
@@ -65,6 +66,7 @@ export interface CreateJobRequest {
   description?: string;
   requirements?: string;
   benefits?: string;
+  requiresCv?: boolean;
   startDate?: string;
   endDate?: string;
 }
@@ -91,6 +93,7 @@ export interface UpdateJobRequest {
   experienceLevel?: string;
   experienceYearsMin?: number;
   roundCount?: number;
+  requiresCv?: boolean;
   startDate?: string;
   endDate?: string;
 }

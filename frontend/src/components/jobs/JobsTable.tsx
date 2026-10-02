@@ -61,7 +61,6 @@ export const JobsTable: React.FC<Props> = ({ jobsPagination, isLoading, onPageCh
           <span className="text-2xl font-bold text-slate-300">!</span>
         </div>
         <h3 className="text-lg font-medium text-slate-800 mb-1">Không tìm thấy công việc nào</h3>
-        <p className="text-slate-500 text-sm font-medium">Thử thay đổi bộ lọc hoặc tạo một công việc mới.</p>
       </div>
     );
   }
