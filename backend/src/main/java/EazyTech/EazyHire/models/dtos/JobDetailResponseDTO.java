@@ -32,6 +32,7 @@ public class JobDetailResponseDTO {
     private String experienceLevel;
     private Integer experienceYearsMin;
     private Integer roundCount;
+    private Boolean requiresCv;
     private Long applicantCount;
     private String status;
     private LocalDateTime publishedAt;

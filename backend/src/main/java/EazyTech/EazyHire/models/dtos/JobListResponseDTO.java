@@ -18,6 +18,7 @@ public class JobListResponseDTO {
     private String location;
     private String employmentType;
     private Integer roundCount;
+    private Boolean requiresCv;
     private String status;
     private Long applicantCount;
     private LocalDateTime publishedAt;

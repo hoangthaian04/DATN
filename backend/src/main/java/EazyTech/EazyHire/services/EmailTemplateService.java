@@ -10,4 +10,5 @@ public interface EmailTemplateService {
     EmailTemplateDTO update(Long companyId, Long userId, Long templateId, EmailTemplateUpdateRequestDTO request);
     void delete(Long companyId, Long userId, Long templateId);
     void validateRoundTemplate(Long companyId, Long templateId, EmailTemplateType expectedType);
+    EmailTemplateDTO getDefaultTemplate(Long companyId, EmailTemplateType type);
 }

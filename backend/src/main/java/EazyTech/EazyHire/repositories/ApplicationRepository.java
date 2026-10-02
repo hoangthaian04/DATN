@@ -26,7 +26,8 @@ public interface ApplicationRepository extends JpaRepository<ApplicationEntity, 
     List<ApplicationEntity> findTop5ByCompanyIdAndStatusOrderByCreatedAtDesc(Long companyId, String status);
 
     @Query("SELECT new EazyTech.EazyHire.models.dtos.ApplicationListResponseDTO(" +
-           "a.id, c.id, c.fullName, j.title, c.phone, c.email, a.status) " +
+           "a.id, c.id, c.fullName, j.title, c.phone, c.email, a.status, j.requiresCv, " +
+           "CASE WHEN a.cvUrl IS NULL OR a.cvUrl = '' THEN false ELSE true END) " +
            "FROM ApplicationEntity a " +
            "JOIN a.candidate c " +
            "JOIN a.job j " +
@@ -52,6 +53,19 @@ public interface ApplicationRepository extends JpaRepository<ApplicationEntity, 
             Long jobId,
             Long candidateId,
             String status
+    );
+
+    @Query("""
+            SELECT a FROM ApplicationEntity a
+            JOIN FETCH a.company company
+            JOIN FETCH a.job job
+            JOIN FETCH a.candidate candidate
+            WHERE a.id = :applicationId
+              AND company.id = :companyId
+            """)
+    Optional<ApplicationEntity> findByIdAndCompanyIdWithContext(
+            @Param("applicationId") Long applicationId,
+            @Param("companyId") Long companyId
     );
 
     Optional<ApplicationEntity> findBySecureToken(String secureToken);

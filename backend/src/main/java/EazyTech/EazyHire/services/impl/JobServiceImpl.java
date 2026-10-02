@@ -28,6 +28,7 @@ import EazyTech.EazyHire.repositories.UserRepository;
 import EazyTech.EazyHire.services.AuditService;
 import EazyTech.EazyHire.services.JobService;
 import EazyTech.EazyHire.services.EmailTemplateService;
+import EazyTech.EazyHire.services.AiMatchingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -51,6 +52,7 @@ public class JobServiceImpl implements JobService {
     private final HiringRoundRepository hiringRoundRepository;
     private final ApplicationRepository applicationRepository;
     private final EmailTemplateService emailTemplateService;
+    private final AiMatchingService aiMatchingService;
 
     @Override
     public Page<JobListResponseDTO> getJobs(Long companyId, String keyword, String status, PaginationRequest paginationRequest) {
@@ -142,6 +144,7 @@ public class JobServiceImpl implements JobService {
                 .experienceLevel(normalizeOrDefault(request.getExperienceLevel(), "MID"))
                 .experienceYearsMin(request.getExperienceYearsMin())
                 .roundCount(0)
+                .requiresCv(request.getRequiresCv() == null || request.getRequiresCv())
                 .status("INACTIVE")
                 .isDeleted(false)
                 .startDate(request.getStartDate())
@@ -164,6 +167,7 @@ public class JobServiceImpl implements JobService {
         job.setPublishedAt(java.time.LocalDateTime.now());
         job.setClosedAt(null);
         JobEntity saved = jobRepository.save(job);
+        aiMatchingService.enqueueForPublishedJob(saved.getId(), companyId, userId);
         auditService.recordTarget(userId, companyId, "JOB", saved.getId(), "PUBLISH_JOB", "Publish Job: " + saved.getTitle());
         return mapToJobDetailDTO(saved);
     }
@@ -394,6 +398,7 @@ public class JobServiceImpl implements JobService {
             job.setExperienceLevel(normalizeOrDefault(request.getExperienceLevel(), "MID"));
         }
         if (request.getExperienceYearsMin() != null) job.setExperienceYearsMin(request.getExperienceYearsMin());
+        if (request.getRequiresCv() != null) job.setRequiresCv(request.getRequiresCv());
 
         LocalDate startDate = request.getStartDate() != null ? request.getStartDate() : job.getStartDate();
         LocalDate endDate = request.getEndDate() != null ? request.getEndDate() : job.getEndDate();
@@ -503,6 +508,7 @@ public class JobServiceImpl implements JobService {
                 .experienceLevel(job.getExperienceLevel())
                 .experienceYearsMin(job.getExperienceYearsMin())
                 .roundCount(job.getRoundCount())
+                .requiresCv(job.getRequiresCv())
                 .applicantCount(applicantCount)
                 .status(job.getStatus())
                 .publishedAt(job.getPublishedAt())

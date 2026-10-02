@@ -168,6 +168,66 @@ class PublicApplicationServiceImplTest {
     }
 
     @Test
+    void allowsApplicationWithoutCvWhenJobDoesNotRequireIt() {
+        CompanyEntity company = company();
+        JobEntity job = job(company, null);
+        job.setRequiresCv(false);
+        CandidateEntity candidate = CandidateEntity.builder()
+                .id(41L).company(company).email("candidate@gmail.com").isDeleted(false).build();
+        ApplicationEntity saved = ApplicationEntity.builder()
+                .id(302L).company(company).job(job).candidate(candidate)
+                .status("ACTIVE").secureToken("token-302")
+                .appliedAt(LocalDateTime.of(2026, 9, 18, 15, 0)).build();
+
+        when(jobRepository.findById(20L)).thenReturn(Optional.of(job));
+        when(careerSiteRepository.findByCompanyId(1L)).thenReturn(Optional.of(
+                CareerSiteEntity.builder().company(company).isPublished(true).build()));
+        when(candidateRepository.findByCompanyIdAndEmailIgnoreCase(1L, "candidate@gmail.com"))
+                .thenReturn(Optional.empty());
+        when(candidateRepository.save(any(CandidateEntity.class))).thenReturn(candidate);
+        when(formFieldRepository.findByJobIdAndCompanyIdAndIsDeletedFalseOrderByOrderIndexAscIdAsc(20L, 1L))
+                .thenReturn(List.of());
+        when(hiringRoundRepository.findFirstByJobIdAndCompanyIdAndIsDeletedFalseOrderByOrderIndexAscIdAsc(20L, 1L))
+                .thenReturn(Optional.empty());
+        when(applicationRepository.save(any(ApplicationEntity.class))).thenReturn(saved);
+
+        var result = service.apply(
+                20L, "Tran B", "candidate@gmail.com", "0901234567",
+                null, null, "[]", true
+        );
+
+        assertEquals(302L, result.getId());
+        verify(cvStorageService, never()).store(any(), any(), any());
+    }
+
+    @Test
+    void rejectsMissingCvWhenJobRequiresIt() {
+        CompanyEntity company = company();
+        JobEntity job = job(company, null);
+
+        when(jobRepository.findById(20L)).thenReturn(Optional.of(job));
+        when(careerSiteRepository.findByCompanyId(1L)).thenReturn(Optional.of(
+                CareerSiteEntity.builder().company(company).isPublished(true).build()));
+        when(candidateRepository.findByCompanyIdAndEmailIgnoreCase(1L, "candidate@gmail.com"))
+                .thenReturn(Optional.empty());
+        when(candidateRepository.save(any(CandidateEntity.class))).thenAnswer(invocation -> {
+            CandidateEntity value = invocation.getArgument(0);
+            value.setId(41L);
+            return value;
+        });
+        when(formFieldRepository.findByJobIdAndCompanyIdAndIsDeletedFalseOrderByOrderIndexAscIdAsc(20L, 1L))
+                .thenReturn(List.of());
+
+        CustomException exception = assertThrows(CustomException.class, () -> service.apply(
+                20L, "Tran B", "candidate@gmail.com", "0901234567",
+                null, null, "[]", true
+        ));
+
+        assertEquals(400, exception.getStatusCode());
+        verify(cvStorageService, never()).store(any(), any(), any());
+    }
+
+    @Test
     void requiresEveryRequiredDynamicFieldBeforeUploadingCv() {
         CompanyEntity company = company();
         JobEntity job = job(company, null);

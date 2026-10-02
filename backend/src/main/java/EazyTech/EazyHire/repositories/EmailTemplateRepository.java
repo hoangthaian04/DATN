@@ -17,4 +17,9 @@ public interface EmailTemplateRepository extends JpaRepository<EmailTemplateEnti
     boolean existsByCompanyIdAndIsDeletedFalseAndTemplateNameIgnoreCase(Long companyId, String templateName);
     boolean existsByCompanyIdAndIsDeletedFalseAndTemplateNameIgnoreCaseAndIdNot(Long companyId, String templateName, Long id);
     boolean existsByCompanyIdAndIsDeletedFalseAndTypeAndTemplateScope(Long companyId, EmailTemplateType type, EazyTech.EazyHire.models.enums.TemplateScope scope);
+    Optional<EmailTemplateEntity> findFirstByCompanyIdAndIsDeletedFalseAndIsActiveTrueAndTypeAndTemplateScope(
+            Long companyId,
+            EmailTemplateType type,
+            EazyTech.EazyHire.models.enums.TemplateScope scope
+    );
 }

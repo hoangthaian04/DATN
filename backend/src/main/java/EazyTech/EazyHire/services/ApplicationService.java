@@ -2,6 +2,7 @@ package EazyTech.EazyHire.services;
 
 import EazyTech.EazyHire.core.PaginationRequest;
 import EazyTech.EazyHire.models.dtos.ApplicationListResponseDTO;
+import EazyTech.EazyHire.models.dtos.CvFileContent;
 import org.springframework.data.domain.Page;
 
 public interface ApplicationService {
@@ -12,4 +13,6 @@ public interface ApplicationService {
             String keyword,
             PaginationRequest paginationRequest
     );
+
+    CvFileContent getCv(Long applicationId, Long companyId);
 }

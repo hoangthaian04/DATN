@@ -5,4 +5,6 @@ import org.springframework.web.multipart.MultipartFile;
 public interface CvStorageService {
 
     String store(Long companyId, Long jobId, MultipartFile file);
+
+    byte[] read(String storageKey);
 }

@@ -22,6 +22,7 @@ import EazyTech.EazyHire.repositories.UserRepository;
 import EazyTech.EazyHire.services.impl.JobServiceImpl;
 import EazyTech.EazyHire.services.AuditService;
 import EazyTech.EazyHire.services.EmailTemplateService;
+import EazyTech.EazyHire.services.AiMatchingService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -68,6 +69,9 @@ class JobServiceImplTest {
     @Mock
     private EmailTemplateService emailTemplateService;
 
+    @Mock
+    private AiMatchingService aiMatchingService;
+
     @InjectMocks
     private JobServiceImpl service;
 
@@ -95,6 +99,7 @@ class JobServiceImplTest {
 
         assertEquals("INACTIVE", result.getStatus());
         assertEquals(1L, result.getCategoryId());
+        assertEquals(true, result.getRequiresCv());
         verify(jobRepository).save(any(JobEntity.class));
     }
 
@@ -137,6 +142,23 @@ class JobServiceImplTest {
 
         assertEquals(400, exception.getStatusCode());
         verify(jobRepository, never()).save(any(JobEntity.class));
+    }
+
+    @Test
+    void updateCanDisableCvRequirementWithoutChangingOtherJobFields() {
+        JobEntity job = job(10L, 20L, category(1L, JobCategoryStatus.ACTIVE));
+        stubActiveWorkspace(20L, 30L);
+        when(jobRepository.findById(10L)).thenReturn(Optional.of(job));
+        when(jobRepository.save(job)).thenReturn(job);
+
+        var result = service.updateJob(10L, UpdateJobRequestDTO.builder()
+                .title("Updated title")
+                .requiresCv(false)
+                .build(), 20L, 30L);
+
+        assertEquals(false, result.getRequiresCv());
+        assertEquals("Updated title", job.getTitle());
+        verify(jobRepository).save(job);
     }
 
     @Test
@@ -507,6 +529,7 @@ class JobServiceImplTest {
         assertEquals("ACTIVE", result.getStatus());
         assertNotNull(result.getPublishedAt());
         verify(jobRepository).save(job);
+        verify(aiMatchingService).enqueueForPublishedJob(10L, 20L, 30L);
         verify(auditService).recordTarget(30L, 20L, "JOB", 10L, "PUBLISH_JOB", "Publish Job: Publishable Job");
     }
 

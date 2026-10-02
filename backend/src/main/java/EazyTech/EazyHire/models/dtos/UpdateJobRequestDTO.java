@@ -62,6 +62,9 @@ public class UpdateJobRequestDTO {
     @Min(value = 0, message = "Số vòng phỏng vấn không được âm")
     private Integer roundCount;
 
+    /** Null preserves the current Job setting for a partial update. */
+    private Boolean requiresCv;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;
 

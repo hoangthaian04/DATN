@@ -82,4 +82,17 @@ class LocalCvStorageServiceTest {
 
         assertEquals(415, exception.getStatusCode());
     }
+
+    @Test
+    void readsStoredPdfUsingPrivateStorageKey() {
+        LocalCvStorageService service = new LocalCvStorageService(tempDir.toString());
+        MockMultipartFile file = new MockMultipartFile(
+                "cvFile", "candidate.pdf", "application/pdf",
+                "%PDF-1.7\nCV content".getBytes(StandardCharsets.US_ASCII)
+        );
+
+        String key = service.store(1L, 20L, file);
+
+        assertEquals("%PDF-1.7\nCV content", new String(service.read(key), StandardCharsets.US_ASCII));
+    }
 }

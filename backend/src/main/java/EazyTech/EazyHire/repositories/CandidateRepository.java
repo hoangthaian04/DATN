@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface CandidateRepository extends JpaRepository<CandidateEntity, Long> {
 
     Optional<CandidateEntity> findByCompanyIdAndEmailIgnoreCase(Long companyId, String email);
+
+    Optional<CandidateEntity> findByIdAndCompanyIdAndIsDeletedFalse(Long id, Long companyId);
 }

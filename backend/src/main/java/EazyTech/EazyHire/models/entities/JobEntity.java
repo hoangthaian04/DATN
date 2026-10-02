@@ -78,6 +78,10 @@ public class JobEntity {
     private Integer roundCount = 0;
 
     @Builder.Default
+    @Column(name = "requires_cv", nullable = false)
+    private Boolean requiresCv = true;
+
+    @Builder.Default
     @Column(length = 50, nullable = false)
     private String status = "INACTIVE";
 
@@ -111,6 +115,7 @@ public class JobEntity {
         if (isDeleted == null) isDeleted = false;
         if (currency == null) currency = "VND";
         if (roundCount == null) roundCount = 0;
+        if (requiresCv == null) requiresCv = true;
     }
 
     @PreUpdate

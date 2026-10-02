@@ -44,6 +44,27 @@ public class LocalCvStorageService implements CvStorageService {
         }
     }
 
+    @Override
+    public byte[] read(String storageKey) {
+        if (storageKey == null || !storageKey.startsWith("private://")) {
+            throw new CustomException(422, "CV không còn khả dụng để phân tích");
+        }
+
+        String relativePath = storageKey.substring("private://".length()).replace('/', java.io.File.separatorChar);
+        Path target = root.resolve(relativePath).normalize();
+        if (!target.startsWith(root)) {
+            throw new CustomException(422, "Đường dẫn CV không hợp lệ");
+        }
+        try {
+            if (!Files.isRegularFile(target)) {
+                throw new CustomException(422, "Không tìm thấy file CV để phân tích");
+            }
+            return Files.readAllBytes(target);
+        } catch (IOException exception) {
+            throw new CustomException(422, "Không thể đọc file CV để phân tích", exception);
+        }
+    }
+
     private void validate(MultipartFile file) {
         if (file == null || file.isEmpty() || file.getSize() > MAX_CV_SIZE) {
             throw new CustomException(400, "Chỉ chấp nhận file PDF tối đa 5MB");

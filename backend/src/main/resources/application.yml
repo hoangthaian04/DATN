@@ -55,3 +55,22 @@ app:
   public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:5173}
   magic-link-ttl-days: ${MAGIC_LINK_TTL_DAYS:30}
   mail-from: ${MAIL_FROM:${MAIL_USERNAME:no-reply@easyhire.local}}
+
+ai:
+  max-input-chars: ${AI_MAX_INPUT_CHARS:40000}
+  request-timeout-seconds: ${AI_REQUEST_TIMEOUT_SECONDS:30}
+  retry-max-attempts: ${AI_RETRY_MAX_ATTEMPTS:2}
+  retry-backoff-millis: ${AI_RETRY_BACKOFF_MILLIS:800}
+  encryption-key: ${AI_ENCRYPTION_KEY:}
+  matching:
+    embedding-model: ${AI_MATCHING_EMBEDDING_MODEL:gemini-embedding-001}
+    input-max-chars: ${AI_MATCHING_INPUT_MAX_CHARS:8000}
+    batch-size: ${AI_MATCHING_BATCH_SIZE:32}
+    poll-interval-ms: ${AI_MATCHING_POLL_INTERVAL_MS:2000}
+    lease-seconds: ${AI_MATCHING_LEASE_SECONDS:120}
+
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-3.8-flash}
+  fallback-model: ${GEMINI_FALLBACK_MODEL:gemini-3.5-flash-lite}
+  base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}

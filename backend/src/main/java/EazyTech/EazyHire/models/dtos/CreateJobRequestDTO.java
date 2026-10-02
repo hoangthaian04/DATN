@@ -59,6 +59,10 @@ public class CreateJobRequestDTO {
     private String requirements;
     private String benefits;
 
+    /** Omitted values preserve the legacy contract where a CV is required. */
+    @Builder.Default
+    private Boolean requiresCv = true;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate startDate;
 

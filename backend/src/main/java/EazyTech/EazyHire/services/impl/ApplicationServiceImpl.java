@@ -3,9 +3,12 @@ package EazyTech.EazyHire.services.impl;
 import EazyTech.EazyHire.core.PaginationRequest;
 import EazyTech.EazyHire.core.exceptions.CustomException;
 import EazyTech.EazyHire.models.dtos.ApplicationListResponseDTO;
+import EazyTech.EazyHire.models.dtos.CvFileContent;
+import EazyTech.EazyHire.models.entities.ApplicationEntity;
 import EazyTech.EazyHire.repositories.ApplicationRepository;
 import EazyTech.EazyHire.repositories.JobRepository;
 import EazyTech.EazyHire.services.ApplicationService;
+import EazyTech.EazyHire.services.CvStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +28,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private final ApplicationRepository applicationRepository;
     private final JobRepository jobRepository;
+    private final CvStorageService cvStorageService;
 
     @Override
     @Transactional(readOnly = true)
@@ -67,5 +71,19 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         return applicationRepository.findApplicationsForListView(jobId, companyId, status, keyword, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CvFileContent getCv(Long applicationId, Long companyId) {
+        ApplicationEntity application = applicationRepository.findByIdAndCompanyIdWithContext(applicationId, companyId)
+                .orElseThrow(() -> new CustomException(404, "Không tìm thấy hồ sơ ứng viên"));
+
+        if (application.getCvUrl() == null || application.getCvUrl().isBlank()) {
+            throw new CustomException(404, "Ứng viên chưa có CV");
+        }
+
+        byte[] content = cvStorageService.read(application.getCvUrl());
+        return new CvFileContent(content, "cv-" + application.getId() + ".pdf");
     }
 }

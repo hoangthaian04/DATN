@@ -17,4 +17,6 @@ public class ApplicationListResponseDTO {
     private String phone;
     private String email;
     private String applicationStatus; // ACTIVE, REJECTED, HIRED
+    private Boolean requiresCv;
+    private Boolean hasCv;
 }

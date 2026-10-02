@@ -111,7 +111,12 @@ public class PublicApplicationServiceImpl implements PublicApplicationService {
         List<PublicApplicationAnswerDTO> submittedAnswers = parseAnswers(answers);
         Map<Long, String> answerByFieldId = validateAnswers(fields, submittedAnswers);
 
-        String cvUrl = cvStorageService.store(job.getCompany().getId(), jobId, cvFile);
+        if (Boolean.TRUE.equals(job.getRequiresCv()) && isMissingFile(cvFile)) {
+            throw new CustomException(400, "CV là bắt buộc cho Job này");
+        }
+        String cvUrl = isMissingFile(cvFile)
+                ? null
+                : cvStorageService.store(job.getCompany().getId(), jobId, cvFile);
         HiringRoundEntity firstRound = hiringRoundRepository
                 .findFirstByJobIdAndCompanyIdAndIsDeletedFalseOrderByOrderIndexAscIdAsc(
                         jobId, job.getCompany().getId()
@@ -317,5 +322,9 @@ public class PublicApplicationServiceImpl implements PublicApplicationService {
 
     private String normalizeOptional(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private boolean isMissingFile(MultipartFile file) {
+        return file == null || file.isEmpty();
     }
 }

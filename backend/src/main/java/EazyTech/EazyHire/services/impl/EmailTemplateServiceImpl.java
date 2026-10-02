@@ -77,6 +77,18 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
         if (!Boolean.TRUE.equals(entity.getIsActive()) || entity.getType() != expectedType) throw new CustomException(400, "Email template được chọn không hợp lệ cho vòng tuyển dụng.");
     }
 
+    @Override
+    @Transactional
+    public EmailTemplateDTO getDefaultTemplate(Long companyId, EmailTemplateType type) {
+        ensureSeeded(companyId);
+        EmailTemplateEntity template = templates
+                .findFirstByCompanyIdAndIsDeletedFalseAndIsActiveTrueAndTypeAndTemplateScope(
+                        companyId, type, TemplateScope.SYSTEM
+                )
+                .orElseThrow(() -> new CustomException(404, "Không tìm thấy mẫu email mặc định."));
+        return toDto(template);
+    }
+
     private EmailTemplateEntity get(Long id, Long companyId) { return templates.findByIdAndCompanyIdAndIsDeletedFalse(id, companyId).orElseThrow(() -> new CustomException(404, "Không tìm thấy Email Template.")); }
     private CompanyEntity company(Long id) { return companies.findById(id).orElseThrow(() -> new CustomException(404, "Không tìm thấy doanh nghiệp.")); }
     private String required(String value, String name) { if (value == null || value.trim().isEmpty()) throw new CustomException(400, name + " không được để trống."); return value.trim(); }
@@ -91,6 +103,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
         seed(company, EmailTemplateType.FAIL, "Thông báo không đạt", "Kết quả tuyển dụng tại {{companyName}}", "Xin chào {{candidateName}}, cảm ơn bạn đã ứng tuyển vị trí {{jobTitle}}.");
         seed(company, EmailTemplateType.INTERVIEW_INVITE, "Mời phỏng vấn", "Thư mời phỏng vấn vị trí {{jobTitle}}", "Xin chào {{candidateName}}, mời bạn tham gia phỏng vấn vào {{interviewDate}}.");
         seed(company, EmailTemplateType.OFFER, "Thư mời nhận việc", "Offer từ {{companyName}}", "Xin chào {{candidateName}}, chúng tôi trân trọng gửi thư mời nhận việc.");
+        seed(company, EmailTemplateType.AI_MATCH_INVITE, "Mời ứng tuyển", "Cơ hội {{jobTitle}} tại {{companyName}}", "Xin chào {{candidateName}},\n\nChúng tôi nhận thấy kinh nghiệm của bạn có thể phù hợp với vị trí {{jobTitle}} tại {{companyName}}. Nếu quan tâm, vui lòng phản hồi email này để chúng tôi trao đổi thêm.\n\nTrân trọng,\n{{companyName}}");
     }
     private void seed(CompanyEntity company, EmailTemplateType type, String name, String subject, String body) { if (!templates.existsByCompanyIdAndIsDeletedFalseAndTypeAndTemplateScope(company.getId(), type, TemplateScope.SYSTEM)) templates.save(EmailTemplateEntity.builder().company(company).templateName(name).type(type).subject(subject).bodyHtml(body).variables(variablesJson(subject, body)).templateScope(TemplateScope.SYSTEM).build()); }
 }

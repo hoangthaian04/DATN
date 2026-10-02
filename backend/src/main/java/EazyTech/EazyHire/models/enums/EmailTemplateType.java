@@ -1,5 +1,5 @@
 package EazyTech.EazyHire.models.enums;
 
 public enum EmailTemplateType {
-    APPLICATION_RECEIVED, PASS, FAIL, INTERVIEW_INVITE, OFFER
+    APPLICATION_RECEIVED, PASS, FAIL, INTERVIEW_INVITE, OFFER, AI_MATCH_INVITE
 }

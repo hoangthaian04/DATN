@@ -27,6 +27,7 @@ public class PublicJobSummaryResponseDTO {
     private String currency;
     private String categoryName;
     private String categorySlug;
+    private Boolean requiresCv;
     private LocalDateTime publishedAt;
     private LocalDate startDate;
     private LocalDate endDate;

@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.time.LocalDateTime;
 
@@ -41,7 +42,7 @@ public class EmailLogServiceImpl implements EmailLogService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public EmailLogDTO record(Long companyId, Long applicationId, String recipientEmail, String templateCode,
                               String subject, String bodyHtml, boolean sent) {
         EmailLogEntity log = EmailLogEntity.builder()

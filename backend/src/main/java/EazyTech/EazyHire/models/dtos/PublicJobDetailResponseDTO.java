@@ -32,6 +32,7 @@ public class PublicJobDetailResponseDTO {
     private Integer experienceYearsMin;
     private String categoryName;
     private String categorySlug;
+    private Boolean requiresCv;
     private LocalDateTime publishedAt;
     private LocalDate startDate;
     private LocalDate endDate;

@@ -201,6 +201,7 @@ public class PublicCareerSiteServiceImpl implements PublicCareerSiteService {
                 .experienceYearsMin(job.getExperienceYearsMin())
                 .categoryName(job.getCategory() != null ? job.getCategory().getName() : null)
                 .categorySlug(job.getCategory() != null ? job.getCategory().getSlug() : null)
+                .requiresCv(job.getRequiresCv())
                 .publishedAt(job.getPublishedAt())
                 .startDate(job.getStartDate())
                 .endDate(job.getEndDate())
