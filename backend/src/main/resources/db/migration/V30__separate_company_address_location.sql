@@ -1,0 +1,5 @@
+ALTER TABLE companies
+    ADD COLUMN IF NOT EXISTS province_code VARCHAR(20);
+
+ALTER TABLE companies
+    ADD COLUMN IF NOT EXISTS ward_code VARCHAR(20);

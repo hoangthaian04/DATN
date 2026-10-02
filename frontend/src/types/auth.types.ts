@@ -50,7 +50,7 @@ export interface RegisterRequest {
 
 export interface OnboardingRequest {
  industry?: string; companySize?: string; website?: string; description?: string;
- phone?: string; address?: string; primaryColor?: string; benefits?: string;
+ phone?: string; address?: string; provinceCode?: string; wardCode?: string; primaryColor?: string; benefits?: string;
  businessType?: string; contactEmail?: string; onboardingCompleted?: boolean;
 }
 
@@ -90,6 +90,8 @@ export interface CompanySummary {
   email?: string;
   website?: string;
   address?: string;
+  provinceCode?: string;
+  wardCode?: string;
   status: CompanyStatus;
   approvedById?: number;
   approvedByName?: string;

@@ -58,6 +58,12 @@ public class CompanyEntity {
     @Column(columnDefinition = "TEXT")
     private String address;
 
+    @Column(name = "province_code", length = 20)
+    private String provinceCode;
+
+    @Column(name = "ward_code", length = 20)
+    private String wardCode;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

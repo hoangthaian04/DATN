@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthService } from '@/services/auth.service';
 import { PublicHeader } from '@/components/layout/PublicHeader';
 import { PublicFooter } from '@/components/layout/PublicFooter';
 import { LocationSelector } from '@/components/location/LocationSelector';
+import { locationService } from '@/services/location.service';
 import {
   AlertCircle,
   ArrowLeft,
@@ -35,13 +37,25 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
   const [provinceCode, setProvinceCode] = useState('');
-  const [provinceName, setProvinceName] = useState('');
   const [wardCode, setWardCode] = useState('');
-  const [wardName, setWardName] = useState('');
   const [website, setWebsite] = useState('');
   const [taxCode, setTaxCode] = useState('');
   const slug = user?.companySlug || '';
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  const provincesQuery = useQuery({
+    queryKey: ['provinces'],
+    queryFn: locationService.getProvinces,
+    staleTime: Infinity,
+  });
+  const wardsQuery = useQuery({
+    queryKey: ['wards', provinceCode],
+    queryFn: () => locationService.getWards(provinceCode),
+    enabled: Boolean(provinceCode),
+    staleTime: Infinity,
+  });
+  const provinceName = provincesQuery.data?.find(option => option.code === provinceCode)?.name || '';
+  const wardName = wardsQuery.data?.find(option => option.code === wardCode)?.name || '';
 
   useEffect(() => {
     let active = true;
@@ -53,6 +67,8 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
         setServices(company.profile?.description || '');
         setPhoneNumber(company.phone || '');
         setAddress(company.address || '');
+        setProvinceCode(company.provinceCode || '');
+        setWardCode(company.wardCode || '');
         setWebsite(company.website || '');
         setLogoUrl(company.careerSite?.logoUrl || company.profile?.logoUrl || null);
       })
@@ -96,6 +112,10 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
       setErrorMessage('Vui lòng điền tên công ty và dịch vụ/mô tả hoạt động');
       return;
     }
+    if (Boolean(provinceCode) !== Boolean(wardCode)) {
+      setErrorMessage('Vui lòng chọn đủ tỉnh/thành phố và xã/phường, hoặc xóa cả hai lựa chọn.');
+      return;
+    }
 
     try {
       setLoading(true);
@@ -106,7 +126,9 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
         website: website
           ? (/^https?:\/\//i.test(website) ? website : `https://${website}`)
           : undefined,
-        address: [address.trim(), wardName, provinceName].filter(Boolean).join(', ') || undefined,
+        address: address.trim() || undefined,
+        provinceCode,
+        wardCode,
         description: services || undefined,
         contactEmail: user?.email,
         onboardingCompleted: true,
@@ -159,9 +181,6 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
           <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mt-4">
             {settings ? 'Thiết lập hồ sơ công ty' : 'Thiết lập hồ sơ công ty trước khi vào HR Dashboard'}
           </h1>
-          <p className="text-sm font-semibold text-slate-500 mt-2 max-w-3xl">
-            Hoàn thiện hồ sơ để tạo Career Site riêng và gắn thương hiệu cho email, tin tuyển dụng.
-          </p>
         </div>}
 
         {errorMessage && (
@@ -327,30 +346,26 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                 <div className="space-y-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Địa chỉ trụ sở
+                      Địa chỉ chi tiết
                     </label>
                     <div className="relative">
                       <MapPin className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-slate-400" />
                       <input
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
-                        placeholder="Quận 1, TP. Hồ Chí Minh..."
+                        placeholder="Số nhà, tên đường, ngõ..."
                         className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[#2563eb] text-sm font-semibold text-slate-800"
                       />
                     </div>
-                    <p className="text-[11px] text-slate-400">Địa chỉ chi tiết được lưu cùng xã/phường và tỉnh/thành phố đã chọn.</p>
                     <LocationSelector
                       provinceCode={provinceCode}
                       wardCode={wardCode}
-                      onProvinceChange={(code, name) => {
+                      onProvinceChange={(code) => {
                         setProvinceCode(code);
-                        setProvinceName(name);
                         setWardCode('');
-                        setWardName('');
                       }}
-                      onWardChange={(code, name) => {
+                      onWardChange={(code) => {
                         setWardCode(code);
-                        setWardName(name);
                       }}
                       disabled={loading}
                     />
@@ -428,8 +443,12 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                         <span className="font-semibold text-sm">{taxCode || 'Chưa cập nhật'}</span>
                       </div>
                       <div>
-                        <span className="font-bold text-slate-500 block">ĐỊA CHỈ:</span>
-                        <span className="font-semibold">{[address.trim(), wardName, provinceName].filter(Boolean).join(', ') || 'Chưa cập nhật'}</span>
+                        <span className="font-bold text-slate-500 block">ĐỊA CHỈ CHI TIẾT:</span>
+                        <span className="font-semibold">{address.trim() || 'Chưa cập nhật'}</span>
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-500 block">XÃ / PHƯỜNG, TỈNH / THÀNH PHỐ:</span>
+                        <span className="font-semibold">{[wardName, provinceName].filter(Boolean).join(', ') || 'Chưa chọn'}</span>
                       </div>
                       <div>
                         <span className="font-bold text-slate-500 block">HOTLINE / WEBSITE:</span>
@@ -437,10 +456,6 @@ export const OnboardingPage: React.FC<{ settings?: boolean }> = ({ settings = fa
                       </div>
                     </div>
                   </div>
-
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    Sau khi bấm <strong>"Hoàn tất thiết lập"</strong>, thông tin sẽ được lưu và bạn có thể sử dụng HR Dashboard.
-                  </p>
 
                   <div className="flex items-center justify-between pt-4">
                     <button

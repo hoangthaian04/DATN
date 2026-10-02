@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import EazyTech.EazyHire.services.LogoStorageService;
 import EazyTech.EazyHire.core.utils.StringUtils;
 import EazyTech.EazyHire.services.CompanyService;
+import EazyTech.EazyHire.services.LocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,7 @@ public class CompanyServiceImpl implements CompanyService {
     private final AuditService audit;
     private final EmailService emails;
     private final LogoStorageService logos;
+    private final LocationService locations;
     @Value("${app.admin-email:admin@easytech.vn}") private String adminEmail;
 
     @Override
@@ -297,6 +299,8 @@ public class CompanyServiceImpl implements CompanyService {
                 .email(company.getEmail())
                 .website(company.getWebsite())
                 .address(company.getAddress())
+                .provinceCode(company.getProvinceCode())
+                .wardCode(company.getWardCode())
                 .status(company.getStatus())
                 .approvedById(company.getApprovedBy() != null ? company.getApprovedBy().getId() : null)
                 .approvedByName(company.getApprovedBy() != null ? company.getApprovedBy().getFullName() : null)
@@ -367,6 +371,7 @@ public class CompanyServiceImpl implements CompanyService {
       CompanyProfileEntity p=companyProfileRepository.findByCompanyId(company.getId()).orElseThrow(()->new CustomException(404,"Không tìm thấy hồ sơ công ty."));
       if(request.getPhone()!=null)company.setPhone(request.getPhone());
       if(request.getAddress()!=null)company.setAddress(request.getAddress());
+      updateCompanyLocation(company, request);
       if(request.getWebsite()!=null)company.setWebsite(request.getWebsite());
       if(request.getIndustry()!=null)p.setIndustry(request.getIndustry());
       if(request.getCompanySize()!=null)p.setCompanySize(request.getCompanySize());
@@ -378,6 +383,41 @@ public class CompanyServiceImpl implements CompanyService {
       if(Boolean.TRUE.equals(request.getOnboardingCompleted()))p.setOnboardingCompleted(true);
       companyRepository.save(company);companyProfileRepository.save(p);
       return getCompanyDetail(company.getId());
+    }
+
+    private void updateCompanyLocation(CompanyEntity company, OnboardingRequestDTO request) {
+      if (request.getProvinceCode() == null && request.getWardCode() == null) return;
+
+      String provinceCode = normalizeLocationCode(request.getProvinceCode());
+      String wardCode = normalizeLocationCode(request.getWardCode());
+      if ((provinceCode == null) != (wardCode == null)) {
+        throw new CustomException(400, "Vui lòng chọn cả tỉnh/thành phố và xã/phường, hoặc xóa cả hai.");
+      }
+      if (provinceCode == null) {
+        company.setProvinceCode(null);
+        company.setWardCode(null);
+        return;
+      }
+
+      boolean provinceExists = locations.getProvinces().stream()
+              .anyMatch(option -> provinceCode.equals(option.getCode()));
+      if (!provinceExists) {
+        throw new CustomException(400, "Tỉnh/thành phố không hợp lệ.");
+      }
+
+      boolean wardBelongsToProvince = locations.getWards(provinceCode).stream()
+              .anyMatch(option -> wardCode.equals(option.getCode()));
+      if (!wardBelongsToProvince) {
+        throw new CustomException(400, "Xã/phường không thuộc tỉnh/thành phố đã chọn.");
+      }
+
+      company.setProvinceCode(provinceCode);
+      company.setWardCode(wardCode);
+    }
+
+    private String normalizeLocationCode(String code) {
+      if (code == null || code.isBlank()) return null;
+      return code.trim();
     }
     @Transactional public CompanyDetailResponseDTO uploadLogo(Long userId,MultipartFile file){
       CompanyEntity company=accounts.requireHr(userId,true).getCompany();

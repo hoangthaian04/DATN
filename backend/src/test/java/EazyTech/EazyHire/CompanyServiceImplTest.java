@@ -3,6 +3,8 @@ package EazyTech.EazyHire;
 import EazyTech.EazyHire.core.exceptions.CustomException;
 import EazyTech.EazyHire.models.dtos.AdminCompanyUpdateRequestDTO;
 import EazyTech.EazyHire.models.dtos.CompanyDetailResponseDTO;
+import EazyTech.EazyHire.models.dtos.LocationOptionDTO;
+import EazyTech.EazyHire.models.dtos.OnboardingRequestDTO;
 import EazyTech.EazyHire.models.entities.CareerSiteEntity;
 import EazyTech.EazyHire.models.entities.CompanyEntity;
 import EazyTech.EazyHire.models.entities.CompanyProfileEntity;
@@ -16,6 +18,7 @@ import EazyTech.EazyHire.repositories.CompanyRepository;
 import EazyTech.EazyHire.services.AuditService;
 import EazyTech.EazyHire.services.EmailService;
 import EazyTech.EazyHire.services.LogoStorageService;
+import EazyTech.EazyHire.services.LocationService;
 import EazyTech.EazyHire.services.UserAccountService;
 import EazyTech.EazyHire.services.impl.CompanyServiceImpl;
 import org.junit.jupiter.api.Test;
@@ -34,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,6 +63,9 @@ class CompanyServiceImplTest {
 
     @Mock
     private LogoStorageService logos;
+
+    @Mock
+    private LocationService locations;
 
     @InjectMocks
     private CompanyServiceImpl service;
@@ -190,6 +197,68 @@ class CompanyServiceImplTest {
         assertEquals("TechA tuyển dụng", careerSite.getFooterText());
         assertEquals("TechA Updated", result.getName());
         verify(audit).record(99L, 1L, "UPDATE_COMPANY", "Admin cập nhật thông tin doanh nghiệp");
+    }
+
+    @Test
+    void updateProfileStoresLocationCodesSeparatelyFromDetailedAddress() {
+        CompanyEntity company = company(CompanyStatus.ACTIVE);
+        CompanyProfileEntity profile = CompanyProfileEntity.builder().id(10L).company(company).build();
+        UserEntity hr = UserEntity.builder()
+                .id(7L)
+                .company(company)
+                .role(UserRole.HR_ADMIN)
+                .status(UserStatus.ACTIVE)
+                .build();
+
+        when(accounts.requireHr(7L, true)).thenReturn(hr);
+        when(companyProfileRepository.findByCompanyId(1L)).thenReturn(Optional.of(profile));
+        when(locations.getProvinces()).thenReturn(List.of(new LocationOptionDTO("01", "Hà Nội")));
+        when(locations.getWards("01")).thenReturn(List.of(new LocationOptionDTO("001", "Ba Đình")));
+        when(companyRepository.save(any(CompanyEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(companyProfileRepository.save(any(CompanyProfileEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(companyRepository.findByIdWithDetails(1L)).thenReturn(Optional.of(company));
+        when(careerSiteRepository.findByCompanyId(1L)).thenReturn(Optional.empty());
+        when(accounts.getCompanyUsers(1L)).thenReturn(List.of());
+
+        OnboardingRequestDTO request = new OnboardingRequestDTO();
+        request.setAddress("Số 12, ngõ 3 Nguyễn Trãi");
+        request.setProvinceCode("01");
+        request.setWardCode("001");
+
+        CompanyDetailResponseDTO result = service.updateProfile(7L, request);
+
+        assertEquals("Số 12, ngõ 3 Nguyễn Trãi", company.getAddress());
+        assertEquals("01", company.getProvinceCode());
+        assertEquals("001", company.getWardCode());
+        assertEquals("01", result.getProvinceCode());
+        assertEquals("001", result.getWardCode());
+    }
+
+    @Test
+    void updateProfileRejectsWardThatDoesNotBelongToSelectedProvince() {
+        CompanyEntity company = company(CompanyStatus.ACTIVE);
+        CompanyProfileEntity profile = CompanyProfileEntity.builder().id(10L).company(company).build();
+        UserEntity hr = UserEntity.builder()
+                .id(7L)
+                .company(company)
+                .role(UserRole.HR_ADMIN)
+                .status(UserStatus.ACTIVE)
+                .build();
+
+        when(accounts.requireHr(7L, true)).thenReturn(hr);
+        when(companyProfileRepository.findByCompanyId(1L)).thenReturn(Optional.of(profile));
+        when(locations.getProvinces()).thenReturn(List.of(new LocationOptionDTO("01", "Hà Nội")));
+        when(locations.getWards("01")).thenReturn(List.of(new LocationOptionDTO("001", "Ba Đình")));
+
+        OnboardingRequestDTO request = new OnboardingRequestDTO();
+        request.setProvinceCode("01");
+        request.setWardCode("999");
+
+        CustomException exception = assertThrows(CustomException.class, () -> service.updateProfile(7L, request));
+
+        assertEquals(400, exception.getStatusCode());
+        verify(companyRepository, never()).save(any(CompanyEntity.class));
+        verifyNoInteractions(audit);
     }
 
     private CompanyEntity company(CompanyStatus status) {

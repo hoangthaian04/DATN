@@ -12,6 +12,8 @@ public class OnboardingRequestDTO {
 @Size(max=5000) private String description;
 @Pattern(regexp="^(\\+?[0-9][0-9 .()-]{7,19})?$", message="Số điện thoại không hợp lệ") private String phone;
 @Size(max=2000) private String address;
+@Size(max=20) private String provinceCode;
+@Size(max=20) private String wardCode;
 @Pattern(regexp="^#[0-9a-fA-F]{6}$", message="Màu thương hiệu không hợp lệ") private String primaryColor;
 @Size(max=5000) private String benefits;
 @Size(max=255) private String businessType;

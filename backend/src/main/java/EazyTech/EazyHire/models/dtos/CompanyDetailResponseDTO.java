@@ -25,6 +25,8 @@ public class CompanyDetailResponseDTO {
     private String email;
     private String website;
     private String address;
+    private String provinceCode;
+    private String wardCode;
     private CompanyStatus status;
     private Long approvedById;
     private String approvedByName;
