@@ -6,9 +6,10 @@ interface Props {
   pagination?: BasePagination<ApplicationListDTO>;
   isLoading: boolean;
   onPageChange: (page: number) => void;
+  onView: (application: ApplicationListDTO) => void;
 }
 
-export const CandidatesTable: React.FC<Props> = ({ pagination, isLoading, onPageChange }) => {
+export const CandidatesTable: React.FC<Props> = ({ pagination, isLoading, onPageChange, onView }) => {
   const getStatusBadge = (status: ApplicationListDTO['applicationStatus']) => {
     const labels = {
       ACTIVE: 'Đang xử lý',
@@ -49,7 +50,6 @@ export const CandidatesTable: React.FC<Props> = ({ pagination, isLoading, onPage
           <span className="text-2xl font-bold text-slate-300">!</span>
         </div>
         <h3 className="text-lg font-bold text-slate-800 mb-1">Không có ứng viên nào</h3>
-        <p className="text-slate-500 text-sm font-medium">Chưa có ứng viên nào cho công việc và bộ lọc này.</p>
       </div>
     );
   }
@@ -102,7 +102,7 @@ export const CandidatesTable: React.FC<Props> = ({ pagination, isLoading, onPage
                 <td className="px-6 py-4 align-top text-center">
                   <div className="flex items-center justify-center gap-2">
                     <button 
-                      onClick={() => alert(`Xem chi tiết ứng viên: ${app.fullName}`)}
+                      onClick={() => onView(app)}
                       className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
                       title="Xem chi tiết"
                     >

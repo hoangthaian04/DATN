@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { EditJobModal } from '../../components/modals/EditJobModal';
 import { JobStatusActionModal } from '../../components/modals/JobStatusActionModal';
+import { AiMatchTab } from '../../components/jobs/AiMatchTab';
 
 import { jobService } from '../../services/job.service';
 import type { JobStatus, SaveJobPipelineRequest } from '../../types/job.types';
@@ -57,6 +58,7 @@ export const JobDetailPage: React.FC = () => {
   const [showRoundsModal, setShowRoundsModal] = useState(false);
   const [statusAction, setStatusAction] = useState<JobStatusAction | null>(null);
   const [showPublishSuccess, setShowPublishSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'ai-match'>('overview');
 
   // Lấy chi tiết Job
   const { data: job, isLoading, isError, error } = useQuery({
@@ -92,6 +94,18 @@ export const JobDetailPage: React.FC = () => {
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || 'Có lỗi xảy ra khi cập nhật tin tuyển dụng');
     }
+  });
+
+  const cvRequirementMutation = useMutation({
+    mutationFn: (requiresCv: boolean) => jobService.updateJob(id!, { title: job?.title || '', requiresCv }),
+    onSuccess: (_, requiresCv) => {
+      toast.success(requiresCv ? 'Đã đặt Job bắt buộc nộp CV' : 'Đã đặt Job không bắt buộc nộp CV');
+      queryClient.invalidateQueries({ queryKey: ['job', id] });
+      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Không thể cập nhật yêu cầu CV của Job');
+    },
   });
 
   const handleSaveJob = (updatedData: SaveJobPipelineRequest) => {
@@ -190,7 +204,13 @@ export const JobDetailPage: React.FC = () => {
         </button>
       </div>
 
-      {/* Details layout: Left Column (2/3) + Right Column (1/3) */}
+      <div className="flex gap-2 border-b border-slate-200" role="tablist" aria-label="Nội dung Job">
+        <button type="button" role="tab" aria-selected={activeTab === 'overview'} onClick={() => setActiveTab('overview')} className={`border-b-2 px-4 py-3 text-sm font-bold transition-colors ${activeTab === 'overview' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>Tổng quan</button>
+        <button type="button" role="tab" aria-selected={activeTab === 'ai-match'} onClick={() => setActiveTab('ai-match')} className={`border-b-2 px-4 py-3 text-sm font-bold transition-colors ${activeTab === 'ai-match' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>AI Match</button>
+      </div>
+
+      {activeTab === 'overview' ? (
+      /* Details layout: Left Column (2/3) + Right Column (1/3) */
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         
         {/* Left Column: Quick Info Bar + Description (2/3) */}
@@ -240,9 +260,26 @@ export const JobDetailPage: React.FC = () => {
               <p className="mt-2 text-sm font-extrabold text-slate-800">
                 {job.startDate || 'Không giới hạn ngày bắt đầu'} → {job.endDate || 'Không giới hạn ngày kết thúc'}
               </p>
-              <p className="mt-1 text-xs font-medium text-slate-500">Không tự thay đổi trạng thái Job; trạng thái vẫn do HR publish/đóng.</p>
             </div>
           )}
+
+          <div className="premium-card bg-white p-5 text-left">
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={job.requiresCv !== false}
+                disabled={job.status === 'CLOSED' || cvRequirementMutation.isPending}
+                onChange={event => cvRequirementMutation.mutate(event.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 disabled:cursor-not-allowed"
+              />
+              <span>
+                <span className="block text-sm font-extrabold text-slate-800">Yêu cầu ứng viên nộp CV</span>
+                <span className="mt-1 block text-xs font-semibold text-slate-500">
+                  {job.requiresCv === false ? 'Không bắt buộc' : 'Bắt buộc'}
+                </span>
+              </span>
+            </label>
+          </div>
 
           {/* Job Description */}
           {(job.description || job.requirements || job.benefits) ? (
@@ -296,14 +333,6 @@ export const JobDetailPage: React.FC = () => {
                 <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">
                   {job.status === 'INACTIVE' ? 'Đăng tuyển ngay' : job.status === 'ACTIVE' ? 'Ngừng tuyển ngay' : 'Mở lại Job'}
                 </h3>
-                <p className="text-xs font-semibold text-slate-500 leading-relaxed">
-                  {job.status === 'INACTIVE' 
-                    ? <span dangerouslySetInnerHTML={{ __html: 'Tin tuyển dụng hiện ở trạng thái <strong>Bản nháp</strong>. Xuất bản để thu hút hồ sơ ứng viên ngay lập tức.' }} />
-                    : job.status === 'ACTIVE'
-                      ? <span dangerouslySetInnerHTML={{ __html: 'Tin tuyển dụng đang được <strong>Công khai</strong>. Ngừng tuyển để ẩn tin tuyển dụng khỏi trang Career Site.' }} />
-                      : <span dangerouslySetInnerHTML={{ __html: 'Tin tuyển dụng đã <strong>Đóng</strong>. Mở lại để tiếp tục nhận hồ sơ mới.' }} />
-                  }
-                </p>
               </div>
 
               <button
@@ -320,7 +349,6 @@ export const JobDetailPage: React.FC = () => {
             <div className="flex justify-between items-start select-none">
               <div className="space-y-1">
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Vòng phỏng vấn</h3>
-                <p className="text-xs font-semibold text-slate-500 leading-relaxed">{rounds.length ? `${rounds.length} vòng đã cấu hình.` : 'Chưa có vòng tuyển dụng nào.'}</p>
               </div>
             </div>
 
@@ -337,22 +365,23 @@ export const JobDetailPage: React.FC = () => {
             <div className="flex justify-between items-start select-none">
               <div className="space-y-1">
                 <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-wider">Ứng viên nộp hồ sơ</h3>
-                <p className="text-xs font-semibold text-slate-500 leading-relaxed">
-                  <span dangerouslySetInnerHTML={{ __html: `Có <strong>${job.applicantCount || 0} ứng viên</strong> nộp hồ sơ ứng tuyển vị trí này.` }} />
-                </p>
+                <span className="text-sm font-bold text-slate-600">{job.applicantCount || 0}</span>
               </div>
             </div>
 
             <button
-              onClick={() => navigate('/dashboard/applications/kanban')}
+              onClick={() => navigate(`/dashboard/applications/list?jobId=${id}`)}
               className="w-full py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-bold transition-all cursor-pointer select-none flex items-center justify-center gap-1.5"
             >
-              <span>Xem danh sách</span>
+              <span>Xem danh sách ứng viên</span>
             </button>
           </div>
         </div>
 
       </div>
+      ) : (
+        <AiMatchTab jobId={id!} jobStatus={job.status} />
+      )}
 
       {/* Edit Job Modal */}
       <EditJobModal 

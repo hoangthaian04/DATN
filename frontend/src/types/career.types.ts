@@ -37,6 +37,7 @@ export interface PublicJobSummary {
   currency?: string;
   categoryName?: string;
   categorySlug?: string;
+  requiresCv?: boolean;
   publishedAt?: string;
   startDate?: string;
   endDate?: string;

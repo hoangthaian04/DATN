@@ -26,7 +26,7 @@ export interface PublicApplicationPayload {
   email: string;
   phone: string;
   coverLetter?: string;
-  cvFile: File;
+  cvFile?: File;
   answers: PublicApplicationAnswer[];
   consentAccepted: boolean;
 }
@@ -67,7 +67,7 @@ export const careerService = {
     body.append('email', payload.email);
     body.append('phone', payload.phone);
     if (payload.coverLetter) body.append('coverLetter', payload.coverLetter);
-    body.append('cvFile', payload.cvFile);
+    if (payload.cvFile) body.append('cvFile', payload.cvFile);
     body.append('answers', JSON.stringify(payload.answers));
     body.append('consentAccepted', String(payload.consentAccepted));
     const response = await api.post<BaseResponse<PublicApplicationConfirmation>>(

@@ -50,7 +50,7 @@ export const FilterBar: React.FC<Props> = ({
           onChange={(e) => onJobChange(e.target.value)}
           disabled={isLoadingJobs}
         >
-          <option value="">Vị trí ứng tuyển: Tất cả</option>
+          <option value="">Job đang tuyển: Tất cả</option>
           {jobs.map(job => (
             <option key={job.id} value={job.id}>{job.title}</option>
           ))}

@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { jobService } from '@/services/job.service';
 import { CandidatesTable } from '@/components/candidates/CandidatesTable';
+import { CandidateDrawer } from '@/components/candidates/CandidateDrawer';
 import { FilterBar } from '@/components/candidates/FilterBar';
-import type { ApplicationStatus } from '@/types/application.types';
+import type { ApplicationListDTO, ApplicationStatus } from '@/types/application.types';
 
 export const CandidatesListPage: React.FC = () => {
-  const [selectedJobId, setSelectedJobId] = useState<string>('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedJobId, setSelectedJobId] = useState<string>(() => searchParams.get('jobId') || '');
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<ApplicationStatus | ''>('');
   const [page, setPage] = useState(1);
+  const [selectedApplication, setSelectedApplication] = useState<ApplicationListDTO | null>(null);
 
   // Fetch danh sách Job cho Dropdown
   const { data: jobsPagination, isLoading: isLoadingJobs } = useQuery({
     queryKey: ['jobs-for-filter'],
-    queryFn: () => jobService.getJobs({ limit: 100 })
+    queryFn: () => jobService.getJobs({ limit: 100, status: 'ACTIVE' })
   });
 
   // Lấy danh sách ứng viên (tất cả hoặc theo job)
@@ -31,23 +35,21 @@ export const CandidatesListPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-800">Danh sách Ứng viên</h1>
-          <p className="text-sm font-semibold text-slate-500 mt-1">
-            Quản lý tất cả hồ sơ ứng tuyển
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {/* Nút Toggle Kanban/List sẽ thêm vào sau nếu cần thiết, hiện tại chỉ có List ở route này */}
-        </div>
-      </div>
+      <header>
+        <h1 className="text-2xl font-black text-slate-800">Danh sách ứng viên</h1>
+      </header>
 
       <FilterBar 
         jobs={jobsPagination?.data || []}
         selectedJobId={selectedJobId}
         onJobChange={(newJobId) => {
           setSelectedJobId(newJobId);
+          setSearchParams(previous => {
+            const next = new URLSearchParams(previous);
+            if (newJobId) next.set('jobId', newJobId);
+            else next.delete('jobId');
+            return next;
+          }, { replace: true });
           setPage(1);
         }}
         keyword={keyword}
@@ -67,7 +69,10 @@ export const CandidatesListPage: React.FC = () => {
         pagination={applicationsPagination}
         isLoading={isLoadingApps}
         onPageChange={setPage}
+        onView={setSelectedApplication}
       />
+
+      {selectedApplication && <CandidateDrawer key={selectedApplication.applicationId} application={selectedApplication} onClose={() => setSelectedApplication(null)} />}
     </div>
   );
 };

@@ -1,8 +1,10 @@
+import type { CvAnalysisResult } from './ai.types';
+
 export type ApplicationStatus = 'ACTIVE' | 'REJECTED' | 'HIRED';
 export type EvaluationResult = 'PASS' | 'FAIL';
 
 export interface Candidate {
-  id: string;
+  id: number;
   name: string;
   email: string;
   phone?: string;
@@ -10,18 +12,15 @@ export interface Candidate {
 }
 
 export interface RoundSummary {
-  id: string;
+  id: number;
   name: string;
   orderIndex: number;
 }
 
-export interface AIAnalysis {
-  score: number;
-  strengths: string[];
-  weaknesses: string[];
-  matchedSkills: string[];
-  missingSkills: string[];
-}
+export type CvAnalysis = CvAnalysisResult;
+
+/** Backward-compatible name for consumers that still use the old UI type. */
+export type AIAnalysis = CvAnalysis;
 
 export interface RoundHistoryItem {
   roundName: string;
@@ -44,7 +43,7 @@ export interface InterviewSchedule {
 }
 
 export interface ApplicationSummary {
-  id: string;
+  id: number;
   candidate: Candidate;
   status: ApplicationStatus;
   currentRound?: RoundSummary;
@@ -54,7 +53,7 @@ export interface ApplicationSummary {
 }
 
 export interface ApplicationDetail extends ApplicationSummary {
-  job: { id: string; title: string };
+  job: { id: number; title: string };
   roundHistory: RoundHistoryItem[];
   aiAnalysis?: AIAnalysis;
   emailHistory: EmailHistoryItem[];
@@ -76,4 +75,6 @@ export interface ApplicationListDTO {
   phone: string;
   email: string;
   applicationStatus: ApplicationStatus;
+  requiresCv?: boolean;
+  hasCv?: boolean;
 }
